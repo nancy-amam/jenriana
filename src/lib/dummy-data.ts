@@ -1,0 +1,245 @@
+import type { Apartment, LocationFeature, Testimonial } from "./interface"
+
+export const featuredApartments: Apartment[] = [
+  {
+    id: "apt-001",
+    imageUrl: "/images/image1.png",
+    name: "Luxury City View Apartment",
+    location: "Victoria Island, Lagos",
+    price: 25000,
+    rating: 4.8,
+    guests: 4,
+    beds: 2,
+    baths: 2,
+  },
+  {
+    id: "apt-002",
+    imageUrl: "/images/image8.png",
+    name: "Modern Downtown Loft",
+    location: "Wuse 2, Abuja",
+    price: 25000,
+    rating: 4.5,
+    guests: 2,
+    beds: 1,
+    baths: 1,
+  },
+  {
+    id: "apt-003",
+    imageUrl: "/images/image12.png",
+    name: "Cozy Family Retreat",
+    location: "Trans Amadi, Port Harcourt",
+    price: 250,
+    rating: 4.3,
+    guests: 6,
+    beds: 3,
+    baths: 2,
+  },
+  {
+    id: "apt-004",
+    imageUrl: "/images/image6.png",
+    name: "Spacious Balcony Suite",
+    location: "Lekki Phase 1, Lagos",
+    price: 300,
+    rating: 4.9,
+    guests: 5,
+    beds: 3,
+    baths: 3,
+  },
+]
+
+export const locationFeatures: LocationFeature[] = [
+  {
+    id: "loc-001",
+    imageUrl: "/images/image5.jpg",
+    altText: "Lagos city skyline",
+    locationName: "Lagos",
+    apartmentCount: 120,
+    colSpan: 1,
+  },
+  {
+    id: "loc-002",
+    imageUrl: "/images/image9.jpg",
+    altText: "Abuja city view",
+    locationName: "Abuja",
+    apartmentCount: 85,
+    colSpan: 1,
+  },
+  {
+    id: "loc-003",
+    imageUrl: "/images/image10.jpg",
+    altText: "Port Harcourt waterfront",
+    locationName: "Port Harcourt",
+    apartmentCount: 50,
+    colSpan: 2,
+  },
+  {
+    id: "loc-004",
+    imageUrl: "/images/image14.jpg",
+    altText: "Enugu green landscape",
+    locationName: "Enugu",
+    apartmentCount: 30,
+    colSpan: 2,
+  },
+  {
+    id: "loc-005",
+    imageUrl: "/images/image3.jpg",
+    altText: "Calabar carnival street",
+    locationName: "Calabar",
+    apartmentCount: 40,
+    colSpan: 1,
+  },
+  {
+    id: "loc-006",
+    imageUrl: "/images/image2.jpg",
+    altText: "Ibadan brown roofs",
+    locationName: "Ibadan",
+    apartmentCount: 60,
+    colSpan: 1,
+  },
+]
+
+export const testimonials: Testimonial[] = [
+  {
+    id: "test-001",
+    rating: 5,
+    text: "The apartment was absolutely stunning and exceeded all our expectations. Clean, spacious, and perfectly located. Highly recommend Jenrianna-apartments!",
+    authorName: "Aisha Bello",
+    authorImage: "/placeholder.svg?height=40&width=40&text=Aisha",
+  },
+  {
+    id: "test-002",
+    rating: 5,
+    text: "Seamless booking process and a fantastic stay. The amenities were top-notch, and the host was incredibly responsive. Will definitely book again!",
+    authorName: "Chukwudi Okoro",
+    authorImage: "/placeholder.svg?height=40&width=40&text=Chukwudi",
+  },
+  {
+    id: "test-003",
+    rating: 5,
+    text: "A true home away from home! The apartment was beautifully furnished and had everything we needed. Great value for money and a comfortable experience.",
+    authorName: "Fatima Adebayo",
+    authorImage: "/placeholder.svg?height=40&width=40&text=Fatima",
+  },
+]
+
+export const trendingApartments: Apartment[] = [
+  {
+    id: "trend-001",
+    imageUrl: "/images/image7.png",
+    name: "Chic Studio in Ikoyi",
+    location: "Ikoyi, Lagos",
+    price: 190,
+    rating: 4.7,
+    guests: 2,
+    beds: 1,
+    baths: 1,
+  },
+  {
+    id: "trend-002",
+    imageUrl: "/images/image11.png",
+    name: "Family Suite in Maitama",
+    location: "Maitama, Abuja",
+    price: 220,
+    rating: 4.6,
+    guests: 5,
+    beds: 3,
+    baths: 2,
+  },
+  {
+    id: "trend-003",
+    imageUrl: "/images/image12.png",
+    name: "Executive Penthouse",
+    location: "Victoria Island, Lagos",
+    price: 350,
+    rating: 4.9,
+    guests: 4,
+    beds: 2,
+    baths: 2,
+  },
+  {
+    id: "trend-004",
+    imageUrl: "/images/image6.png",
+    name: "Riverside View Flat",
+    location: "Old GRA, Port Harcourt",
+    price: 160,
+    rating: 4.4,
+    guests: 3,
+    beds: 2,
+    baths: 1,
+  },
+]
+
+export const detailedApartments: Apartment[] = [
+  {
+    id: "apt-001", // Matches one of the featured apartments
+    imageUrl: "/images/image8.png",
+    name: "Luxury City View Apartment",
+    location: "Victoria Island, Lagos",
+    price: 25000,
+    rating: 4.8,
+    guests: 4,
+    beds: 2,
+    baths: 2,
+    description:
+      "Experience unparalleled luxury in this stunning city view apartment located in the heart of Victoria Island. Boasting modern design, spacious living areas, and breathtaking panoramic views, it's the perfect retreat for discerning travelers. Enjoy state-of-the-art amenities and easy access to Lagos's finest dining, entertainment, and business districts.",
+    amenities: [
+      { id: "am-001", name: "Air Conditioning", icon: "AirVent" },
+      { id: "am-002", name: "Wi-Fi", icon: "Wifi" },
+      { id: "am-003", name: "Kitchen Utensils", icon: "Utensils" },
+      { id: "am-004", name: "Smart TV", icon: "Tv" },
+      { id: "am-005", name: "Work Space", icon: "Laptop" },
+      { id: "am-006", name: "Gym Access", icon: "Dumbbell" },
+      { id: "am-007", name: "Free Parking", icon: "ParkingSquare" },
+      { id: "am-008", name: "24/7 Security", icon: "ShieldCheck" },
+    ],
+    galleryImages: [
+      {
+        id: "gal-001",
+        src: "/images/image17.png",
+        alt: "Apartment living room",
+        isLarge: true,
+      },
+      { id: "gal-002", src: "/images/image16.png", alt: "Apartment bedroom" },
+      { id: "gal-003", src: "/images/image15.png", alt: "Apartment kitchen" },
+      {
+        id: "gal-004",
+        src: "/images/image18.png",
+        alt: "Apartment bathroom",
+      },
+    ],
+  },
+  {
+    id: "apt-002", // Another example detailed apartment
+    imageUrl: "/images/image8.png",
+    name: "Modern Downtown Loft",
+    location: "Wuse 2, Abuja",
+    price: 25000,
+    rating: 4.5,
+    guests: 2,
+    beds: 1,
+    baths: 1,
+    description:
+      "A stylish and comfortable loft in the vibrant heart of Wuse 2. Perfect for business travelers or couples, this apartment offers a chic urban experience with all modern conveniences. Enjoy easy access to Abuja's central business district, fine dining, and cultural attractions.",
+    amenities: [
+      { id: "am-001", name: "Air Conditioning", icon: "AirVent" },
+      { id: "am-002", name: "Wi-Fi", icon: "Wifi" },
+      { id: "am-003", name: "Kitchenette", icon: "Microwave" },
+      { id: "am-004", name: "Workspace", icon: "Laptop" },
+      { id: "am-005", name: "Elevator Access", icon: "ArrowUpFromLine" },
+      { id: "am-006", name: "City View", icon: "Building" },
+    ],
+    galleryImages: [
+      {
+        id: "gal-001",
+        src: "/placeholder.svg?height=600&width=800&text=Loft+Interior+1",
+        alt: "Loft living area",
+        isLarge: true,
+      },
+      { id: "gal-002", src: "/placeholder.svg?height=190&width=250&text=Loft+Bedroom", alt: "Loft bedroom" },
+      { id: "gal-003", src: "/placeholder.svg?height=190&width=250&text=Loft+Kitchenette", alt: "Loft kitchenette" },
+      { id: "gal-004", src: "/placeholder.svg?height=190&width=250&text=Loft+Bathroom", alt: "Loft bathroom" },
+    ],
+  },
+]
+
+
