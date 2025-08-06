@@ -23,7 +23,7 @@ export default function HomePage() {
       >
         <div className="absolute inset-0 bg-black/40"></div>
         <div className="relative z-10 h-full flex flex-col justify-end pb-6 px-4 md:px-16 mb-5">
-          <div className="flex flex-col items-start text-white mb-6 md:mb-8">
+          <div className="flex flex-col items-start text-white mb-6 md:mb-[160px]">
             <h1 className="text-[30px] md:text-[45px] font-bold">
               Book Your Ideal Stay in Just a Few Clicks
             </h1>
@@ -36,7 +36,7 @@ export default function HomePage() {
       </section>
 
       {/* Search Bar */}
-      <div className="mt-10 md:-mt-16 px-4 md:px-16 z-20 relative">
+      <div className="mt-10 md:-mt-[170px] px-4 md:px-16 z-20 relative">
         <div className="bg-white text-[#1e1e1e] rounded-xl shadow-lg p-4 md:p-6 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
           <div>
             <label htmlFor="location" className="block text-sm font-medium text-[#1e1e1e] mb-1">
@@ -115,62 +115,129 @@ export default function HomePage() {
   </div>
 
   {/* Desktop: Asymmetric grid */}
-  <div className="hidden md:block space-y-6 ">
-    {/* First row */}
-    <div className="grid grid-cols-4 gap-6">
-      {locationFeatures.slice(0, 3).map((feature, idx) => (
-        <div
-          key={idx}
-          className={`col-span-${idx === 2 ? 2 : 1}`}
-        >
-          <div className="relative w-full h-[323px]">
-            <Image
-              src={feature.imageUrl || "/placeholder.svg"}
-              alt={feature.altText}
-              fill
-              className="object-cover rounded-[20px]"
-            />
-          </div>
-          <div className="p-4 text-left">
-            <h3 className="text-base font-normal text-[#1e1e1e]">
-              {feature.locationName}
-            </h3>
-            <p className="text-base text-[#4b5563]">
-              {feature.apartmentCount} Apartments
-            </p>
-          </div>
-        </div>
-      ))}
-    </div>
 
-    {/* Second row */}
-    <div className="grid grid-cols-4 gap-6">
-      {locationFeatures.slice(3, 6).map((feature, idx) => (
-        <div
-          key={idx}
-          className={`col-span-${idx === 0 ? 2 : 1}`}
-        >
-          <div className="relative w-full h-[323px]">
-            <Image
-              src={feature.imageUrl || "/placeholder.svg"}
-              alt={feature.altText}
-              fill
-              className="object-cover rounded-[20px]"
-            />
+ <div className="space-y-6">
+          {/* First row: 1 col + 1 col + 2 col */}
+          <div className="grid grid-cols-4 gap-6">
+            <div className="col-span-1">
+              <div className="relative w-full h-[323px]">
+                <Image
+                  src={locationFeatures[0].imageUrl || "/placeholder.svg"}
+                  alt={locationFeatures[0].altText}
+                  fill
+                  className="object-cover rounded-[20px]"
+                />
+              </div>
+              <div className="p-4 text-left">
+                <h3 className="text-base font-normal text-[#1e1e1e]">
+                  {locationFeatures[0].locationName}
+                </h3>
+                <p className="text-base text-[#4b5563]">
+                  {locationFeatures[0].apartmentCount} Apartments
+                </p>
+              </div>
+            </div>
+
+            <div className="col-span-1">
+              <div className="relative w-full h-[323px]">
+                <Image
+                  src={locationFeatures[1].imageUrl || "/placeholder.svg"}
+                  alt={locationFeatures[1].altText}
+                  fill
+                  className="object-cover rounded-[20px]"
+                />
+              </div>
+              <div className="p-4 text-left">
+                <h3 className="text-base font-normal text-[#1e1e1e]">
+                  {locationFeatures[1].locationName}
+                </h3>
+                <p className="text-base text-[#4b5563]">
+                  {locationFeatures[1].apartmentCount} Apartments
+                </p>
+              </div>
+            </div>
+
+            <div className="col-span-2">
+              <div className="relative w-full h-[323px]">
+                <Image
+                  src={locationFeatures[2].imageUrl || "/placeholder.svg"}
+                  alt={locationFeatures[2].altText}
+                  fill
+                  className="object-cover rounded-[20px]"
+                />
+              </div>
+              <div className="p-4 text-left">
+                <h3 className="text-base font-normal text-[#1e1e1e]">
+                  {locationFeatures[2].locationName}
+                </h3>
+                <p className="text-base text-[#4b5563]">
+                  {locationFeatures[2].apartmentCount} Apartments
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="p-4 text-left">
-            <h3 className="text-base font-normal text-[#1e1e1e]">
-              {feature.locationName}
-            </h3>
-            <p className="text-base text-[#4b5563]">
-              {feature.apartmentCount} Apartments
-            </p>
+
+          {/* Second row: 2 col + 1 col + 1 col */}
+          <div className="grid grid-cols-4 gap-6">
+            <div className="col-span-2">
+              <div className="relative w-full h-[323px]">
+                <Image
+                  src={locationFeatures[3].imageUrl || "/placeholder.svg"}
+                  alt={locationFeatures[3].altText}
+                  fill
+                  className="object-cover rounded-[20px]"
+                />
+              </div>
+              <div className="p-4 text-left">
+                <h3 className="text-base font-normal text-[#1e1e1e]">
+                  {locationFeatures[3].locationName}
+                </h3>
+                <p className="text-base text-[#4b5563]">
+                  {locationFeatures[3].apartmentCount} Apartments
+                </p>
+              </div>
+            </div>
+
+            <div className="col-span-1">
+              <div className="relative w-full h-[323px]">
+                <Image
+                  src={locationFeatures[4].imageUrl || "/placeholder.svg"}
+                  alt={locationFeatures[4].altText}
+                  fill
+                  className="object-cover rounded-[20px]"
+                />
+              </div>
+              <div className="p-4 text-left">
+                <h3 className="text-base font-normal text-[#1e1e1e]">
+                  {locationFeatures[4].locationName}
+                </h3>
+                <p className="text-base text-[#4b5563]">
+                  {locationFeatures[4].apartmentCount} Apartments
+                </p>
+              </div>
+            </div>
+
+            <div className="col-span-1">
+              <div className="relative w-full h-[323px]">
+                <Image
+                  src={locationFeatures[5].imageUrl || "/placeholder.svg"}
+                  alt={locationFeatures[5].altText}
+                  fill
+                  className="object-cover rounded-[20px]"
+                />
+              </div>
+              <div className="p-4 text-left">
+                <h3 className="text-base font-normal text-[#1e1e1e]">
+                  {locationFeatures[5].locationName}
+                </h3>
+                <p className="text-base text-[#4b5563]">
+                  {locationFeatures[5].apartmentCount} Apartments
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-      ))}
-    </div>
-  </div>
-</section>
+      </section>
 
 
       {/* Featured Listings */}

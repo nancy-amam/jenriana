@@ -26,6 +26,11 @@ export default function CheckoutPage() {
   })
 
   if (!apartment || isNaN(nights) || isNaN(guests) || isNaN(price)) {
+    console.error("CheckoutPage: Invalid initial booking information received.");
+    console.error("  apartment:", apartment);
+    console.error("  nights:", nights, "isNaN(nights):", isNaN(nights));
+    console.error("  guests:", guests, "isNaN(guests):", isNaN(guests));
+    console.error("  price:", price, "isNaN(price):", isNaN(price));
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-lg font-semibold">
         Invalid booking information
@@ -58,10 +63,23 @@ export default function CheckoutPage() {
   const formattedCheckIn = format(checkInDate, "MMM d, yyyy")
   const formattedCheckOut = format(checkOutDate, "MMM d, yyyy")
 
+  // Construct the URL for the booking-engine page
+  const bookingEngineUrl = `/booking-engine?apartmentId=${apartment.id}&nights=${nights}&guests=${guests}&price=${price}&selectedServices=${selectedServices.join(',')}`;
+
+  console.log("CheckoutPage: Preparing to navigate to /booking-engine with:");
+  console.log("  URL:", bookingEngineUrl);
+  console.log("  apartmentId:", apartment.id);
+  console.log("  nights:", nights);
+  console.log("  guests:", guests);
+  console.log("  price:", price);
+  console.log("  selectedServices (array):", selectedServices);
+  console.log("  selectedServices (joined):", selectedServices.join(','));
+
+
   return (
     <div className="relative min-h-screen bg-black text-white px-4 py-12 md:px-16 overflow-hidden">
       <Image
-        src="/images/image8.png"
+        src={apartment.imageUrl || "/placeholder.svg"}
         alt="Apartment background"
         fill
         className="object-cover z-0"
@@ -252,10 +270,10 @@ export default function CheckoutPage() {
                 <span>₦{grandTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
               </div>
             </div>
-            <Link href='/booking-engine'>
-                  <button className="w-full bg-black text-white py-2 px-6 rounded-md hover:bg-gray-800 transition">
-              Confirm Booking
-            </button>
+            <Link href={bookingEngineUrl}> {/* Updated Link href */}
+              <button className="w-full bg-black text-white py-2 px-6 rounded-md hover:bg-gray-800 transition">
+                Confirm Booking
+              </button>
             </Link>
           </div>
         </div>

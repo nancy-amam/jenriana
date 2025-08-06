@@ -10,13 +10,18 @@ export default function LayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const hideNavAndFooter = pathname.includes('/sign-up') || pathname.includes('/login');
+
+  const hideNavAndFooter =
+    pathname.includes('/sign-up') || pathname.includes('/login');
+
+  const hideFooter =
+    hideNavAndFooter || pathname.includes('/booking-engine');
 
   return (
     <>
       {!hideNavAndFooter && <Navbar />}
       <main className={!hideNavAndFooter ? "pt-16" : ""}>{children}</main>
-      {!hideNavAndFooter && <Footer />}
+      {!hideFooter && <Footer />}
     </>
   );
 }
