@@ -1,4 +1,4 @@
-import type { Apartment, LocationFeature, Testimonial } from "./interface"
+import type { Apartment, LocationFeature, Testimonial, Service } from "./interface"
 
 export const featuredApartments: Apartment[] = [
   {
@@ -242,4 +242,33 @@ export const detailedApartments: Apartment[] = [
   },
 ]
 
-
+export const services: Service[] = [
+  {
+    id: 'private-chef',
+    name: 'Private Chef',
+    description: 'Enjoy meals prepared by a personal chef',
+    price: 15000,
+    unit: '/night',
+  },
+  {
+    id: 'airport-transfer',
+    name: 'Airport Transfer',
+    description: 'Hassle-free pick-up and drop-off at the airport',
+    price: 5000,
+    unit: '/trip',
+  },
+  {
+    id: 'daily-cleaning',
+    name: 'Daily Cleaning',
+    description: 'Keep your apartment spotless throughout your stay',
+    price: 3000,
+    unit: '/day',
+  },
+  {
+    id: 'car-rental',
+    name: 'Car Rental',
+    description: 'Explore the city at your own pace with a rental car',
+    price: 10000,
+    unit: '/day',
+  },
+]

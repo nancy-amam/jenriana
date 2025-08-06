@@ -42,3 +42,11 @@ export interface GalleryImage {
   alt: string
   isLarge?: boolean // To indicate if it's the large image in the gallery
 }
+
+export interface Service {
+  id: string
+  name: string
+  description: string
+  price: number
+  unit: string // e.g., "/night", "/stay", "/person"
+}

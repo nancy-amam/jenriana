@@ -1,19 +1,19 @@
 'use client'
-
 import { useSearchParams } from "next/navigation"
-import { detailedApartments } from "@/lib/dummy-data"
+import { detailedApartments, services } from "@/lib/dummy-data"
 import Image from "next/image"
 import { useState } from "react"
 import { format, addDays } from "date-fns"
-import { BedDouble as BedIcon, Bath as BathIcon } from "lucide-react"
+import { BedIcon, BathIcon } from 'lucide-react'
+import Link from "next/link"
 
 export default function CheckoutPage() {
   const searchParams = useSearchParams()
-
   const apartmentId = searchParams.get("apartmentId")
   const nights = Number(searchParams.get("nights"))
   const guests = Number(searchParams.get("guests"))
   const price = Number(searchParams.get("price"))
+  const [selectedServices, setSelectedServices] = useState<string[]>([])
 
   const apartment = detailedApartments.find((apt) => apt.id === apartmentId)
 
@@ -33,10 +33,25 @@ export default function CheckoutPage() {
     )
   }
 
+  const handleCheckboxChange = (serviceId: string) => {
+    setSelectedServices((prevSelected) =>
+      prevSelected.includes(serviceId)
+        ? prevSelected.filter((id) => id !== serviceId)
+        : [...prevSelected, serviceId]
+    )
+  }
+
   const totalCost = price * nights
   const serviceFee = 5000
   const taxes = 0.075 * totalCost
-  const grandTotal = totalCost + serviceFee + taxes
+
+  // Calculate total for selected optional services
+  const selectedServicesTotal = selectedServices.reduce((sum, serviceId) => {
+    const service = services.find(s => s.id === serviceId);
+    return sum + (service ? service.price : 0);
+  }, 0);
+
+  const grandTotal = totalCost + serviceFee + taxes + selectedServicesTotal; // Include selected services total
 
   const checkInDate = new Date()
   const checkOutDate = addDays(checkInDate, nights)
@@ -52,11 +67,9 @@ export default function CheckoutPage() {
         className="object-cover z-0"
       />
       <div className="absolute inset-0 bg-black/80 z-10"></div>
-
       <div className="relative z-20 max-w-7xl mx-auto">
         <h1 className="text-[36px] font-normal mb-2">Confirm Your Booking</h1>
         <p className="mb-10 text-base font-normal ">Just a few more details to confirm your stay</p>
-
         <div className="flex flex-col md:flex-row gap-8 w-full items-start">
           {/* Guest Info */}
           <div className="bg-white text-black rounded-[12px] p-6 space-y-6 w-full md:flex-1 max-w-3xl">
@@ -76,7 +89,6 @@ export default function CheckoutPage() {
                   style={{ borderColor: "#EAECF0" }}
                 />
               </div>
-
               {/* Email */}
               <div className="space-y-1">
                 <label className="block text-base font-medium" style={{ color: "#212121" }}>
@@ -91,7 +103,6 @@ export default function CheckoutPage() {
                   style={{ borderColor: "#EAECF0" }}
                 />
               </div>
-
               {/* Phone */}
               <div className="space-y-1">
                 <label className="block text-base font-medium" style={{ color: "#212121" }}>
@@ -106,7 +117,6 @@ export default function CheckoutPage() {
                   style={{ borderColor: "#EAECF0" }}
                 />
               </div>
-
               {/* Address */}
               <div className="space-y-1">
                 <label className="block text-base font-medium" style={{ color: "#212121" }}>
@@ -121,7 +131,6 @@ export default function CheckoutPage() {
                   style={{ borderColor: "#EAECF0" }}
                 />
               </div>
-
               {/* Special Request */}
               <div className="space-y-1">
                 <label className="block text-base font-medium" style={{ color: "#212121" }}>
@@ -136,16 +145,52 @@ export default function CheckoutPage() {
                   style={{ borderColor: "#EAECF0" }}
                 ></textarea>
               </div>
+              {/* optional services */}
+              <div className=" px-4 mb-10">
+                <h2 className="text-[20px] font-normal text-[#111827] text-left mb-2">
+                  Enhance Your Stay
+                </h2>
+                <p className="text-base text-[#4b5563] text-left mb-6">
+                  Select optional services to upgrade your experience
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {services.map((service) => (
+                    <div
+                      key={service.id}
+                      className="flex justify-between items-center border border-gray-200 rounded-[12px] p-6"
+                    >
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          id={service.id}
+                          checked={selectedServices.includes(service.id)}
+                          onChange={() => handleCheckboxChange(service.id)}
+                          className="mt-1 w-5 h-5 text-[#11827] bg-gray-100 border-gray-300 rounded "
+                        />
+                        <div className="flex flex-col">
+                          <label htmlFor={service.id} className="font-normal text-base text-[#111827] cursor-pointer">
+                            {service.name}
+                          </label>
+                          <p className="text-sm text-[#4b5566]">{service.description}</p>
+                        </div>
+                      </div>
+                      <div className="text-base font-normal text-[#111827] flex-shrink-0 ml-4">
+                        ₦{service.price.toLocaleString()}
+                        <span className="text-sm font-normal text-[#4b5566]">{service.unit}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </form>
           </div>
-
           {/* Booking Summary */}
           <div className="bg-white text-black rounded-[12px] p-6 space-y-6 w-full md:w-[424px] max-w-full">
             {/* Apartment Info */}
             <div className="flex gap-4">
               {apartment.imageUrl && (
                 <Image
-                  src={apartment.imageUrl}
+                  src={apartment.imageUrl || "/placeholder.svg"}
                   alt={apartment.name}
                   width={120}
                   height={80}
@@ -167,9 +212,8 @@ export default function CheckoutPage() {
                 </div>
               </div>
             </div>
-
             {/* Check-in / Check-out */}
-            <div className="flex justify-between text-black font-normal text-sm  pt-4">
+            <div className="flex justify-between text-black font-normal text-sm pt-4">
               <div>
                 <p className="text-[#6b7280] font-normal">Check-in</p>
                 <p>{formattedCheckIn}</p>
@@ -179,9 +223,8 @@ export default function CheckoutPage() {
                 <p>{formattedCheckOut}</p>
               </div>
             </div>
-
             {/* Pricing Breakdown */}
-            <div className="text-sm text-[#6b7280] space-y-2 font-normal  pt-4">
+            <div className="text-sm text-[#6b7280] space-y-2 font-normal pt-4">
               <div className="flex justify-between">
                 <span>₦{price.toLocaleString()} x {nights} night(s)</span>
                 <span className=" text-[#11827]">₦{totalCost.toLocaleString()}</span>
@@ -190,6 +233,16 @@ export default function CheckoutPage() {
                 <span>Service Fee</span>
                 <span className=" text-[#11827]">₦{serviceFee.toLocaleString()}</span>
               </div>
+              {/* Display selected optional services */}
+              {selectedServices.map((serviceId) => {
+                const service = services.find(s => s.id === serviceId);
+                return service ? (
+                  <div key={service.id} className="flex justify-between">
+                    <span>{service.name}</span>
+                    <span className=" text-[#11827]">₦{service.price.toLocaleString()}</span>
+                  </div>
+                ) : null;
+              })}
               <div className="flex justify-between">
                 <span>Taxes (7.5%)</span>
                 <span className=" text-[#11827]">₦{taxes.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
@@ -199,10 +252,11 @@ export default function CheckoutPage() {
                 <span>₦{grandTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
               </div>
             </div>
-
-            <button className="w-full bg-black text-white py-2 px-6 rounded-md hover:bg-gray-800 transition">
+            <Link href='/booking-engine'>
+                  <button className="w-full bg-black text-white py-2 px-6 rounded-md hover:bg-gray-800 transition">
               Confirm Booking
             </button>
+            </Link>
           </div>
         </div>
       </div>
