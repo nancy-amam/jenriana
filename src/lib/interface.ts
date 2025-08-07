@@ -50,3 +50,18 @@ export interface Service {
   price: number
   unit: string // e.g., "/night", "/stay", "/person"
 }
+
+export interface Booking  {
+  id: string;
+  apartmentId: string;
+  apartmentName: string;
+  apartmentLocation: string;
+  checkInDate: string;
+  checkOutDate: string;
+  nights: number;
+  guests: number;
+  totalPrice: number;
+  selectedServices: { id: string; name: string; price: number }[];
+  paymentMethod: 'card' | 'bank-transfer';
+  bookingDate: string;
+};

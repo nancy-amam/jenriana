@@ -39,7 +39,7 @@ export default function HomePage() {
       <div className="mt-10 md:-mt-[170px] px-4 md:px-16 z-20 relative">
         <div className="bg-white text-[#1e1e1e] rounded-xl shadow-lg p-4 md:p-6 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-[#1e1e1e] mb-1">
+            <label htmlFor="location" className="block text-sm font-normal text-[#1e1e1e] mb-1">
               Location
             </label>
             <select id="location" className="w-full rounded-md px-3 py-2">
@@ -96,7 +96,7 @@ export default function HomePage() {
     {locationFeatures.map((feature, idx) => (
       <div
         key={idx}
-        className="min-w-[260px] flex-shrink-0  rounded-[20px] overflow-hidden shadow"
+        className="min-w-[260px] flex-shrink-0  rounded-[20px] overflow-hidden "
       >
         <div className="relative w-full h-[220px]">
           <Image
@@ -116,7 +116,7 @@ export default function HomePage() {
 
   {/* Desktop: Asymmetric grid */}
 
- <div className="space-y-6">
+ <div className="space-y-6 hidden md:block  ">
           {/* First row: 1 col + 1 col + 2 col */}
           <div className="grid grid-cols-4 gap-6">
             <div className="col-span-1">

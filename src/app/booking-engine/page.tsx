@@ -4,8 +4,8 @@ import { useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { useState } from "react" 
 import { format, addDays, differenceInDays } from "date-fns"
-import { BedIcon, BathIcon, MapPin, Wallet, Banknote } from 'lucide-react' 
-
+import { BedIcon, BathIcon, MapPin, Wallet, Banknote, Lock } from 'lucide-react' 
+import { useRouter } from "next/navigation"
 
 import { detailedApartments, services } from "@/lib/dummy-data" 
 
@@ -19,6 +19,7 @@ export default function BookingEnginePage() {
   const price = Number(searchParams.get("price"))
   const selectedServicesParam = searchParams.get("selectedServices")
   const initialSelectedServices = selectedServicesParam ? selectedServicesParam.split(',') : [];
+  const router = useRouter();
 
   const apartment = detailedApartments.find((apt) => apt.id === apartmentId)
 
@@ -54,10 +55,39 @@ export default function BookingEnginePage() {
     )
   }
 
-  const handleConfirmAndPay = () => {
-    alert(`Confirming booking for ${apartment.name} with total ₦${grandTotal.toLocaleString()} via ${paymentMethod}.`);
-    // Here you would integrate with your payment gateway
+
+const handleConfirmAndPay = () => {
+  const booking = {
+    id: Date.now().toString(),
+    apartmentId: apartment.id,
+    apartmentName: apartment.name,
+    apartmentLocation: apartment.location,
+    checkInDate,
+    checkOutDate,
+    nights,
+    guests: numGuests,
+    totalPrice: grandTotal,
+    selectedServices: initialSelectedServices.map((serviceId) => {
+  const service = services.find((s) => s.id === serviceId);
+  return service ? {
+    id: service.id,
+    name: service.name,
+    price: service.price
+  } : null;
+}).filter(Boolean) as { id: string; name: string; price: number }[],
+
+    paymentMethod,
+    bookingDate: new Date().toISOString(),
   };
+
+  const existingBookings = JSON.parse(localStorage.getItem('myBookings') || '[]');
+  localStorage.setItem('myBookings', JSON.stringify([booking, ...existingBookings]));
+
+  // ✅ Navigate to My Bookings immediately (no alert)
+  router.push('/my-bookings');
+};
+
+
 
   return (
     <div className=" bg-[#f1f1f1] py-12 px-4 md:px-16">
@@ -65,38 +95,39 @@ export default function BookingEnginePage() {
         {/* Left Column */}
         <div className="flex flex-col gap-4">
           {/* Apartment Info Card */}
-          <div className="bg-white rounded-lg p-6 shadow-md w-full ">
-            <div className="flex  justify-between ">
-              <h2 className="text-2xl font-normal text-[#111827]">{apartment.name}</h2>
-              {apartment.galleryImages.length > 3 && (
-                <Image
-                  src={apartment.galleryImages[3].src || "/placeholder.svg"}
-                  alt={apartment.galleryImages[3].alt}
-                  width={120}
-                  height={80}
-                  className="rounded-md object-cover flex-shrink-0 ml-4"
-                />
-              )}
-            </div>
-            <p className="flex items-center text-base text-[#4b5566] -mt-20 ">
-                <MapPin className="w-4 h-4 mr-1 text-[#4b5566]" />
-              {apartment.location}</p>
-            <p className="text-[30px] font-normal text-[#111827] ">
-              ₦{apartment.price.toLocaleString()}<span className="text-sm font-normal text-[#6b7280]">/night</span>
-            </p>
-            <div className="flex flex-wrap gap-2 mt-5">
-              {apartment.galleryImages.slice(0, 3).map((img) => (
-                <Image
-                  key={img.id}
-                  src={img.src || "/placeholder.svg"}
-                  alt={img.alt}
-                  width={120}
-                  height={80}
-                  className="rounded-md object-cover flex-shrink-0"
-                />
-              ))}
-            </div>
-          </div>
+            <div className="bg-white rounded-lg p-6 shadow-md w-full">
+  <div className="flex flex-col sm:flex-row sm:justify-between">
+    
+    {/* Image gallery (Top on mobile, right on larger screens) */}
+    <div className="order-1 sm:order-2 mb-8 sm:mb-10 sm:ml-4 overflow-x-auto flex gap-2 sm:block sm:overflow-visible">
+  {apartment.galleryImages.slice(0, 4).map((img) => (
+    <Image
+      key={img.id}
+      src={img.src || "/placeholder.svg"}
+      alt={img.alt}
+      width={200} // Larger width so only 1 fits in mobile viewport
+      height={100}
+      className="rounded-md object-cover flex-shrink-0"
+    />
+  ))}
+</div>
+
+
+    {/* Apartment name */}
+    <h2 className="order-2 sm:order-1 text-2xl font-normal text-[#111827]">{apartment.name}</h2>
+  </div>
+
+  <p className="flex items-center text-base text-[#4b5566] md:-mt-20">
+    <MapPin className="w-4 h-4 mr-1 text-[#4b5566]" />
+    {apartment.location}
+  </p>
+
+  <p className="text-[30px] font-normal text-[#111827]">
+    ₦{apartment.price.toLocaleString()}
+    <span className="text-sm font-normal text-[#6b7280]">/night</span>
+  </p>
+</div>
+
           {/* Booking Details Card */}
           <div className="bg-white rounded-lg p-6 shadow-md w-full md:max-h-[450px]">
             <h2 className="text-[20px] font-normal text-[#111827] mb-4">Booking Details</h2>
@@ -244,12 +275,12 @@ export default function BookingEnginePage() {
             </div>
           )}
           {paymentMethod === 'bank-transfer' && (
-            <div className="text-gray-700 space-y-2">
+            <div className="text-[#4b5566] space-y-2">
               <p>Please transfer the total amount to the following bank account:</p>
               <p className="font-semibold">Bank Name: Jenrianna Bank</p>
               <p className="font-semibold">Account Name: Jenrianna Apartments</p>
               <p className="font-semibold">Account Number: 1234567890</p>
-              <p className="text-sm text-gray-500">Your booking will be confirmed upon receipt of payment.</p>
+              <p className="text-sm text-[#4b5566]">Your booking will be confirmed upon receipt of payment.</p>
             </div>
           )}
           <button
@@ -258,6 +289,10 @@ export default function BookingEnginePage() {
           >
             Confirm and Pay ₦{grandTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </button>
+          <div className="text-xs text-[#4b5566] mt-2 flex items-center gap-1">
+  <Lock className="w-4 h-4" />
+  <p>Your payment information is secure and encrypted</p>
+</div>
         </div>
       </div>
     </div>
