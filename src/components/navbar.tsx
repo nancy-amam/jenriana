@@ -10,7 +10,7 @@ const Navbar = () => {
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Apartments', href: '/search' },
-    { name: 'Contact', href: '/contact' },
+    { name: 'Contact', href: '/contact-us' },
     { name: 'My Bookings', href: '/my-bookings' },
   ];
 

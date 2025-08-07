@@ -15,7 +15,7 @@ export default function LayoutWrapper({
     pathname.includes('/sign-up') || pathname.includes('/login');
 
   const hideFooter =
-    hideNavAndFooter || pathname.includes('/booking-engine');
+    hideNavAndFooter || pathname.includes('/booking-engine') || pathname.includes('/my-bookings') || pathname.includes('/contact-us')
 
   return (
     <>
