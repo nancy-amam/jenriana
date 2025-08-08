@@ -36,7 +36,7 @@ export default function AdminBookingPage() {
   return (
     <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
       {/* Search Card */}
-      <div className="w-full max-w-[1090px] h-[82px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 mb-6">
+      <div className="w-full max-w-[1090px] h-[82px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 mb-6 mt-[-20px]">
         <input
           type="text"
           placeholder="Search by booking name or ID"
@@ -99,6 +99,7 @@ export default function AdminBookingPage() {
       </div>
 
       {/* Mobile Cards */}
+     
       <div className="lg:hidden space-y-4">
         {dummyBookings.map((booking) => (
           <div
@@ -117,21 +118,42 @@ export default function AdminBookingPage() {
                 {booking.status}
               </span>
             </div>
-            <p className="text-sm font-semibold text-gray-800">{booking.name}</p>
-            <p className="text-sm text-gray-600">{booking.apartment}</p>
-            <p className="text-sm text-gray-700 mt-1">
+            <p className="text-base font-semibold text-[#111827]">{booking.name}</p>
+            <p className="text-sm text-[#4b5566]">{booking.apartment}</p>
+            <p className="text-sm text-[#111827] mt-2">
               ₦{booking.amountPaid.toLocaleString()} for {booking.nights} nights
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-[#4b5566] mt-2">
               {new Date(booking.arrival).toLocaleDateString()} -{' '}
               {new Date(booking.departure).toLocaleDateString()}
             </p>
-            <Link
-              href={`/admin/bookings/${booking.id}`}
-              className="mt-4 inline-block w-full text-center bg-black text-white py-2 rounded-md text-sm font-medium"
-            >
-              View
-            </Link>
+            
+            {/* Action Buttons Row */}
+            <div className="mt-4 flex gap-2">
+              {booking.status === 'Pending' ? (
+                <>
+                  <button className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium">
+                    Confirm
+                  </button>
+                  <button className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-medium">
+                    Decline
+                  </button>
+                  <Link
+                    href={`/admin/bookings/${booking.id}`}
+                    className="flex-1 text-center bg-[#212121] hover:bg-gray-800 text-white py-2 rounded-lg text-sm font-medium"
+                  >
+                    View
+                  </Link>
+                </>
+              ) : (
+                <Link
+                  href={`/admin/bookings/${booking.id}`}
+                  className="w-full text-center bg-[#212121] hover:bg-gray-800 text-white py-2 rounded-lg text-sm font-medium"
+                >
+                  View
+                </Link>
+              )}
+            </div>
           </div>
         ))}
       </div>

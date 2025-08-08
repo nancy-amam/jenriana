@@ -26,7 +26,7 @@ export default function AdminGuestsPage() {
   return (
     <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
       {/* Search */}
-      <div className="w-full max-w-[1090px] h-[82px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 mb-6">
+      <div className="  w-full max-w-[1090px] h-[82px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 md:mb-6 mt-[-20px]">
         <input
           type="text"
           placeholder="Search by guest name or email"
@@ -37,7 +37,7 @@ export default function AdminGuestsPage() {
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden lg:block w-full max-w-[1090px] bg-white rounded-lg shadow-md p-4">
+      <div className="hidden lg:block w-full max-w-[1090px] bg-white rounded-lg shadow-md p-4 ">
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-[#4b5566] uppercase">
             <tr>
@@ -70,7 +70,7 @@ export default function AdminGuestsPage() {
       </div>
 
       {/* Mobile Cards */}
-      <div className="lg:hidden space-y-4">
+      <div className="lg:hidden space-y-4 mt-6">
         {dummyGuests.map((guest) => (
           <div
             key={guest.id}
@@ -83,10 +83,10 @@ export default function AdminGuestsPage() {
               Total Bookings: {guest.totalBookings}
             </p>
             <div className="flex gap-4 mt-4">
-              <button className="flex-1 bg-blue-600 text-white py-2 rounded-md text-sm font-medium flex items-center justify-center gap-1">
+              <button className="flex-1 bg-[#f3f4f6] text-[#374151]  py-2 rounded-md text-sm font-medium flex items-center justify-center gap-1">
                 <Pencil className="w-4 h-4" /> Edit
               </button>
-              <button className="flex-1 bg-red-600 text-white py-2 rounded-md text-sm font-medium flex items-center justify-center gap-1">
+              <button className="flex-1 bg-[#fef2f2] text-[#dc2626]  py-2 rounded-md text-sm font-medium flex items-center justify-center gap-1">
                 <Trash2 className="w-4 h-4" /> Delete
               </button>
             </div>

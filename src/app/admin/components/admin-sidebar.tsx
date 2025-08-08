@@ -52,7 +52,7 @@ export default function AdminSidebar({ isMobile = false, onLinkClick }: AdminSid
       {/* Desktop Sidebar */}
       <aside className="hidden md:block w-64 bg-white p-4">
         <h2 className="text-[24px] text-[#1e1e1e] font-bold mb-6">Jenrianna</h2>
-        <ul className="space-y-4 mt-10">
+        <ul className="space-y-4 mt-20">
           {links.map((link) => {
             const isActive = pathname.startsWith(link.href);
             return (
