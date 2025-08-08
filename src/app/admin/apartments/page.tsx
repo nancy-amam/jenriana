@@ -2,6 +2,8 @@
 
 import { Pencil, Trash2, MapPin, BedDouble, DollarSign } from 'lucide-react';
 import Image from 'next/image';
+import { useState } from 'react';
+import AddApartmentModal from '../components/add-apartment';
 
 const apartments = [
   {
@@ -29,6 +31,9 @@ const apartments = [
 ];
 
 export default function ApartmentsManagementPage() {
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen ">
       {/* Search Card */}
@@ -90,7 +95,9 @@ export default function ApartmentsManagementPage() {
 
   {/* Actions */}
   <td className="flex gap-3 items-center py-6">
-    <button className="text-blue-600 hover:underline flex items-center gap-1">
+    <button 
+     onClick={() => setIsModalOpen(true)}
+    className="text-blue-600 hover:underline flex items-center gap-1">
       <Pencil className="w-4 h-4" /> Edit
     </button>
     <button className="text-red-600 hover:underline flex items-center gap-1">
@@ -106,6 +113,7 @@ export default function ApartmentsManagementPage() {
 
       {/* Apartment Cards (Mobile) */}
       <div className="md:hidden space-y-4">
+        
         {apartments.map((apt) => (
           <div key={apt.id} className="bg-white rounded-lg shadow-md p-4 space-y-3">
             <div className="relative w-full h-[150px] rounded-md overflow-hidden">
@@ -125,10 +133,12 @@ export default function ApartmentsManagementPage() {
               <p><span className="font-medium">Status:</span> {apt.status}</p>
             </div>
             <div className="flex gap-4 mt-2">
-              <button className="flex-1 bg-blue-600 text-white  text-sm py-2 rounded-md flex items-center justify-center gap-1">
+              <button
+               onClick={() => setIsModalOpen(true)}
+               className="flex-1 bg-[#f3f4f6] text-[#374151]  text-sm py-2 rounded-md flex items-center justify-center gap-1">
                 <Pencil className="w-4 h-4" /> Edit
               </button>
-              <button className="flex-1 bg-red-500 text-white text-sm py-2 rounded-md flex items-center justify-center gap-1">
+              <button className="flex-1 bg-[#fef2f2] text-[#dc2626] text-sm py-2 rounded-md flex items-center justify-center gap-1">
                 <Trash2 className="w-4 h-4" /> Delete
               </button>
             </div>
@@ -147,6 +157,8 @@ export default function ApartmentsManagementPage() {
           <button className="px-3 py-1 border rounded">Next</button>
         </div>
       </div>
+
+       <AddApartmentModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }
