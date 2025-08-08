@@ -12,7 +12,7 @@ export default function LayoutWrapper({
   const pathname = usePathname();
 
   const hideNavAndFooter =
-    pathname.includes('/sign-up') || pathname.includes('/login');
+    pathname.includes('/sign-up') || pathname.includes('/login') || pathname.includes('/admin');
 
   const hideFooter =
     hideNavAndFooter || pathname.includes('/booking-engine') || pathname.includes('/my-bookings') || pathname.includes('/contact-us')

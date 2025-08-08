@@ -12,6 +12,7 @@ const Navbar = () => {
     { name: 'Apartments', href: '/search' },
     { name: 'Contact', href: '/contact-us' },
     { name: 'My Bookings', href: '/my-bookings' },
+    { name: 'Admin', href: '/admin'}
   ];
 
   return (
