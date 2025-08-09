@@ -25,11 +25,34 @@ const ApartmentSchema: Schema = new Schema(
     rooms: { type: Number, required: true },
     bathrooms: { type: Number, required: true },
     maxGuests: { type: Number, required: true },
-    features: [String],
+    features: {
+      type: [String],
+      enum: [
+        "air-conditioning",
+        "wifi",
+        "smart-tv",
+        "kitchen",
+        "workspace",
+        "generator",
+        "parking",
+        "security"
+      ], // enforce valid values
+      default: [],
+    },
     gallery: [String],
-    address: { type: String },
+    address: { type: String, required: true },
     ratings: { type: Number, default: 0 },
-    rules: [String],
+    rules: {
+      type: [String],
+      enum: [
+        "no-smoking",
+        "no-parties",
+        "children-allowed",
+        "do-not-exceed-guest-count",
+        "check-in-3pm-11pm",
+      ],
+      default: [],
+    },
     isTrending: { type: Boolean, default: false },
   },
   { timestamps: true }
