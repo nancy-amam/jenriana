@@ -15,8 +15,11 @@ import {
   Plus,
   Trash2,
   Upload,
-  Image
+  Image,
+  Loader2
 } from 'lucide-react';
+import { addApartment } from '@/services/api-services';
+import { ApartmentData } from '@/lib/interface';
 
 interface Feature {
   id: string;
@@ -50,9 +53,20 @@ interface RulesState {
 interface AddApartmentModalProps {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export default function AddApartmentModal({ open, onClose }: AddApartmentModalProps) {
+interface FormData {
+  name: string;
+  location: string;
+  address: string;
+  pricePerNight: number;
+  rooms: number;
+  bathrooms: number;
+  maxGuests: number;
+}
+
+export default function AddApartmentModal({ open, onClose, onSuccess }: AddApartmentModalProps) {
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [rules, setRules] = useState<RulesState>({
     noSmoking: false,
@@ -65,6 +79,17 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
     { id: 1, name: '', pricing: '', description: '', price: '', active: true }
   ]);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    location: '',
+    address: '',
+    pricePerNight: 0,
+    rooms: 0,
+    bathrooms: 0,
+    maxGuests: 0
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const features: Feature[] = [
     { id: 'ac', name: 'Air Conditioning', icon: AirVent },
@@ -106,6 +131,14 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
     return colors[ruleKey] || 'text-gray-500';
   };
 
+  const handleInputChange = (field: keyof FormData, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    if (error) setError(null);
+  };
+
   const toggleFeature = (featureId: string) => {
     setSelectedFeatures(prev => 
       prev.includes(featureId) 
@@ -139,22 +172,147 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
     ));
   };
 
+  const updateAddOn = (id: number, field: keyof AddOn, value: string) => {
+    setAddOns(prev => prev.map(addon => 
+      addon.id === id ? { ...addon, [field]: value } : addon
+    ));
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setUploadedImages(prev => [...prev, ...files.slice(0, 3 - prev.length)]);
   };
 
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const validateForm = (): boolean => {
+    if (!formData.name.trim()) {
+      setError('Apartment name is required');
+      return false;
+    }
+    if (!formData.location.trim()) {
+      setError('Location is required');
+      return false;
+    }
+    if (!formData.address.trim()) {
+      setError('Address is required');
+      return false;
+    }
+    if (formData.pricePerNight <= 0) {
+      setError('Price per night must be greater than 0');
+      return false;
+    }
+    if (formData.maxGuests <= 0) {
+      setError('Max guests must be greater than 0');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Map feature IDs to backend-expected format (lowercase with hyphens)
+      const featureMapping = {
+        'ac': 'air-conditioning',
+        'wifi': 'wifi',
+        'washing': 'washing-machine',
+        'generator': 'generator',
+        'tv': 'smart-tv',
+        'kitchen': 'kitchen'
+      };
+
+      // Get selected feature names in backend format
+      const selectedFeatureNames = selectedFeatures.map(id => 
+        featureMapping[id as keyof typeof featureMapping] || id.toLowerCase().replace(/\s+/g, '-')
+      );
+
+      // Convert rules to backend format (array of strings, not object)
+      const rulesArray = [];
+      if (rules.noSmoking) rulesArray.push('no-smoking');
+      if (rules.noParties) rulesArray.push('no-parties');
+      if (rules.petsAllowed) rulesArray.push('pets-allowed');
+      if (rules.childrenAllowed) rulesArray.push('children-allowed');
+      if (rules.maxGuests) rulesArray.push('max-guests-enforced');
+
+      // Prepare apartment data matching backend expectations
+      const apartmentData: ApartmentData = {
+        name: formData.name.trim(),
+        location: formData.location.trim(),
+        address: formData.address.trim(),
+        pricePerNight: formData.pricePerNight,
+        rooms: formData.rooms,
+        bathrooms: formData.bathrooms,
+        maxGuests: formData.maxGuests,
+        features: selectedFeatureNames,
+        gallery: [], // Empty array as expected by backend
+        rules: rulesArray, // Array format as expected by backend
+        isTrending: false // Default value as shown in backend response
+      };
+
+      console.log('Submitting apartment data:', apartmentData);
+
+      await addApartment(apartmentData);
+      
+      // Reset form on success
+      setFormData({
+        name: '',
+        location: '',
+        address: '',
+        pricePerNight: 0,
+        rooms: 0,
+        bathrooms: 0,
+        maxGuests: 0
+      });
+      setSelectedFeatures([]);
+      setRules({
+        noSmoking: false,
+        noParties: false,
+        petsAllowed: false,
+        childrenAllowed: true,
+        maxGuests: true
+      });
+      setUploadedImages([]);
+      setAddOns([{ id: 1, name: '', pricing: '', description: '', price: '', active: true }]);
+
+      onSuccess?.();
+      onClose();
+    } catch (err: any) {
+      console.error('Full error object:', err);
+      
+      // Enhanced error handling to show specific server messages
+      let errorMessage = 'Failed to add apartment';
+      
+      if (err && typeof err === 'object') {
+        if (err.status && err.message) {
+          // Handle structured API errors (from your apiHandler)
+          errorMessage = `Error ${err.status}: ${err.message}`;
+        } else if (err.message) {
+          // Handle general Error objects
+          errorMessage = err.message;
+        } else if (typeof err === 'string') {
+          errorMessage = err;
+        }
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 flex justify-center items-center p-5 z-50">
-      <style jsx>{`
-        .modal-content::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
+    <div className="fixed inset-0 flex justify-center items-center p-5 z-50 ">
       <div 
-        className="modal-content bg-white w-[686px] max-h-[90vh] overflow-y-auto rounded-xl p-6 shadow-2xl"
+        className="bg-white w-[686px] max-h-[90vh] overflow-y-auto rounded-xl p-6 shadow-2xl"
         style={{
           msOverflowStyle: 'none',
           scrollbarWidth: 'none'
@@ -162,7 +320,7 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-[#111827]">Edit Apartment</h2>
+          <h2 className="text-xl font-semibold text-[#111827]">Add Apartment</h2>
           <button 
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg"
@@ -170,6 +328,29 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Enhanced Error Message */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <X className="h-5 w-5 text-red-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  Error Adding Apartment
+                </h3>
+                <p className="mt-1 text-sm text-red-700">{error}</p>
+                <button
+                  onClick={() => setError(null)}
+                  className="mt-2 text-xs text-red-600 underline hover:text-red-800"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Basic Information */}
         <div className="mb-6">
@@ -181,6 +362,8 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
               </label>
               <input
                 type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="Enter apartment name"
               />
@@ -191,8 +374,22 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
               </label>
               <input
                 type="text"
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="Enter location"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">
+                Address*
+              </label>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) => handleInputChange('address', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                placeholder="Enter full address"
               />
             </div>
           </div>
@@ -206,8 +403,12 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
             </label>
             <input
               type="number"
+              value={formData.pricePerNight || ''}
+              onChange={(e) => handleInputChange('pricePerNight', parseFloat(e.target.value) || 0)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               placeholder="$0"
+              min="0"
+              step="0.01"
             />
           </div>
           <div>
@@ -216,8 +417,11 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
             </label>
             <input
               type="number"
+              value={formData.rooms || ''}
+              onChange={(e) => handleInputChange('rooms', parseInt(e.target.value) || 0)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               placeholder="0"
+              min="0"
             />
           </div>
           <div>
@@ -226,18 +430,24 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
             </label>
             <input
               type="number"
+              value={formData.bathrooms || ''}
+              onChange={(e) => handleInputChange('bathrooms', parseInt(e.target.value) || 0)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               placeholder="0"
+              min="0"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-[#374151] mb-2">
-              Max Guests
+              Max Guests*
             </label>
             <input
               type="number"
+              value={formData.maxGuests || ''}
+              onChange={(e) => handleInputChange('maxGuests', parseInt(e.target.value) || 0)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               placeholder="0"
+              min="1"
             />
           </div>
         </div>
@@ -275,7 +485,8 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
 
         {/* Rules */}
         <div className="mb-6">
-          <div className="w-[646px] space-y-2">
+          <h3 className="text-left text-base font-semibold text-[#374151] mb-4">Rules</h3>
+          <div className="max-w-[646px] space-y-2">
             {rulesList.map((rule) => {
               const IconComponent = rule.icon;
               return (
@@ -331,6 +542,8 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
                   </label>
                   <input
                     type="text"
+                    value={addon.name}
+                    onChange={(e) => updateAddOn(addon.id, 'name', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="Service name"
                   />
@@ -341,6 +554,8 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
                   </label>
                   <input
                     type="text"
+                    value={addon.pricing}
+                    onChange={(e) => updateAddOn(addon.id, 'pricing', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="$0"
                   />
@@ -353,6 +568,8 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
                 </label>
                 <input
                   type="text"
+                  value={addon.description}
+                  onChange={(e) => updateAddOn(addon.id, 'description', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   placeholder="Service description"
                 />
@@ -364,12 +581,14 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
                     Price
                   </label>
                   <input
-                    type="number"
+                    type="text"
+                    value={addon.price}
+                    onChange={(e) => updateAddOn(addon.id, 'price', e.target.value)}
                     className="w-[90%] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="$0"
                   />
                 </div>
-                 <div className="flex items-center gap-2 pb-2 mt-7">
+                <div className="flex items-center gap-2 pb-2 mt-7">
                   <span className="text-sm font-medium text-gray-700">Active</span>
                   <div
                     onClick={() => toggleAddOnActive(addon.id)}
@@ -385,7 +604,7 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
                   </div>
                 </div>
               </div>
-              </div>
+            </div>
           ))}
           
           <button
@@ -402,16 +621,26 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
           <h3 className="text-left text-lg font-semibold text-[#111827] mb-4">Images</h3>
           
           {uploadedImages.length > 0 && (
-            <div className="flex gap-2 mb-4">
-              {uploadedImages.slice(0, 3).map((image, index) => (
-                <div key={index} className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <Image className="w-8 h-8 text-gray-400" />
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {uploadedImages.map((image, index) => (
+                <div key={index} className="relative w-20 h-20 bg-gray-200 rounded-lg overflow-hidden">
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt={`Apartment image ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    onClick={() => removeImage(index)}
+                    className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </div>
               ))}
             </div>
           )}
           
-          <div className="w-[646px] h-[136px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
+          <div className="max-w-[646px] h-[136px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
             <input
               type="file"
               multiple
@@ -425,6 +654,11 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
               <p className="text-sm text-gray-600">
                 Drag and drop images here or <span className="text-blue-600">browse files</span>
               </p>
+              {uploadedImages.length > 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {uploadedImages.length} image{uploadedImages.length > 1 ? 's' : ''} selected
+                </p>
+              )}
             </label>
           </div>
         </div>
@@ -433,12 +667,18 @@ export default function AddApartmentModal({ open, onClose }: AddApartmentModalPr
         <div className="flex justify-start gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            disabled={isLoading}
+            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
-           <button className="px-4 py-2 bg-black text-white rounded-lg  transition-colors">
-            Save Changes
+          <button 
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2"
+          >
+            {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+            {isLoading ? 'Adding Apartment...' : 'Add Apartment'}
           </button>
         </div>
       </div>

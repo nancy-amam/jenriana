@@ -78,3 +78,41 @@ export interface SignUpData {
   password: string;
   confirmPassword: string;
 }
+
+
+export interface ApartmentData {
+  name: string;
+  location: string;
+  address: string;
+  pricePerNight: number;
+  rooms: number;
+  bathrooms: number;
+  maxGuests: number;
+  features: string[]; // Array of lowercase, hyphenated feature names
+  gallery: string[]; // Array of image URLs (empty for new apartments)
+  rules: string[]; // Array of rule strings (e.g., ['no-smoking', 'pets-allowed'])
+  isTrending?: boolean; // Optional, defaults to false
+}
+
+export interface ApartmentResponse {
+  success: boolean;
+  data: {
+    _id: string;
+    name: string;
+    location: string;
+    address: string;
+    pricePerNight: number;
+    rooms: number;
+    bathrooms: number;
+    maxGuests: number;
+    features: string[];
+    gallery: string[];
+    rules: string[];
+    ratings: number;
+    isTrending: boolean;
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+  };
+}
+

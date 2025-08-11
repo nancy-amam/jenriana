@@ -1,7 +1,5 @@
-
 import { apiHandler } from "@/utils/api-handler";
-import { SignInData, SignUpData } from "@/lib/interface";
-
+import { SignInData, SignUpData, ApartmentData } from "@/lib/interface";
 
 export async function signIn(data: SignInData) {
   return apiHandler("/api/auth/signin", {
@@ -15,4 +13,85 @@ export async function signUp(data: SignUpData) {
     method: "POST",
     body: data,
   });
+}
+
+export async function addApartment(
+  apartmentData: ApartmentData,
+  images: File[] = []
+): Promise<any> {
+  try {
+    console.log("Adding apartment with data:", apartmentData);
+
+    // Validation
+    if (!apartmentData.name?.trim()) {
+      throw new Error("Apartment name is required");
+    }
+    if (!apartmentData.location?.trim()) {
+      throw new Error("Location is required");
+    }
+    if (!apartmentData.address?.trim()) {
+      throw new Error("Address is required");
+    }
+    if (!apartmentData.pricePerNight || apartmentData.pricePerNight <= 0) {
+      throw new Error("Price per night must be greater than 0");
+    }
+    if (!apartmentData.maxGuests || apartmentData.maxGuests <= 0) {
+      throw new Error("Max guests must be greater than 0");
+    }
+
+    // Prepare FormData
+    const formData = new FormData();
+
+    // Append all fields (except gallery, which will come from images)
+    formData.append("name", apartmentData.name.trim());
+    formData.append("location", apartmentData.location.trim());
+    formData.append("address", apartmentData.address.trim());
+    formData.append("pricePerNight", String(apartmentData.pricePerNight));
+    formData.append("rooms", String(apartmentData.rooms || 0));
+    formData.append("bathrooms", String(apartmentData.bathrooms || 0));
+    formData.append("maxGuests", String(apartmentData.maxGuests));
+    formData.append("isTrending", String(apartmentData.isTrending || false));
+
+    // Append features array
+    if (apartmentData.features?.length) {
+      apartmentData.features.forEach((feature) => {
+        formData.append("features", feature);
+      });
+    }
+
+    // Append rules array
+    if (apartmentData.rules?.length) {
+      apartmentData.rules.forEach((rule) => {
+        formData.append("rules", rule);
+      });
+    }
+
+    // Append images if provided
+    if (images.length > 0) {
+      images.forEach((file) => {
+        formData.append("gallery", file); // key name must match backend
+      });
+    }
+
+    // Send request
+    const response = await apiHandler("/api/apartment", {
+      method: "POST",
+      body: formData,
+      // Don't set Content-Type manually — browser will handle it
+    });
+
+    console.log("Apartment added successfully:", response);
+    return response;
+  } catch (error: any) {
+    console.error("Failed to add apartment:", error);
+
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    throw new Error(
+      error.message ||
+        "Failed to add apartment. Please check your data and try again."
+    );
+  }
 }

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { signUp } from '@/services/api-services'
 import { FiEye, FiEyeOff } from 'react-icons/fi'
+import Router, { useRouter } from 'next/router'
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -20,6 +21,8 @@ export default function SignupPage() {
 
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -48,21 +51,40 @@ export default function SignupPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validate()) return
+  
+const resetForm = () => {
+  setFormData({
+    fullname: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+  })
+  setErrors({})
+  setShowPassword(false)
+  setShowConfirmPassword(false)
+}
 
-    setLoading(true)
-    try {
-      const res = await signUp(formData)
-      console.log('Signup success:', res)
-    } catch (err: any) {
-      console.error('Signup failed:', err)
-      setErrors({ general: err.message || 'Signup failed' })
-    } finally {
-      setLoading(false)
-    }
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  if (!validate()) return
+
+  setLoading(true)
+  try {
+    const res = await signUp(formData)
+    console.log('Signup success:', res)
+    
+    
+    resetForm()
+    router.push('/login')
+  } catch (err: any) {
+    console.error('Signup failed:', err)
+    setErrors({ general: err.message || 'Signup failed' })
+  } finally {
+    setLoading(false)
   }
+}
 
   return (
     <div className="flex flex-col-reverse md:flex-row min-h-screen">

@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { signIn } from '@/services/api-services'
 import { SignInData } from '@/lib/interface'
 import { FiEye, FiEyeOff } from 'react-icons/fi'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState<SignInData>({
@@ -16,27 +17,51 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const router = useRouter()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+  e.preventDefault()
+  setLoading(true)
+  setError(null)
 
-    try {
-      const res = await signIn(formData)
-      console.log('Sign in success:', res)
-      // redirect or store token here
-    } catch (err: any) {
-      console.error('Sign in failed:', err)
-      setError(err.message || 'Something went wrong')
-    } finally {
-      setLoading(false)
+  try {
+    const res = await signIn(formData)
+    console.log('Sign in success:', res)
+    
+    // Store user data in localStorage
+    if (res.user) {
+      localStorage.setItem('user', JSON.stringify(res.user))
+      localStorage.setItem('userId', res.user.id)
+      localStorage.setItem('userRole', res.user.role)
     }
+    
+    // Clear all form fields on success
+    setFormData({
+      email: '',
+      password: '',
+    })
+    
+    // Clear any existing errors
+    setError(null)
+    
+    // Redirect based on user role
+    if (res.user.role === 'admin') {
+      router.push('/admin') // Admin dashboard
+    } else {
+      router.push('/') // Regular user home
+    }
+    
+  } catch (err: any) {
+    console.error('Sign in failed:', err)
+    setError(err.message || 'Something went wrong')
+  } finally {
+    setLoading(false)
   }
+}
 
   return (
     <div className="flex flex-col-reverse md:flex-row min-h-screen">

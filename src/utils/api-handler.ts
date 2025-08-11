@@ -14,13 +14,14 @@ export async function apiHandler(
   { method = "GET", headers = {}, body = null, ...otherOptions }: AxiosOptions = {}
 ) {
   const url = `${BASE_URL}${path}`;
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
   try {
     const response = await axios({
       url,
       method,
       headers: {
-        "Content-Type": "application/json",
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
         ...headers,
       },
       data: body,
@@ -30,11 +31,13 @@ export async function apiHandler(
     return response.data;
   } catch (error: any) {
     if (error.response) {
-      const errMsg = {
+      throw {
         status: error.response.status,
-        message: error.response.data?.error || error.response.data?.message || "An error occurred",
+        message:
+          error.response.data?.error ||
+          error.response.data?.message ||
+          "An error occurred",
       };
-      throw errMsg;
     }
     throw new Error(error.message || "Network error");
   }
