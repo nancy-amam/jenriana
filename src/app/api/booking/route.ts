@@ -5,49 +5,35 @@ import connectDB from '../lib/mongodb';
 import Booking from '../../../models/bookings';
 import { getUserFromRequest } from '../lib/getUserFromRequest';
 import Apartment from '@/models/apartment';
+import { PaystackService } from '../lib/paystack.service';
 
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
     const user = await getUserFromRequest();
-    if (!user) {
-  return NextResponse.json({ message: 'User not authenticated' }, { status: 401 });
-}
-    const body = await req.json();
-
-    const {
-      apartmentId,
-      checkInDate,
-      checkOutDate,
-      guests,
-      paymentMethod,
-    } = body;
+    const { apartmentId, checkInDate, checkOutDate, guests, paymentMethod } = await req.json();
 
     if (!apartmentId || !checkInDate || !checkOutDate || !guests || !paymentMethod) {
-      return NextResponse.json({ message: 'Missing fields' }, { status: 400 });
+      return NextResponse.json({ message: "Missing fields" }, { status: 400 });
     }
 
-    // ✅ Fetch apartment to get nightly price
+    // Fetch apartment price
     const apartment = await Apartment.findById(apartmentId);
     if (!apartment) {
-      return NextResponse.json({ message: 'Apartment not found' }, { status: 404 });
+      return NextResponse.json({ message: "Apartment not found" }, { status: 404 });
     }
 
-    // ✅ Calculate number of days
+    // Calculate total amount
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
     const timeDiff = checkOut.getTime() - checkIn.getTime();
-
     if (timeDiff <= 0) {
       return NextResponse.json({ message: 'Invalid check-in/check-out dates' }, { status: 400 });
     }
+    const days = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+    const totalAmount = days * apartment.pricePerNight;
 
-    const numberOfDays = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-    // ✅ Calculate total amount
-    const totalAmount = apartment.pricePerNight * numberOfDays;
-
-    // ✅ Create booking
+    // Create booking in "pending" state
     const booking = await Booking.create({
       userId: user?._id,
       apartmentId,
@@ -56,18 +42,27 @@ export async function POST(req: NextRequest) {
       guests,
       totalAmount,
       paymentMethod,
+      status: "pending",
     });
 
+    // Initialize Paystack payment
+    const paystack = new PaystackService();
+const transaction = await paystack.initializeTransaction({
+  email: user?.email as any,
+  amount: totalAmount,
+  callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/verify?bookingId=${booking._id}`
+});
+
     return NextResponse.json(
-      { message: 'Booking created', booking },
+      {
+        message: "Booking created. Proceed to payment.",
+        bookingId: booking._id,
+        payment: transaction, // includes authorization_url
+      },
       { status: 201 }
     );
   } catch (error) {
-    console.error('Booking error:', error);
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error("Booking error:", error);
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }
-
