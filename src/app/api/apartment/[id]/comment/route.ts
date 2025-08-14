@@ -1,0 +1,98 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { getUserFromRequest } from "@/app/api/lib/getUserFromRequest";
+import connectDB from "@/app/api/lib/mongodb";
+import Apartment from "@/models/apartment";
+import Feedback from "@/models/feedback";
+import { NextResponse } from "next/server";
+
+
+export async function POST(req: Request, { params }: { params: { id: string } }) {
+  await connectDB();
+
+  try {
+    const user = await getUserFromRequest();
+    if (!user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const apartment = await Apartment.findById(params.id);
+    if (!apartment) {
+      return NextResponse.json({ message: "Apartment not found" }, { status: 404 });
+    }
+
+    const { comment, rating } = await req.json();
+    if (!comment || !rating) {
+      return NextResponse.json({ message: "Comment and rating are required" }, { status: 400 });
+    }
+
+    // Save feedback
+    await Feedback.create({
+      userId: user.id,
+      apartmentId: params.id,
+      comment,
+      rating,
+    });
+
+    return NextResponse.json(
+      { success: true, message: "Feedback added and rating updated" },
+      { status: 201 }
+    );
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  }
+}
+
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+
+    const user = await getUserFromRequest();
+    if (!user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+  try {
+    const apartmentId = params.id;
+    console.log("Received apartment ID:", apartmentId);
+
+    // 1. Get all feedback for this apartment
+    const feedbackList = await Feedback.find({ apartmentId })
+      .populate("userId", "fullname email")
+      .sort({ createdAt: -1 });
+
+    if (feedbackList.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "No feedback found for this apartment" },
+        { status: 404 }
+      );
+    }
+
+    // 2. Calculate average rating
+    const avgRating =
+      feedbackList.reduce((sum, fb) => sum + fb.rating, 0) /
+      feedbackList.length;
+
+    // 3. Update the apartment's average rating
+    await Apartment.findByIdAndUpdate(apartmentId, {
+      averageRating: parseFloat(avgRating.toFixed(2)),
+    });
+
+    // 4. Return feedback and average
+    return NextResponse.json(
+      {
+        success: true,
+        averageRating: parseFloat(avgRating.toFixed(2)),
+        comments: feedbackList,
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Error fetching apartment comments:", error);
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
+  }
+}
