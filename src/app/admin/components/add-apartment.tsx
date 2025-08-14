@@ -15,8 +15,8 @@ import {
   Plus,
   Trash2,
   Upload,
-  Image,
-  Loader2
+  Loader2,
+  CheckCircle
 } from 'lucide-react';
 import { addApartment } from '@/services/api-services';
 import { ApartmentData } from '@/lib/interface';
@@ -90,6 +90,7 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const features: Feature[] = [
     { id: 'ac', name: 'Air Conditioning', icon: AirVent },
@@ -180,7 +181,8 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setUploadedImages(prev => [...prev, ...files.slice(0, 3 - prev.length)]);
+    console.log('Selected files:', files.map(f => f.name)); // Debug: Log selected file names
+    setUploadedImages(prev => [...prev, ...files]);
   };
 
   const removeImage = (index: number) => {
@@ -218,7 +220,6 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
     setError(null);
 
     try {
-      // Map feature IDs to backend-expected format (lowercase with hyphens)
       const featureMapping = {
         'ac': 'air-conditioning',
         'wifi': 'wifi',
@@ -228,12 +229,10 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
         'kitchen': 'kitchen'
       };
 
-      // Get selected feature names in backend format
       const selectedFeatureNames = selectedFeatures.map(id => 
         featureMapping[id as keyof typeof featureMapping] || id.toLowerCase().replace(/\s+/g, '-')
       );
 
-      // Convert rules to backend format (array of strings, not object)
       const rulesArray = [];
       if (rules.noSmoking) rulesArray.push('no-smoking');
       if (rules.noParties) rulesArray.push('no-parties');
@@ -241,7 +240,6 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
       if (rules.childrenAllowed) rulesArray.push('children-allowed');
       if (rules.maxGuests) rulesArray.push('max-guests-enforced');
 
-      // Prepare apartment data matching backend expectations
       const apartmentData: ApartmentData = {
         name: formData.name.trim(),
         location: formData.location.trim(),
@@ -251,16 +249,16 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
         bathrooms: formData.bathrooms,
         maxGuests: formData.maxGuests,
         features: selectedFeatureNames,
-        gallery: [], // Empty array as expected by backend
-        rules: rulesArray, // Array format as expected by backend
-        isTrending: false // Default value as shown in backend response
+        gallery: [], // Backend will handle images from FormData
+        rules: rulesArray,
+        isTrending: false
       };
 
       console.log('Submitting apartment data:', apartmentData);
+      console.log('Submitting images:', uploadedImages.map(f => f.name)); // Debug: Log image names
 
-      await addApartment(apartmentData);
+      await addApartment(apartmentData, uploadedImages);
       
-      // Reset form on success
       setFormData({
         name: '',
         location: '',
@@ -280,21 +278,25 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
       });
       setUploadedImages([]);
       setAddOns([{ id: 1, name: '', pricing: '', description: '', price: '', active: true }]);
+      setSuccessMessage('Apartment added successfully!');
 
-      onSuccess?.();
-      onClose();
+      setTimeout(() => {
+        setSuccessMessage(null);
+        onSuccess?.();
+        onClose();
+      }, 3000);
     } catch (err: any) {
-      console.error('Full error object:', err);
-      
-      // Enhanced error handling to show specific server messages
+      console.error('Submission error:', err);
       let errorMessage = 'Failed to add apartment';
       
       if (err && typeof err === 'object') {
         if (err.status && err.message) {
-          // Handle structured API errors (from your apiHandler)
-          errorMessage = `Error ${err.status}: ${err.message}`;
+          if (err.message.includes('Pinata')) {
+            errorMessage = 'Failed to upload images to Pinata. Please try again or contact support.';
+          } else {
+            errorMessage = `Error ${err.status}: ${err.message}`;
+          }
         } else if (err.message) {
-          // Handle general Error objects
           errorMessage = err.message;
         } else if (typeof err === 'string') {
           errorMessage = err;
@@ -310,32 +312,42 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 flex justify-center items-center p-5 z-50 ">
+    <div className="fixed inset-0 flex justify-center items-center p-5 z-50">
       <div 
-        className="bg-white w-[686px] max-h-[90vh] overflow-y-auto rounded-xl p-6 shadow-2xl"
+        className="bg-white w-[686px] max-h-[90vh] overflow-y-auto rounded-xl p-6 shadow-2xl relative"
         style={{
           msOverflowStyle: 'none',
           scrollbarWidth: 'none'
         }}
       >
+        {/* Success Message */}
+        {successMessage && (
+          <div className="absolute top-4 right-4 z-10 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start">
+            <CheckCircle className="h-5 w-5 text-green-400" />
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-green-800">Success</h3>
+              <p className="mt-1 text-sm text-green-700">{successMessage}</p>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-[#111827]">Add Apartment</h2>
           <button 
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg"
+            disabled={isLoading}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Enhanced Error Message */}
+        {/* Error Message */}
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <X className="h-5 w-5 text-red-400" />
-              </div>
+              <X className="h-5 w-5 text-red-400" />
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">
                   Error Adding Apartment
@@ -366,6 +378,7 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="Enter apartment name"
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -378,6 +391,7 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
                 onChange={(e) => handleInputChange('location', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="Enter location"
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -390,6 +404,7 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
                 onChange={(e) => handleInputChange('address', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="Enter full address"
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -409,6 +424,7 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
               placeholder="$0"
               min="0"
               step="0.01"
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -422,6 +438,7 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               placeholder="0"
               min="0"
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -435,6 +452,7 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               placeholder="0"
               min="0"
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -448,6 +466,7 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               placeholder="0"
               min="1"
+              disabled={isLoading}
             />
           </div>
         </div>
@@ -462,18 +481,19 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
               return (
                 <div
                   key={feature.id}
-                  onClick={() => toggleFeature(feature.id)}
+                  onClick={() => !isLoading && toggleFeature(feature.id)}
                   className={`w-[175.375px] h-[58px] p-[17px] flex items-center gap-3 border rounded-lg cursor-pointer transition-all ${
                     isSelected 
                       ? 'border-purple-600 bg-purple-50' 
                       : 'border-gray-200 hover:border-purple-600 hover:bg-gray-50'
-                  }`}
+                  } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => toggleFeature(feature.id)}
                     className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                    disabled={isLoading}
                   />
                   <IconComponent className={`w-4 h-4 ${getFeatureIconColor(feature.id)}`} />
                   <span className="text-sm text-gray-700">{feature.name}</span>
@@ -492,17 +512,19 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
               return (
                 <div
                   key={rule.key}
-                  className="h-10 flex justify-between bg-[#f9fafb] items-center rounded-lg px-4 py-2 border border-gray-200"
+                  className={`h-10 flex justify-between bg-[#f9fafb] items-center rounded-lg px-4 py-2 border border-gray-200 ${
+                    isLoading ? 'opacity-50' : ''
+                  }`}
                 >
                   <div className="flex items-center gap-2">
                     <IconComponent className={`w-4 h-4 ${getRuleIconColor(rule.key)}`} />
                     <span className="text-sm text-gray-700">{rule.name}</span>
                   </div>
                   <div
-                    onClick={() => toggleRule(rule.key)}
+                    onClick={() => !isLoading && toggleRule(rule.key)}
                     className={`w-11 h-6 rounded-full cursor-pointer transition-colors ${
                       rules[rule.key] ? 'bg-blue-600' : 'bg-gray-300'
-                    }`}
+                    } ${isLoading ? 'cursor-not-allowed' : ''}`}
                   >
                     <div
                       className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform mt-0.5 ${
@@ -528,8 +550,10 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
               <div className="flex justify-between items-center mb-3">
                 <h4 className="text-sm font-medium text-gray-700">Add-on #{index + 1}</h4>
                 <button
-                  onClick={() => removeAddOn(addon.id)}
-                  className="p-1 text-sm text-red-500 hover:bg-red-50 rounded"
+                  onClick={() => !isLoading && removeAddOn(addon.id)}
+                  className={`p-1 text-sm text-red-500 hover:bg-red-50 rounded ${
+                    isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
                   Remove
                 </button>
@@ -543,9 +567,10 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
                   <input
                     type="text"
                     value={addon.name}
-                    onChange={(e) => updateAddOn(addon.id, 'name', e.target.value)}
+                    onChange={(e) => !isLoading && updateAddOn(addon.id, 'name', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="Service name"
+                    disabled={isLoading}
                   />
                 </div>
                 <div>
@@ -555,9 +580,10 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
                   <input
                     type="text"
                     value={addon.pricing}
-                    onChange={(e) => updateAddOn(addon.id, 'pricing', e.target.value)}
+                    onChange={(e) => !isLoading && updateAddOn(addon.id, 'pricing', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="$0"
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -569,9 +595,10 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
                 <input
                   type="text"
                   value={addon.description}
-                  onChange={(e) => updateAddOn(addon.id, 'description', e.target.value)}
+                  onChange={(e) => !isLoading && updateAddOn(addon.id, 'description', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   placeholder="Service description"
+                  disabled={isLoading}
                 />
               </div>
               
@@ -583,18 +610,19 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
                   <input
                     type="text"
                     value={addon.price}
-                    onChange={(e) => updateAddOn(addon.id, 'price', e.target.value)}
+                    onChange={(e) => !isLoading && updateAddOn(addon.id, 'price', e.target.value)}
                     className="w-[90%] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="$0"
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="flex items-center gap-2 pb-2 mt-7">
                   <span className="text-sm font-medium text-gray-700">Active</span>
                   <div
-                    onClick={() => toggleAddOnActive(addon.id)}
+                    onClick={() => !isLoading && toggleAddOnActive(addon.id)}
                     className={`w-11 h-6 rounded-full cursor-pointer transition-colors ${
                       addon.active ? 'bg-black' : 'bg-gray-300'
-                    }`}
+                    } ${isLoading ? 'cursor-not-allowed' : ''}`}
                   >
                     <div
                       className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform mt-0.5 ${
@@ -608,8 +636,10 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
           ))}
           
           <button
-            onClick={addNewAddOn}
-            className="flex items-center gap-2 p-3 bg-[#d1d5db]/30 text-[#374151] rounded-lg text-sm font-medium"
+            onClick={() => !isLoading && addNewAddOn()}
+            className={`flex items-center gap-2 p-3 bg-[#d1d5db]/30 text-[#374151] rounded-lg text-sm font-medium ${
+              isLoading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
             <Plus className="w-4 h-4" />
             Add New Add-on
@@ -630,8 +660,10 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
                     className="w-full h-full object-cover"
                   />
                   <button
-                    onClick={() => removeImage(index)}
-                    className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                    onClick={() => !isLoading && removeImage(index)}
+                    className={`absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors ${
+                      isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -648,8 +680,9 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
               onChange={handleImageUpload}
               className="hidden"
               id="image-upload"
+              disabled={isLoading}
             />
-            <label htmlFor="image-upload" className="cursor-pointer text-center">
+            <label htmlFor="image-upload" className={`cursor-pointer text-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
               <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
               <p className="text-sm text-gray-600">
                 Drag and drop images here or <span className="text-blue-600">browse files</span>

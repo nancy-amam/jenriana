@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextResponse } from "next/server";
-import connectDB from '../lib/mongodb';
+import connectDB from "../lib/mongodb";
 import Apartment from "@/models/apartment";
+import { pinFileToPinata } from "../lib/pinata";
 
-// GET all apartments
+// ================= GET all apartments =================
 export async function GET() {
   await connectDB();
 
@@ -12,20 +13,64 @@ export async function GET() {
     const apartments = await Apartment.find().sort({ createdAt: -1 });
     return NextResponse.json({ success: true, data: apartments });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }
 
-// CREATE new apartment
+// ================= CREATE new apartment =================
 export async function POST(request: Request) {
-  await connectDB();
-
   try {
-    const body = await request.json();
-    const apartment = await Apartment.create(body);
+    await connectDB();
+    const formData = await request.formData();
 
-    return NextResponse.json({ success: true, data: apartment }, { status: 201 });
+    // Map frontend fields to variables
+    const name = formData.get("name") as string;
+    const location = formData.get("location") as string;
+    const address = formData.get("address") as string;
+    const pricePerNight = Number(formData.get("pricePerNight"));
+    const rooms = Number(formData.get("rooms"));
+    const bathrooms = Number(formData.get("bathrooms"));
+    const maxGuests = Number(formData.get("maxGuests"));
+    const isTrending = formData.get("isTrending") === "true";
+
+    // Arrays
+    const features = formData.getAll("features") as string[];
+    const rules = formData.getAll("rules") as string[];
+
+    // Upload gallery images to Pinata
+    const galleryFiles = formData.getAll("gallery") as File[];
+    const galleryUrls: string[] = [];
+    for (const file of galleryFiles) {
+      const url = await pinFileToPinata(file);
+      galleryUrls.push(url);
+    }
+
+    // Create apartment in DB
+    const apartment = await Apartment.create({
+      name,
+      location,
+      address,
+      pricePerNight,
+      rooms,
+      bathrooms,
+      maxGuests,
+      isTrending,
+      features,
+      rules,
+      gallery: galleryUrls,
+    });
+
+    return NextResponse.json(
+      { success: true, data: apartment },
+      { status: 201 }
+    );
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }
