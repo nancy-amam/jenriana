@@ -6,12 +6,42 @@ import Apartment from "@/models/apartment";
 import { uploadToPinata } from "../lib/pinata";
 
 // ================= GET all apartments =================
+// export async function GET() {
+//   await connectDB();
+
+//   try {
+//     const apartments = await Apartment.find().sort({ createdAt: -1 });
+//     return NextResponse.json({ success: true, data: apartments });
+//   } catch (error: any) {
+//     return NextResponse.json(
+//       { success: false, message: error.message },
+//       { status: 500 }
+//     );
+//   }
+// }
+
 export async function GET() {
   await connectDB();
 
   try {
-    const apartments = await Apartment.find().sort({ createdAt: -1 });
-    return NextResponse.json({ success: true, data: apartments });
+    const apartments = await Apartment.find()
+      .sort({ createdAt: -1 })
+      .lean(); // .lean() makes data plain JS objects for faster read operations
+
+    const apartmentsWithRatings = apartments.map((apt) => {
+      const ratings = apt.ratings || [];
+      const avgRating =
+        ratings.length > 0
+          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+          : 0;
+
+      return {
+        ...apt,
+        averageRating: parseFloat(avgRating.toFixed(2)), // 2 decimal places
+      };
+    });
+
+    return NextResponse.json({ success: true, data: apartmentsWithRatings });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message },
@@ -19,6 +49,7 @@ export async function GET() {
     );
   }
 }
+
 
 // ================= CREATE new apartment =================
 export async function POST(request: Request) {
