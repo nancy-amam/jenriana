@@ -3,7 +3,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "../lib/mongodb";
 import Apartment from "@/models/apartment";
-import { pinFileToPinata } from "../lib/pinata";
+import { uploadToPinata } from "../lib/pinata";
 
 // ================= GET all apartments =================
 export async function GET() {
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     const galleryFiles = formData.getAll("gallery") as File[];
     const galleryUrls: string[] = [];
     for (const file of galleryFiles) {
-      const url = await pinFileToPinata(file);
+      const url = await uploadToPinata(file);
       galleryUrls.push(url);
     }
 
@@ -68,6 +68,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error: any) {
+    console.error(error);
     return NextResponse.json(
       { success: false, message: error.message },
       { status: 500 }
