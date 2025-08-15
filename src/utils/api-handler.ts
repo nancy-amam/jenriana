@@ -1,7 +1,5 @@
 import axios from "axios";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
 interface AxiosOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   headers?: Record<string, string>;
@@ -9,16 +7,18 @@ interface AxiosOptions {
   [key: string]: any;
 }
 
+// Empty BASE_URL means relative path
+const BASE_URL = "";
+
 export async function apiHandler(
   path: string,
   { method = "GET", headers = {}, body = null, ...otherOptions }: AxiosOptions = {}
 ) {
-  const url = `${BASE_URL}${path}`;
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
   try {
     const response = await axios({
-      url,
+      url: `${BASE_URL}${path}`, // e.g., "/api/apartment"
       method,
       headers: {
         ...(isFormData ? {} : { "Content-Type": "application/json" }),
