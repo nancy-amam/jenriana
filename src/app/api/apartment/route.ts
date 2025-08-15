@@ -4,44 +4,43 @@ import { NextResponse } from "next/server";
 import connectDB from "../lib/mongodb";
 import Apartment from "@/models/apartment";
 import { uploadToPinata } from "../lib/pinata";
+import { getUserFromRequest } from "../lib/getUserFromRequest";
 
 // ================= GET all apartments =================
-// export async function GET() {
-//   await connectDB();
-
-//   try {
-//     const apartments = await Apartment.find().sort({ createdAt: -1 });
-//     return NextResponse.json({ success: true, data: apartments });
-//   } catch (error: any) {
-//     return NextResponse.json(
-//       { success: false, message: error.message },
-//       { status: 500 }
-//     );
-//   }
-// }
-
 export async function GET() {
   await connectDB();
 
   try {
-    const apartments = await Apartment.find()
-      .sort({ createdAt: -1 })
-      .lean(); // .lean() makes data plain JS objects for faster read operations
+    const apartments = await Apartment.aggregate([
+      {
+        $lookup: {
+          from: "feedbacks", 
+          localField: "_id",
+          foreignField: "apartmentId",
+          as: "feedbacks",
+        },
+      },
+      {
+        $addFields: {
+          averageRating: {
+            $cond: [
+              { $gt: [{ $size: "$feedbacks" }, 0] },
+              { $avg: "$feedbacks.rating" },
+              0,
+            ],
+          },
+          feedbackCount: { $size: "$feedbacks" },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $project: {
+          feedbacks: 0, // hide actual feedbacks if you don’t need them in the list
+        },
+      },
+    ]);
 
-    const apartmentsWithRatings = apartments.map((apt) => {
-      const ratings = apt.ratings || [];
-      const avgRating =
-        ratings.length > 0
-          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
-          : 0;
-
-      return {
-        ...apt,
-        averageRating: parseFloat(avgRating.toFixed(2)), // 2 decimal places
-      };
-    });
-
-    return NextResponse.json({ success: true, data: apartmentsWithRatings });
+    return NextResponse.json({ success: true, data: apartments });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message },
@@ -55,6 +54,10 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await connectDB();
+    const user = await getUserFromRequest();
+    if (!user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      }
     const formData = await request.formData();
 
     // Map frontend fields to variables
