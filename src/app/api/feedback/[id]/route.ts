@@ -4,14 +4,14 @@ import connectDB from "../../lib/mongodb";
 import Feedback from "@/models/feedback";
 import { getUserFromRequest } from "../../lib/getUserFromRequest";
 
-
-
-
-
+// Updated interface for Next.js 15
+interface RouteContext {
+  params: Promise<{ id: string }>
+}
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: RouteContext
 ) {
   await connectDB();
 
@@ -55,8 +55,7 @@ export async function PUT(
   }
 }
 
-
-export async function DELETE(req: Request, { params }: { params: { id: string }}) {
+export async function DELETE(req: Request, { params }: RouteContext) {
   await connectDB();
 
   try {

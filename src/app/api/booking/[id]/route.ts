@@ -4,7 +4,12 @@ import connectDB from '../../lib/mongodb';
 import Booking from '../../../../models/bookings';
 import { getUserFromRequest } from '../../lib/getUserFromRequest';
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+// Updated interface for Next.js 15
+interface RouteContext {
+  params: Promise<{ id: string }>
+}
+
+export async function PATCH(req: NextRequest, { params }: RouteContext) {
   try {
     await connectDB();
 
