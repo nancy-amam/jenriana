@@ -30,7 +30,7 @@ export default function ApartmentsManagementPage() {
   const [modalState, setModalState] = useState({
     open: false,
     editMode: false,
-    apartmentData: null as Apartment | null
+    apartmentData: undefined as Apartment | undefined
   });
 
   const [apartments, setApartments] = useState<Apartment[]>([]);
@@ -62,7 +62,7 @@ export default function ApartmentsManagementPage() {
     setModalState({
       open: true,
       editMode: false,
-      apartmentData: null
+      apartmentData: undefined
     });
   };
 
@@ -70,7 +70,8 @@ export default function ApartmentsManagementPage() {
   const handleEditApartment = (apartment: Apartment) => {
     // Transform the data to match the expected format
     const transformedApartment = {
-      id: apartment._id, // Map _id to id for the modal
+      _id: apartment._id, // Include _id as required by Apartment type
+      id: apartment._id, // Map _id to id for the modal (if needed by modal)
       name: apartment.name,
       location: apartment.location,
       address: apartment.address || '',
@@ -82,7 +83,7 @@ export default function ApartmentsManagementPage() {
       rules: apartment.rules || [],
       gallery: apartment.gallery || [],
       isTrending: apartment.isTrending || false
-      // Don't include _id, ratings, createdAt, updatedAt in the form data
+      // Don't include ratings, createdAt, updatedAt in the form data
       // These should be handled by the backend
     };
 
@@ -98,7 +99,7 @@ export default function ApartmentsManagementPage() {
     setModalState({
       open: false,
       editMode: false,
-      apartmentData: null
+      apartmentData: undefined
     });
   };
 

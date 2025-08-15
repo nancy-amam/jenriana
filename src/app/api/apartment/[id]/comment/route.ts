@@ -5,17 +5,24 @@ import Apartment from "@/models/apartment";
 import Feedback from "@/models/feedback";
 import { NextResponse } from "next/server";
 
+// Updated interface for Next.js 15
+interface RouteContext {
+  params: Promise<{ id: string }>
+}
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: RouteContext) {
   await connectDB();
 
   try {
+    // Await params to get the actual values
+    const { id } = await params;
+    
     const user = await getUserFromRequest();
     if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const apartment = await Apartment.findById(params.id);
+    const apartment = await Apartment.findById(id);
     if (!apartment) {
       return NextResponse.json({ message: "Apartment not found" }, { status: 404 });
     }
@@ -28,7 +35,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     // Save feedback
     await Feedback.create({
       userId: user.id,
-      apartmentId: params.id,
+      apartmentId: id,
       comment,
       rating,
     });
@@ -44,17 +51,18 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: RouteContext
 ) {
   await connectDB();
 
-    const user = await getUserFromRequest();
-    if (!user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+  const user = await getUserFromRequest();
+  if (!user) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
 
   try {
-    const apartmentId = params.id;
+    // Await params to get the actual values
+    const { id: apartmentId } = await params;
     console.log("Received apartment ID:", apartmentId);
 
     // 1. Get all feedback for this apartment
