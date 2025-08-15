@@ -6,23 +6,72 @@ import Apartment from "@/models/apartment";
 import connectDB from "../../lib/mongodb";
 import { getUserFromRequest } from "../../lib/getUserFromRequest";
 import mongoose from "mongoose";
+import { uploadToPinata } from "../../lib/pinata";
 
 // /app/api/apartments/[id]/route.ts
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  await connectDB();
-  const body = await req.json();
-
   try {
-    const updated = await Apartment.findByIdAndUpdate(params.id, body, { new: true });
+    await connectDB();
+    const user = await getUserFromRequest();
+    if (!user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const formData = await req.formData();
+
+    // Find existing apartment
+    const existingApartment = await Apartment.findById(params.id);
+    if (!existingApartment) {
+      return NextResponse.json({ message: "Apartment not found" }, { status: 404 });
+    }
+
+    // Prepare update object (only set values if provided)
+    const updateData: any = {};
+
+    if (formData.has("name")) updateData.name = formData.get("name") as string;
+    if (formData.has("location")) updateData.location = formData.get("location") as string;
+    if (formData.has("address")) updateData.address = formData.get("address") as string;
+    if (formData.has("pricePerNight")) updateData.pricePerNight = Number(formData.get("pricePerNight"));
+    if (formData.has("rooms")) updateData.rooms = Number(formData.get("rooms"));
+    if (formData.has("bathrooms")) updateData.bathrooms = Number(formData.get("bathrooms"));
+    if (formData.has("maxGuests")) updateData.maxGuests = Number(formData.get("maxGuests"));
+    if (formData.has("isTrending")) updateData.isTrending = formData.get("isTrending") === "true";
+
+    if (formData.has("features")) updateData.features = formData.getAll("features") as string[];
+    if (formData.has("rules")) updateData.rules = formData.getAll("rules") as string[];
+
+    // Handle gallery uploads (merge with existing)
+    const galleryFiles = formData.getAll("gallery") as File[];
+    if (galleryFiles.length > 0) {
+      const newGalleryUrls: string[] = [];
+      for (const file of galleryFiles) {
+        const url = await uploadToPinata(file);
+        newGalleryUrls.push(url);
+      }
+      updateData.gallery = [
+        ...(existingApartment.gallery || []), // keep old images
+        ...newGalleryUrls // add new images
+      ];
+    }
+
+    // Update apartment
+    const updated = await Apartment.findByIdAndUpdate(params.id, updateData, { new: true });
+
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
+    console.error("Error updating apartment:", error);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
 
+
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   await connectDB();
 
+  const user = await getUserFromRequest();
+  if (!user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
   try {
     await Apartment.findByIdAndDelete(params.id);
     return NextResponse.json({ success: true, message: "Apartment deleted" });
@@ -31,60 +80,13 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   }
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: Request, { params }: { params: { id: string } }) {
   await connectDB();
 
-  try {
     const user = await getUserFromRequest();
     if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-
-    const { comment, rating } = await req.json();
-    if (!comment || !rating) {
-      return NextResponse.json({ message: "Comment and rating are required" }, { status: 400 });
-    }
-
-    const apartment = await Apartment.findById(params.id);
-    if (!apartment) {
-      return NextResponse.json({ success: false, message: "Apartment not found" }, { status: 404 });
-    }
-
-    // Add new feedback
-    apartment.ratings.push({
-      userId: user.id,
-      comment,
-      rating,
-      createdAt: new Date(),
-    });
-
-    // Recalculate average rating
-    const avg =
-      apartment.ratings.reduce((sum, r) => sum + r.rating, 0) /
-      apartment.ratings.length;
-    apartment.averageRating = avg;
-
-    await apartment.save();
-
-    return NextResponse.json(
-      { success: true, data: apartment },
-      { status: 201 }
-    );
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 }
-    );
-  }
-}
-
-
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-  await connectDB();
-
   try {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
