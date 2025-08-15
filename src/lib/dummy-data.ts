@@ -169,78 +169,51 @@ export const trendingApartments: Apartment[] = [
   },
 ]
 
+
 export const detailedApartments: Apartment[] = [
   {
-    id: "apt-001", // Matches one of the featured apartments
-    imageUrl: "/images/image8.png",
-    name: "Luxury City View Apartment",
-    location: "Victoria Island, Lagos",
-    price: 25000,
-    rating: 4.8,
+    id: "1",
+    name: "Luxury Suite",
+    location: "Downtown, New York",
+    price: 250,
+    rating: 4.5,
+    imageUrl: "/img1.jpg",
     guests: 4,
     beds: 2,
     baths: 2,
-    description:
-      "Experience unparalleled luxury in this stunning city view apartment located in the heart of Victoria Island. Boasting modern design, spacious living areas, and breathtaking panoramic views, it's the perfect retreat for discerning travelers. Enjoy state-of-the-art amenities and easy access to Lagos's finest dining, entertainment, and business districts.",
-    amenities: [
-      { id: "am-001", name: "Air Conditioning", icon: "AirVent" },
-      { id: "am-002", name: "Wi-Fi", icon: "Wifi" },
-      { id: "am-003", name: "Kitchen Utensils", icon: "Utensils" },
-      { id: "am-004", name: "Smart TV", icon: "Tv" },
-      { id: "am-005", name: "Work Space", icon: "Laptop" },
-      { id: "am-006", name: "Gym Access", icon: "Dumbbell" },
-      { id: "am-007", name: "Free Parking", icon: "ParkingSquare" },
-      { id: "am-008", name: "24/7 Security", icon: "ShieldCheck" },
-    ],
+    description: "A luxurious suite in the heart of the city with stunning views.",
     galleryImages: [
-      {
-        id: "gal-001",
-        src: "/images/image17.png",
-        alt: "Apartment living room",
-        isLarge: true,
-      },
-      { id: "gal-002", src: "/images/image16.png", alt: "Apartment bedroom" },
-      { id: "gal-003", src: "/images/image15.png", alt: "Apartment kitchen" },
-      {
-        id: "gal-004",
-        src: "/images/image18.png",
-        alt: "Apartment bathroom",
-      },
+      { id: "img1", src: "/img1.jpg", alt: "Main view", isLarge: true },
+      { id: "img2", src: "/img2.jpg", alt: "Bedroom" },
+      { id: "img3", src: "/img3.jpg", alt: "Living room" },
+    ],
+    amenities: [
+      { id: "1", name: "Wifi", icon: "Wifi" },
+      { id: "2", name: "Air Conditioning", icon: "AirVent" },
+      { id: "3", name: "Kitchen", icon: "Utensils" },
     ],
   },
   {
-    id: "apt-002", // Another example detailed apartment
-    imageUrl: "/images/image8.png",
-    name: "Modern Downtown Loft",
-    location: "Wuse 2, Abuja",
-    price: 25000,
-    rating: 4.5,
+    id: "2",
+    name: "Cozy Retreat",
+    location: "Brooklyn, New York",
+    price: 150,
+    rating: 4.2,
+    imageUrl: "/img4.jpg",
     guests: 2,
     beds: 1,
     baths: 1,
-    description:
-      "A stylish and comfortable loft in the vibrant heart of Wuse 2. Perfect for business travelers or couples, this apartment offers a chic urban experience with all modern conveniences. Enjoy easy access to Abuja's central business district, fine dining, and cultural attractions.",
-    amenities: [
-      { id: "am-001", name: "Air Conditioning", icon: "AirVent" },
-      { id: "am-002", name: "Wi-Fi", icon: "Wifi" },
-      { id: "am-003", name: "Kitchenette", icon: "Microwave" },
-      { id: "am-004", name: "Workspace", icon: "Laptop" },
-      { id: "am-005", name: "Elevator Access", icon: "ArrowUpFromLine" },
-      { id: "am-006", name: "City View", icon: "Building" },
-    ],
+    description: "A cozy apartment perfect for a weekend getaway.",
     galleryImages: [
-      {
-        id: "gal-001",
-        src: "/placeholder.svg?height=600&width=800&text=Loft+Interior+1",
-        alt: "Loft living area",
-        isLarge: true,
-      },
-      { id: "gal-002", src: "/placeholder.svg?height=190&width=250&text=Loft+Bedroom", alt: "Loft bedroom" },
-      { id: "gal-003", src: "/placeholder.svg?height=190&width=250&text=Loft+Kitchenette", alt: "Loft kitchenette" },
-      { id: "gal-004", src: "/placeholder.svg?height=190&width=250&text=Loft+Bathroom", alt: "Loft bathroom" },
+      { id: "img4", src: "/img4.jpg", alt: "Main view", isLarge: true },
+      { id: "img5", src: "/img5.jpg", alt: "Bedroom" },
+    ],
+    amenities: [
+      { id: "4", name: "Wifi", icon: "Wifi" },
+      { id: "5", name: "TV", icon: "Tv" },
     ],
   },
-]
+];
 
 export const services: Service[] = [
   {
