@@ -3,7 +3,7 @@
 import { Pencil, Trash2, MapPin, BedDouble, DollarSign, Users, Bath } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import AddEditApartmentModal from '../components/add-apartment'; // Updated import name
+import AddEditApartmentModal from '../components/add-apartment';
 import { getApartments } from '@/services/api-services';
 
 type Apartment = {
@@ -19,36 +19,53 @@ type Apartment = {
   rules?: string[];
   isTrending?: boolean;
   gallery?: string[];
-  ratings?: number; // Add missing field
+  ratings?: number;
   createdAt?: string;
-  updatedAt?: string; // Add missing field
-  __v?: number; // Add version field (optional)
+  updatedAt?: string;
+  __v?: number;
+};
+
+interface ApartmentData {
+  name: string;
+  location: string;
+  address: string;
+  pricePerNight: number;
+  rooms: number;
+  bathrooms: number;
+  maxGuests: number;
+  features: string[];
+  rules: string[];
+  gallery: string[];
+  isTrending: boolean;
+}
+
+type ModalState = {
+  open: boolean;
+  editMode: boolean;
+  apartmentData: (ApartmentData & { id?: string }) | undefined;
 };
 
 export default function ApartmentsManagementPage() {
-  // Combined modal state
-  const [modalState, setModalState] = useState({
+  const [modalState, setModalState] = useState<ModalState>({
     open: false,
     editMode: false,
-    apartmentData: undefined as Apartment | undefined
+    apartmentData: undefined,
   });
 
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | string>(null);
 
-  // Fetch apartments on component mount
   useEffect(() => {
     const fetchApartments = async () => {
       try {
         setLoading(true);
         const response = await getApartments();
-        // Extract apartments array from response.data
         setApartments(response.data || []);
         setError(null);
       } catch (err: any) {
         setError(err.message);
-        console.error("Error fetching apartments:", err);
+        console.error('Error fetching apartments:', err);
       } finally {
         setLoading(false);
       }
@@ -57,21 +74,17 @@ export default function ApartmentsManagementPage() {
     fetchApartments();
   }, []);
 
-  // Handle adding new apartment
   const handleAddApartment = () => {
     setModalState({
       open: true,
       editMode: false,
-      apartmentData: undefined
+      apartmentData: undefined,
     });
   };
 
-  // Handle editing existing apartment
   const handleEditApartment = (apartment: Apartment) => {
-    // Transform the data to match the expected format
-    const transformedApartment = {
-      _id: apartment._id, // Include _id as required by Apartment type
-      id: apartment._id, // Map _id to id for the modal (if needed by modal)
+    const transformedApartment: ApartmentData & { id?: string } = {
+      id: apartment._id,
       name: apartment.name,
       location: apartment.location,
       address: apartment.address || '',
@@ -82,42 +95,34 @@ export default function ApartmentsManagementPage() {
       features: apartment.features || [],
       rules: apartment.rules || [],
       gallery: apartment.gallery || [],
-      isTrending: apartment.isTrending || false
-      // Don't include ratings, createdAt, updatedAt in the form data
-      // These should be handled by the backend
+      isTrending: apartment.isTrending || false,
     };
 
     setModalState({
       open: true,
       editMode: true,
-      apartmentData: transformedApartment
+      apartmentData: transformedApartment,
     });
   };
 
-  // Handle closing modal
   const handleCloseModal = () => {
     setModalState({
       open: false,
       editMode: false,
-      apartmentData: undefined
+      apartmentData: undefined,
     });
   };
 
-  // Handle successful add/edit
   const handleSuccess = async () => {
-    // Refresh the apartments list
     try {
       const response = await getApartments();
       setApartments(response.data || []);
     } catch (err: any) {
-      console.error("Error refreshing apartments:", err);
+      console.error('Error refreshing apartments:', err);
     }
-    
-    // Close modal
     handleCloseModal();
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
@@ -128,7 +133,6 @@ export default function ApartmentsManagementPage() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
@@ -141,7 +145,6 @@ export default function ApartmentsManagementPage() {
 
   return (
     <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
-      {/* Search Card */}
       <div className="w-full mb-10 h-[82px] bg-white shadow-md rounded-lg flex items-center px-4 gap-4 mt-[-20px]">
         <input
           type="text"
@@ -150,7 +153,6 @@ export default function ApartmentsManagementPage() {
         />
       </div>
 
-      {/* Table Card (Desktop) */}
       <div className="hidden md:block w-full bg-white shadow-md rounded-lg p-4 mt-10 overflow-x-auto">
         <table className="w-full text-sm font-normal text-left table-fixed">
           <thead className="text-xs text-[#4b5566] uppercase">
@@ -167,10 +169,8 @@ export default function ApartmentsManagementPage() {
           <tbody className="mt-4">
             {apartments.map((apt) => (
               <tr key={apt._id} className="text-[#111827] text-sm font-normal border-b border-gray-100">
-                {/* Apartment image + details */}
                 <td className="py-3 font-medium">
                   <div className="flex items-center gap-3">
-                    {/* Apartment image */}
                     <div className="relative w-12 h-12 flex-shrink-0">
                       <Image
                         src={apt.gallery?.[0] || '/images/default-apartment.png'}
@@ -179,8 +179,6 @@ export default function ApartmentsManagementPage() {
                         className="rounded object-cover"
                       />
                     </div>
-
-                    {/* Name + date added */}
                     <div className="min-w-0 flex-1">
                       <div className="font-medium truncate">{apt.name}</div>
                       <div className="text-xs text-gray-500 whitespace-nowrap">
@@ -189,7 +187,6 @@ export default function ApartmentsManagementPage() {
                     </div>
                   </div>
                 </td>
-
                 <td className="py-3">
                   <div className="truncate" title={apt.location}>
                     {apt.location}
@@ -211,8 +208,6 @@ export default function ApartmentsManagementPage() {
                     {apt.isTrending ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-
-                {/* Actions */}
                 <td className="py-3">
                   <div className="flex gap-2 items-center">
                     <button 
@@ -232,11 +227,9 @@ export default function ApartmentsManagementPage() {
         </table>
       </div>
 
-      {/* Apartment Cards (Mobile) */}
       <div className="md:hidden space-y-4">
         {apartments.map((apt) => (
           <div key={apt._id} className="bg-white rounded-lg shadow-md p-4 space-y-3">
-            {/* Image and Name Row */}
             <div className="flex gap-3">
               <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
                 <Image
@@ -250,17 +243,11 @@ export default function ApartmentsManagementPage() {
                 <p className="text-base font-semibold text-[#111827]">{apt.name}</p>
               </div>
             </div>
-
-            {/* Details Section */}
             <div className="text-sm text-[#374151] space-y-2">
-              {/* Location */}
               <p className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" /> {apt.location}
               </p>
-
-              {/* 3x2 Grid for Details (3 rows, 2 columns) */}
               <div className="grid grid-cols-2 gap-2 text-xs">
-                {/* Row 1 */}
                 <div className="flex items-center gap-1">
                   <BedDouble className="w-3 h-3" />
                   <span>{apt.rooms} rooms</span>
@@ -269,8 +256,6 @@ export default function ApartmentsManagementPage() {
                   <Bath className="w-3 h-3" />
                   <span>{apt.bathrooms || 0} baths</span>
                 </div>
-
-                {/* Row 2 */}
                 <div className="flex items-center gap-1">
                   <Users className="w-3 h-3" />
                   <span>{apt.maxGuests || 1} guests</span>
@@ -278,8 +263,6 @@ export default function ApartmentsManagementPage() {
                 <div className="flex items-center gap-1 text-green-600 font-semibold">
                   <span>₦{apt.pricePerNight?.toLocaleString() || '0'}</span>
                 </div>
-
-                {/* Row 3 */}
                 <div className="flex items-center gap-1">
                   <span className="font-medium">Status:</span>
                   <span>{apt.isTrending ? 'Active' : 'Inactive'}</span>
@@ -290,8 +273,6 @@ export default function ApartmentsManagementPage() {
                 </div>
               </div>
             </div>
-
-            {/* Action Buttons */}
             <div className="flex gap-4 mt-2">
               <button
                 onClick={() => handleEditApartment(apt)}
@@ -319,7 +300,6 @@ export default function ApartmentsManagementPage() {
         </div>
       </div>
 
-      {/* Modal */}
       <AddEditApartmentModal 
         open={modalState.open}
         onClose={handleCloseModal}
