@@ -8,10 +8,18 @@ import { getUserFromRequest } from "../../lib/getUserFromRequest";
 import mongoose from "mongoose";
 import { uploadToPinata } from "../../lib/pinata";
 
-// /app/api/apartments/[id]/route.ts
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+// Updated interface for Next.js 15
+interface RouteContext {
+  params: Promise<{ id: string }>
+}
+
+export async function PUT(req: Request, { params }: RouteContext) {
   try {
     await connectDB();
+    
+    // Await params to get the actual values
+    const { id } = await params;
+    
     const user = await getUserFromRequest();
     if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -20,7 +28,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const formData = await req.formData();
 
     // Find existing apartment
-    const existingApartment = await Apartment.findById(params.id);
+    const existingApartment = await Apartment.findById(id);
     if (!existingApartment) {
       return NextResponse.json({ message: "Apartment not found" }, { status: 404 });
     }
@@ -55,7 +63,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 
     // Update apartment
-    const updated = await Apartment.findByIdAndUpdate(params.id, updateData, { new: true });
+    const updated = await Apartment.findByIdAndUpdate(id, updateData, { new: true });
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
@@ -64,29 +72,35 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: RouteContext) {
   await connectDB();
+
+  // Await params to get the actual values
+  const { id } = await params;
 
   const user = await getUserFromRequest();
   if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
   try {
-    await Apartment.findByIdAndDelete(params.id);
+    await Apartment.findByIdAndDelete(id);
     return NextResponse.json({ success: true, message: "Apartment deleted" });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: RouteContext) {
   await connectDB();
 
-    const user = await getUserFromRequest();
-    if (!user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+  // Await params to get the actual values
+  const { id } = await params;
+
+  const user = await getUserFromRequest();
+  if (!user) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+  
   try {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
@@ -94,7 +108,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const skip = (page - 1) * limit;
 
     const apartmentWithFeedback = await Apartment.aggregate([
-      { $match: { _id: new mongoose.Types.ObjectId(params.id) } },
+      { $match: { _id: new mongoose.Types.ObjectId(id) } },
       {
         $lookup: {
           from: "feedbacks",
