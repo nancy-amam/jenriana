@@ -1,15 +1,10 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { ApartmentCard } from "@/components/apartment-card"
-import { TestimonialCard } from "@/components/testimonial-card"
-import { TrendingApartmentCard } from "@/components/trending-card"
-import {
-  featuredApartments,
-  locationFeatures,
-  testimonials,
-  trendingApartments,
-} from "@/lib/dummy-data"
+import Image from "next/image";
+import { ApartmentCard } from "@/components/apartment-card";
+import { TestimonialCard } from "@/components/testimonial-card";
+import { TrendingApartmentCard } from "@/components/trending-card";
+import { featuredApartments, locationFeatures, testimonials, trendingApartments } from "@/lib/dummy-data";
 
 export default function HomePage() {
   return (
@@ -28,8 +23,7 @@ export default function HomePage() {
               Book Your Ideal Stay in Just a Few Clicks
             </h1>
             <p className="text-[16px] md:text-[20px] max-w-xl text-[#ffffff]/90 mt-2">
-              Discover handpicked apartments in top Nigerian cities — curated
-              for comfort and convenience.
+              Discover handpicked apartments in top Nigerian cities — curated for comfort and convenience.
             </p>
           </div>
         </div>
@@ -84,39 +78,33 @@ export default function HomePage() {
       </div>
 
       {/* Explore Features Section */}
-      
-        {/* Explore Features */}
-<section className="py-12 md:py-24 lg:py-32 px-4 md:px-16 mt-5">
-  <h2 className="text-[28px] md:text-[36px] font-medium mb-6 md:mb-8 text-[#1e1e1e] text-left">
-    Explore Features
-  </h2>
+      <section className="py-12 md:py-24 lg:py-32 px-4 md:px-16 mt-5">
+        <h2 className="text-[28px] md:text-[36px] font-medium mb-6 md:mb-8 text-[#1e1e1e] text-left">
+          Explore Features
+        </h2>
 
-  {/* Mobile: Horizontal scroll */}
-  <div className="md:hidden flex gap-4 overflow-x-auto no-scrollbar">
-    {locationFeatures.map((feature, idx) => (
-      <div
-        key={idx}
-        className="min-w-[260px] flex-shrink-0  rounded-[20px] overflow-hidden "
-      >
-        <div className="relative w-full h-[220px]">
-          <Image
-            src={feature.imageUrl || "/placeholder.svg"}
-            alt={feature.altText}
-            fill
-            className="object-cover  rounded-[20px]"
-          />
+        {/* Mobile: Horizontal scroll */}
+        <div className="md:hidden flex gap-4 overflow-x-auto no-scrollbar">
+          {locationFeatures.map((feature, idx) => (
+            <div key={idx} className="min-w-[260px] flex-shrink-0 rounded-[20px] overflow-hidden">
+              <div className="relative w-full h-[220px]">
+                <Image
+                  src={feature.imageUrl || "/placeholder.svg"}
+                  alt={feature.altText}
+                  fill
+                  className="object-cover rounded-[20px]"
+                />
+              </div>
+              <div className="p-4 text-left">
+                <h3 className="text-base font-normal text-[#1e1e1e]">{feature.locationName}</h3>
+                <p className="text-sm text-[#4b5563]">{feature.apartmentCount} Apartments</p>
+              </div>
+            </div>
+          ))}
         </div>
-        <div className="p-4 text-left">
-          <h3 className="text-base font-normal text-[#1e1e1e]">{feature.locationName}</h3>
-          <p className="text-sm text-[#4b5563]">{feature.apartmentCount} Apartments</p>
-        </div>
-      </div>
-    ))}
-  </div>
 
-  {/* Desktop: Asymmetric grid */}
-
- <div className="space-y-6 hidden md:block  ">
+        {/* Desktop: Asymmetric grid */}
+        <div className="space-y-6 hidden md:block">
           {/* First row: 1 col + 1 col + 2 col */}
           <div className="grid grid-cols-4 gap-6">
             <div className="col-span-1">
@@ -129,15 +117,10 @@ export default function HomePage() {
                 />
               </div>
               <div className="p-4 text-left">
-                <h3 className="text-base font-normal text-[#1e1e1e]">
-                  {locationFeatures[0].locationName}
-                </h3>
-                <p className="text-base text-[#4b5563]">
-                  {locationFeatures[0].apartmentCount} Apartments
-                </p>
+                <h3 className="text-base font-normal text-[#1e1e1e]">{locationFeatures[0].locationName}</h3>
+                <p className="text-base text-[#4b5563]">{locationFeatures[0].apartmentCount} Apartments</p>
               </div>
             </div>
-
             <div className="col-span-1">
               <div className="relative w-full h-[323px]">
                 <Image
@@ -148,15 +131,10 @@ export default function HomePage() {
                 />
               </div>
               <div className="p-4 text-left">
-                <h3 className="text-base font-normal text-[#1e1e1e]">
-                  {locationFeatures[1].locationName}
-                </h3>
-                <p className="text-base text-[#4b5563]">
-                  {locationFeatures[1].apartmentCount} Apartments
-                </p>
+                <h3 className="text-base font-normal text-[#1e1e1e]">{locationFeatures[1].locationName}</h3>
+                <p className="text-base text-[#4b5563]">{locationFeatures[1].apartmentCount} Apartments</p>
               </div>
             </div>
-
             <div className="col-span-2">
               <div className="relative w-full h-[323px]">
                 <Image
@@ -167,12 +145,8 @@ export default function HomePage() {
                 />
               </div>
               <div className="p-4 text-left">
-                <h3 className="text-base font-normal text-[#1e1e1e]">
-                  {locationFeatures[2].locationName}
-                </h3>
-                <p className="text-base text-[#4b5563]">
-                  {locationFeatures[2].apartmentCount} Apartments
-                </p>
+                <h3 className="text-base font-normal text-[#1e1e1e]">{locationFeatures[2].locationName}</h3>
+                <p className="text-base text-[#4b5563]">{locationFeatures[2].apartmentCount} Apartments</p>
               </div>
             </div>
           </div>
@@ -189,15 +163,10 @@ export default function HomePage() {
                 />
               </div>
               <div className="p-4 text-left">
-                <h3 className="text-base font-normal text-[#1e1e1e]">
-                  {locationFeatures[3].locationName}
-                </h3>
-                <p className="text-base text-[#4b5563]">
-                  {locationFeatures[3].apartmentCount} Apartments
-                </p>
+                <h3 className="text-base font-normal text-[#1e1e1e]">{locationFeatures[3].locationName}</h3>
+                <p className="text-base text-[#4b5563]">{locationFeatures[3].apartmentCount} Apartments</p>
               </div>
             </div>
-
             <div className="col-span-1">
               <div className="relative w-full h-[323px]">
                 <Image
@@ -208,15 +177,10 @@ export default function HomePage() {
                 />
               </div>
               <div className="p-4 text-left">
-                <h3 className="text-base font-normal text-[#1e1e1e]">
-                  {locationFeatures[4].locationName}
-                </h3>
-                <p className="text-base text-[#4b5563]">
-                  {locationFeatures[4].apartmentCount} Apartments
-                </p>
+                <h3 className="text-base font-normal text-[#1e1e1e]">{locationFeatures[4].locationName}</h3>
+                <p className="text-base text-[#4b5563]">{locationFeatures[4].apartmentCount} Apartments</p>
               </div>
             </div>
-
             <div className="col-span-1">
               <div className="relative w-full h-[323px]">
                 <Image
@@ -227,18 +191,13 @@ export default function HomePage() {
                 />
               </div>
               <div className="p-4 text-left">
-                <h3 className="text-base font-normal text-[#1e1e1e]">
-                  {locationFeatures[5].locationName}
-                </h3>
-                <p className="text-base text-[#4b5563]">
-                  {locationFeatures[5].apartmentCount} Apartments
-                </p>
+                <h3 className="text-base font-normal text-[#1e1e1e]">{locationFeatures[5].locationName}</h3>
+                <p className="text-base text-[#4b5563]">{locationFeatures[5].apartmentCount} Apartments</p>
               </div>
             </div>
           </div>
         </div>
       </section>
-
 
       {/* Featured Listings */}
       <section className="py-12 md:py-24 lg:py-32 px-4 md:px-16">
@@ -247,7 +206,11 @@ export default function HomePage() {
         </h2>
         <div className="flex overflow-x-auto pb-4 space-x-4 no-scrollbar">
           {featuredApartments.map((apartment) => (
-            <ApartmentCard key={apartment.id} {...apartment} />
+            <ApartmentCard
+              key={apartment.id}
+              {...apartment}
+              price={apartment.price.toLocaleString("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 })}
+            />
           ))}
         </div>
       </section>
@@ -290,8 +253,7 @@ export default function HomePage() {
             Can&apos;t Decide? Let&apos;s Help You Find the Perfect Apartment.
           </h2>
           <p className="text-base md:text-base mb-8">
-            Not sure where to start? Our team is ready to assist you in choosing
-            an apartment that fits your needs — no stress, no pressure.
+            Not sure where to start? Our team is ready to assist you in choosing an apartment that fits your needs — no stress, no pressure.
           </p>
           <button className="bg-[#212121] mt-5 text-white py-4 px-10 rounded-lg text-base font-normal hover:bg-gray-800 transition">
             Contact Us
@@ -299,5 +261,5 @@ export default function HomePage() {
         </div>
       </section>
     </main>
-  )
+  );
 }

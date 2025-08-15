@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { signUp } from '@/services/api-services'
 import { FiEye, FiEyeOff } from 'react-icons/fi'
-import Router, { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation'
+
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({

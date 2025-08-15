@@ -1,21 +1,24 @@
-'use client'
-import { useSearchParams } from "next/navigation"
-import { detailedApartments, services } from "@/lib/dummy-data"
-import Image from "next/image"
-import { useState } from "react"
-import { format, addDays } from "date-fns"
-import { BedIcon, BathIcon } from 'lucide-react'
-import Link from "next/link"
+"use client";
 
-export default function CheckoutPage() {
-  const searchParams = useSearchParams()
-  const apartmentId = searchParams.get("apartmentId")
-  const nights = Number(searchParams.get("nights"))
-  const guests = Number(searchParams.get("guests"))
-  const price = Number(searchParams.get("price"))
-  const [selectedServices, setSelectedServices] = useState<string[]>([])
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { detailedApartments, services } from "@/lib/dummy-data";
+import Image from "next/image";
+import { useState } from "react";
+import { format, addDays } from "date-fns";
+import { BedIcon, BathIcon } from "lucide-react";
+import Link from "next/link";
+import { Apartment } from "@/lib/interface";
 
-  const apartment = detailedApartments.find((apt) => apt.id === apartmentId)
+function CheckoutContent() {
+  const searchParams = useSearchParams();
+  const apartmentId = searchParams.get("apartmentId");
+  const nights = Number(searchParams.get("nights"));
+  const guests = Number(searchParams.get("guests"));
+  const price = Number(searchParams.get("price"));
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+
+  const apartment = detailedApartments.find((apt) => apt.id === apartmentId);
 
   const [guestInfo, setGuestInfo] = useState({
     name: "",
@@ -23,7 +26,7 @@ export default function CheckoutPage() {
     phone: "",
     address: "",
     specialRequest: "",
-  })
+  });
 
   if (!apartment || isNaN(nights) || isNaN(guests) || isNaN(price)) {
     console.error("CheckoutPage: Invalid initial booking information received.");
@@ -35,36 +38,47 @@ export default function CheckoutPage() {
       <div className="min-h-screen flex items-center justify-center text-red-600 text-lg font-semibold">
         Invalid booking information
       </div>
-    )
+    );
   }
+
+  // Transform apartment to ensure compatibility (exclude isLarge)
+  const transformedApartment: Apartment = {
+    ...apartment,
+    galleryImages: (apartment.galleryImages || []).map((img) => ({
+      id: img.id,
+      src: img.src,
+      alt: img.alt,
+    })),
+    amenities: apartment.amenities || [],
+  };
 
   const handleCheckboxChange = (serviceId: string) => {
     setSelectedServices((prevSelected) =>
       prevSelected.includes(serviceId)
         ? prevSelected.filter((id) => id !== serviceId)
         : [...prevSelected, serviceId]
-    )
-  }
+    );
+  };
 
-  const totalCost = price * nights
-  const serviceFee = 5000
-  const taxes = 0.075 * totalCost
+  const totalCost = price * nights;
+  const serviceFee = 5000;
+  const taxes = 0.075 * totalCost;
 
   // Calculate total for selected optional services
   const selectedServicesTotal = selectedServices.reduce((sum, serviceId) => {
-    const service = services.find(s => s.id === serviceId);
+    const service = services.find((s) => s.id === serviceId);
     return sum + (service ? service.price : 0);
   }, 0);
 
-  const grandTotal = totalCost + serviceFee + taxes + selectedServicesTotal; // Include selected services total
+  const grandTotal = totalCost + serviceFee + taxes + selectedServicesTotal;
 
-  const checkInDate = new Date()
-  const checkOutDate = addDays(checkInDate, nights)
-  const formattedCheckIn = format(checkInDate, "MMM d, yyyy")
-  const formattedCheckOut = format(checkOutDate, "MMM d, yyyy")
+  const checkInDate = new Date();
+  const checkOutDate = addDays(checkInDate, nights);
+  const formattedCheckIn = format(checkInDate, "MMM d, yyyy");
+  const formattedCheckOut = format(checkOutDate, "MMM d, yyyy");
 
   // Construct the URL for the booking-engine page
-  const bookingEngineUrl = `/booking-engine?apartmentId=${apartment.id}&nights=${nights}&guests=${guests}&price=${price}&selectedServices=${selectedServices.join(',')}`;
+  const bookingEngineUrl = `/booking-engine?apartmentId=${apartment.id}&nights=${nights}&guests=${guests}&price=${price}&selectedServices=${selectedServices.join(",")}`;
 
   console.log("CheckoutPage: Preparing to navigate to /booking-engine with:");
   console.log("  URL:", bookingEngineUrl);
@@ -73,13 +87,12 @@ export default function CheckoutPage() {
   console.log("  guests:", guests);
   console.log("  price:", price);
   console.log("  selectedServices (array):", selectedServices);
-  console.log("  selectedServices (joined):", selectedServices.join(','));
-
+  console.log("  selectedServices (joined):", selectedServices.join(","));
 
   return (
     <div className="relative min-h-screen bg-black text-white px-4 py-12 md:px-16 overflow-hidden">
       <Image
-        src={apartment.imageUrl || "/placeholder.svg"}
+        src={transformedApartment.imageUrl || "/placeholder.svg"}
         alt="Apartment background"
         fill
         className="object-cover z-0"
@@ -87,11 +100,13 @@ export default function CheckoutPage() {
       <div className="absolute inset-0 bg-black/80 z-10"></div>
       <div className="relative z-20 max-w-7xl mx-auto">
         <h1 className="text-[36px] font-normal mb-2">Confirm Your Booking</h1>
-        <p className="mb-10 text-base font-normal ">Just a few more details to confirm your stay</p>
+        <p className="mb-10 text-base font-normal">Just a few more details to confirm your stay</p>
         <div className="flex flex-col md:flex-row gap-8 w-full items-start">
           {/* Guest Info */}
           <div className="bg-white text-black rounded-[12px] p-6 space-y-6 w-full md:flex-1 max-w-3xl">
-            <h2 className="text-2xl font-medium mb-2" style={{ color: "#111827" }}>Guest Information</h2>
+            <h2 className="text-2xl font-medium mb-2" style={{ color: "#111827" }}>
+              Guest Information
+            </h2>
             <form className="space-y-5">
               {/* Name */}
               <div className="space-y-1">
@@ -163,8 +178,8 @@ export default function CheckoutPage() {
                   style={{ borderColor: "#EAECF0" }}
                 ></textarea>
               </div>
-              {/* optional services */}
-              <div className=" px-4 mb-10">
+              {/* Optional Services */}
+              <div className="px-4 mb-10">
                 <h2 className="text-[20px] font-normal text-[#111827] text-left mb-2">
                   Enhance Your Stay
                 </h2>
@@ -183,10 +198,13 @@ export default function CheckoutPage() {
                           id={service.id}
                           checked={selectedServices.includes(service.id)}
                           onChange={() => handleCheckboxChange(service.id)}
-                          className="mt-1 w-5 h-5 text-[#11827] bg-gray-100 border-gray-300 rounded "
+                          className="mt-1 w-5 h-5 text-[#11827] bg-gray-100 border-gray-300 rounded"
                         />
                         <div className="flex flex-col">
-                          <label htmlFor={service.id} className="font-normal text-base text-[#111827] cursor-pointer">
+                          <label
+                            htmlFor={service.id}
+                            className="font-normal text-base text-[#111827] cursor-pointer"
+                          >
                             {service.name}
                           </label>
                           <p className="text-sm text-[#4b5566]">{service.description}</p>
@@ -206,26 +224,26 @@ export default function CheckoutPage() {
           <div className="bg-white text-black rounded-[12px] p-6 space-y-6 w-full md:w-[424px] max-w-full">
             {/* Apartment Info */}
             <div className="flex gap-4">
-              {apartment.imageUrl && (
+              {transformedApartment.imageUrl && (
                 <Image
-                  src={apartment.imageUrl || "/placeholder.svg"}
-                  alt={apartment.name}
+                  src={transformedApartment.imageUrl || "/placeholder.svg"}
+                  alt={transformedApartment.name}
                   width={120}
                   height={80}
                   className="rounded-md object-cover"
                 />
               )}
               <div>
-                <h3 className="text-sm text-[#111827] font-normal">{apartment.name}</h3>
-                <p className="text-sm text-[#4b5563]">{apartment.location}</p>
+                <h3 className="text-sm text-[#111827] font-normal">{transformedApartment.name}</h3>
+                <p className="text-sm text-[#4b5563]">{transformedApartment.location}</p>
                 <div className="flex gap-3 mt-2">
-                  <div className=" p-1 flex gap-1 items-center">
-                    <BedIcon className="w-5 h-5 mb-1 text-[#6b7280] " />
-                    <span className="text-sm font-normal text-[#6b7280]">{apartment.beds} Beds</span>
+                  <div className="p-1 flex gap-1 items-center">
+                    <BedIcon className="w-5 h-5 mb-1 text-[#6b7280]" />
+                    <span className="text-sm font-normal text-[#6b7280]">{transformedApartment.beds} Beds</span>
                   </div>
-                  <div className=" p-1 flex gap-1 items-center">
+                  <div className="p-1 flex gap-1 items-center">
                     <BathIcon className="w-5 h-5 mb-1 text-[#6b7280]" />
-                    <span className="text-sm font-normal text-[#6b7280]">{apartment.baths} Baths</span>
+                    <span className="text-sm font-normal text-[#6b7280]">{transformedApartment.baths} Baths</span>
                   </div>
                 </div>
               </div>
@@ -245,32 +263,33 @@ export default function CheckoutPage() {
             <div className="text-sm text-[#6b7280] space-y-2 font-normal pt-4">
               <div className="flex justify-between">
                 <span>₦{price.toLocaleString()} x {nights} night(s)</span>
-                <span className=" text-[#11827]">₦{totalCost.toLocaleString()}</span>
+                <span className="text-[#111827]">₦{totalCost.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span>Service Fee</span>
-                <span className=" text-[#11827]">₦{serviceFee.toLocaleString()}</span>
+                <span className="text-[#111827]">₦{serviceFee.toLocaleString()}</span>
               </div>
-              {/* Display selected optional services */}
               {selectedServices.map((serviceId) => {
-                const service = services.find(s => s.id === serviceId);
+                const service = services.find((s) => s.id === serviceId);
                 return service ? (
                   <div key={service.id} className="flex justify-between">
                     <span>{service.name}</span>
-                    <span className=" text-[#11827]">₦{service.price.toLocaleString()}</span>
+                    <span className="text-[#111827]">₦{service.price.toLocaleString()}</span>
                   </div>
                 ) : null;
               })}
               <div className="flex justify-between">
                 <span>Taxes (7.5%)</span>
-                <span className=" text-[#11827]">₦{taxes.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                <span className="text-[#111827]">
+                  ₦{taxes.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </span>
               </div>
               <div className="flex justify-between font-semibold text-black border-t border-gray-300 pt-2">
                 <span>Total</span>
                 <span>₦{grandTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
               </div>
             </div>
-            <Link href={bookingEngineUrl}> {/* Updated Link href */}
+            <Link href={bookingEngineUrl}>
               <button className="w-full bg-black text-white py-2 px-6 rounded-md hover:bg-gray-800 transition">
                 Confirm Booking
               </button>
@@ -279,5 +298,13 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
-  )
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white">Loading...</div>}>
+      <CheckoutContent />
+    </Suspense>
+  );
 }
