@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   AirVent, 
@@ -18,7 +18,7 @@ import {
   Loader2,
   CheckCircle
 } from 'lucide-react';
-import { addApartment } from '@/services/api-services';
+import { addApartment, updateApartment } from '@/services/api-services';
 import { ApartmentData } from '@/lib/interface';
 
 interface Feature {
@@ -50,10 +50,12 @@ interface RulesState {
   maxGuests: boolean;
 }
 
-interface AddApartmentModalProps {
+interface AddEditApartmentModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  editMode?: boolean;
+  apartmentData?: ApartmentData & { id?: string };
 }
 
 interface FormData {
@@ -66,7 +68,13 @@ interface FormData {
   maxGuests: number;
 }
 
-export default function AddApartmentModal({ open, onClose, onSuccess }: AddApartmentModalProps) {
+export default function AddEditApartmentModal({ 
+  open, 
+  onClose, 
+  onSuccess,
+  editMode = false,
+  apartmentData 
+}: AddEditApartmentModalProps) {
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [rules, setRules] = useState<RulesState>({
     noSmoking: false,
@@ -79,6 +87,7 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
     { id: 1, name: '', pricing: '', description: '', price: '', active: true }
   ]);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     location: '',
@@ -108,6 +117,119 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
     { key: 'childrenAllowed', name: 'Children Allowed', icon: Baby },
     { key: 'maxGuests', name: 'Don\'t Exceed Max Guests', icon: Users }
   ];
+
+  // Feature mapping for API
+  const featureMapping = {
+    'air-conditioning': 'ac',
+    'wifi': 'wifi',
+    'washing-machine': 'washing',
+    'generator': 'generator',
+    'smart-tv': 'tv',
+    'kitchen': 'kitchen'
+  };
+
+  const reverseFeatureMapping = {
+    'ac': 'air-conditioning',
+    'wifi': 'wifi',
+    'washing': 'washing-machine',
+    'generator': 'generator',
+    'tv': 'smart-tv',
+    'kitchen': 'kitchen'
+  };
+
+  // Rules mapping for API (updated to match backend)
+  const rulesMapping = {
+    'no-smoking': 'noSmoking',
+    'no-parties': 'noParties',
+    'pets-allowed': 'petsAllowed',
+    'children-allowed': 'childrenAllowed',
+    'do-not-exceed-guest-count': 'maxGuests', // Updated to match backend
+    'max-guests-enforced': 'maxGuests', // Keep both for compatibility
+    'check-in-3pm-11pm': 'maxGuests' // This doesn't map to our UI, handle separately
+  };
+
+  // Initialize form with existing data in edit mode
+  useEffect(() => {
+    if (editMode && apartmentData && open) {
+      // Set form data
+      setFormData({
+        name: apartmentData.name || '',
+        location: apartmentData.location || '',
+        address: apartmentData.address || '',
+        pricePerNight: apartmentData.pricePerNight || 0,
+        rooms: apartmentData.rooms || 0,
+        bathrooms: apartmentData.bathrooms || 0,
+        maxGuests: apartmentData.maxGuests || 0
+      });
+
+      // Set features
+      if (apartmentData.features) {
+        const mappedFeatures = apartmentData.features
+          .map(feature => featureMapping[feature as keyof typeof featureMapping])
+          .filter(Boolean);
+        setSelectedFeatures(mappedFeatures);
+      }
+
+      // Set rules
+      const newRules: RulesState = {
+        noSmoking: false,
+        noParties: false,
+        petsAllowed: false,
+        childrenAllowed: true,
+        maxGuests: true
+      };
+
+      if (apartmentData.rules) {
+        apartmentData.rules.forEach(rule => {
+          const ruleKey = rulesMapping[rule as keyof typeof rulesMapping];
+          if (ruleKey) {
+            newRules[ruleKey as keyof RulesState] = true;
+          }
+          // Handle the max guests rule specifically
+          if (rule === 'do-not-exceed-guest-count' || rule === 'max-guests-enforced') {
+            newRules.maxGuests = true;
+          }
+        });
+      }
+      setRules(newRules);
+
+      // Set existing images
+      if (apartmentData.gallery) {
+        setExistingImages(apartmentData.gallery);
+      }
+
+      // Clear uploaded images when switching to edit mode
+      setUploadedImages([]);
+    } else if (!editMode && open) {
+      // Reset form for add mode
+      resetForm();
+    }
+  }, [editMode, apartmentData, open]);
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      location: '',
+      address: '',
+      pricePerNight: 0,
+      rooms: 0,
+      bathrooms: 0,
+      maxGuests: 0
+    });
+    setSelectedFeatures([]);
+    setRules({
+      noSmoking: false,
+      noParties: false,
+      petsAllowed: false,
+      childrenAllowed: true,
+      maxGuests: true
+    });
+    setUploadedImages([]);
+    setExistingImages([]);
+    setAddOns([{ id: 1, name: '', pricing: '', description: '', price: '', active: true }]);
+    setError(null);
+    setSuccessMessage(null);
+  };
 
   const getFeatureIconColor = (featureId: string): string => {
     const colors = {
@@ -181,12 +303,16 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    console.log('Selected files:', files.map(f => f.name)); // Debug: Log selected file names
+    console.log('Selected files:', files.map(f => f.name));
     setUploadedImages(prev => [...prev, ...files]);
   };
 
   const removeImage = (index: number) => {
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = (index: number) => {
+    setExistingImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const validateForm = (): boolean => {
@@ -220,17 +346,8 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
     setError(null);
 
     try {
-      const featureMapping = {
-        'ac': 'air-conditioning',
-        'wifi': 'wifi',
-        'washing': 'washing-machine',
-        'generator': 'generator',
-        'tv': 'smart-tv',
-        'kitchen': 'kitchen'
-      };
-
       const selectedFeatureNames = selectedFeatures.map(id => 
-        featureMapping[id as keyof typeof featureMapping] || id.toLowerCase().replace(/\s+/g, '-')
+        reverseFeatureMapping[id as keyof typeof reverseFeatureMapping] || id.toLowerCase().replace(/\s+/g, '-')
       );
 
       const rulesArray = [];
@@ -238,9 +355,9 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
       if (rules.noParties) rulesArray.push('no-parties');
       if (rules.petsAllowed) rulesArray.push('pets-allowed');
       if (rules.childrenAllowed) rulesArray.push('children-allowed');
-      if (rules.maxGuests) rulesArray.push('max-guests-enforced');
+      if (rules.maxGuests) rulesArray.push('do-not-exceed-guest-count'); // Updated to match backend
 
-      const apartmentData: ApartmentData = {
+      const apartmentPayload: ApartmentData = {
         name: formData.name.trim(),
         location: formData.location.trim(),
         address: formData.address.trim(),
@@ -249,36 +366,27 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
         bathrooms: formData.bathrooms,
         maxGuests: formData.maxGuests,
         features: selectedFeatureNames,
-        gallery: [], // Backend will handle images from FormData
+        gallery: existingImages, // Keep existing images, backend will handle new ones
         rules: rulesArray,
-        isTrending: false
+        isTrending: apartmentData?.isTrending || false
       };
 
-      console.log('Submitting apartment data:', apartmentData);
-      console.log('Submitting images:', uploadedImages.map(f => f.name)); // Debug: Log image names
+      // Debug: Log the apartment ID for updates
+      if (editMode && apartmentData?.id) {
+        console.log('Apartment ID for update:', apartmentData.id);
+        console.log('Clean apartment payload:', apartmentPayload);
+        console.log('Images being uploaded:', uploadedImages.length);
+      }
 
-      await addApartment(apartmentData, uploadedImages);
+      let response;
+      if (editMode && apartmentData?.id) {
+        response = await updateApartment(apartmentData.id, apartmentPayload, uploadedImages);
+      } else {
+        response = await addApartment(apartmentPayload, uploadedImages);
+      }
       
-      setFormData({
-        name: '',
-        location: '',
-        address: '',
-        pricePerNight: 0,
-        rooms: 0,
-        bathrooms: 0,
-        maxGuests: 0
-      });
-      setSelectedFeatures([]);
-      setRules({
-        noSmoking: false,
-        noParties: false,
-        petsAllowed: false,
-        childrenAllowed: true,
-        maxGuests: true
-      });
-      setUploadedImages([]);
-      setAddOns([{ id: 1, name: '', pricing: '', description: '', price: '', active: true }]);
-      setSuccessMessage('Apartment added successfully!');
+      resetForm();
+      setSuccessMessage(`Apartment ${editMode ? 'updated' : 'added'} successfully!`);
 
       setTimeout(() => {
         setSuccessMessage(null);
@@ -287,7 +395,7 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
       }, 3000);
     } catch (err: any) {
       console.error('Submission error:', err);
-      let errorMessage = 'Failed to add apartment';
+      let errorMessage = `Failed to ${editMode ? 'update' : 'add'} apartment`;
       
       if (err && typeof err === 'object') {
         if (err.status && err.message) {
@@ -333,7 +441,9 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
 
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-[#111827]">Add Apartment</h2>
+          <h2 className="text-xl font-semibold text-[#111827]">
+            {editMode ? 'Edit Apartment' : 'Add Apartment'}
+          </h2>
           <button 
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg"
@@ -350,7 +460,7 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
               <X className="h-5 w-5 text-red-400" />
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">
-                  Error Adding Apartment
+                  Error {editMode ? 'Updating' : 'Adding'} Apartment
                 </h3>
                 <p className="mt-1 text-sm text-red-700">{error}</p>
                 <button
@@ -650,25 +760,57 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
         <div className="mb-6">
           <h3 className="text-left text-lg font-semibold text-[#111827] mb-4">Images</h3>
           
+          {/* Existing Images (Edit Mode) */}
+          {editMode && existingImages.length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Current Images</h4>
+              <div className="flex gap-2 mb-4 flex-wrap">
+                {existingImages.map((imageUrl, index) => (
+                  <div key={index} className="relative w-20 h-20 bg-gray-200 rounded-lg overflow-hidden">
+                    <img
+                      src={imageUrl}
+                      alt={`Current apartment image ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      onClick={() => !isLoading && removeExistingImage(index)}
+                      className={`absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors ${
+                        isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* New Images */}
           {uploadedImages.length > 0 && (
-            <div className="flex gap-2 mb-4 flex-wrap">
-              {uploadedImages.map((image, index) => (
-                <div key={index} className="relative w-20 h-20 bg-gray-200 rounded-lg overflow-hidden">
-                  <img
-                    src={URL.createObjectURL(image)}
-                    alt={`Apartment image ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    onClick={() => !isLoading && removeImage(index)}
-                    className={`absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors ${
-                      isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                {editMode ? 'New Images to Add' : 'Selected Images'}
+              </h4>
+              <div className="flex gap-2 mb-4 flex-wrap">
+                {uploadedImages.map((image, index) => (
+                  <div key={index} className="relative w-20 h-20 bg-gray-200 rounded-lg overflow-hidden">
+                    <img
+                      src={URL.createObjectURL(image)}
+                      alt={`${editMode ? 'New' : 'Apartment'} image ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      onClick={() => !isLoading && removeImage(index)}
+                      className={`absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors ${
+                        isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
           
@@ -687,11 +829,12 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
               <p className="text-sm text-gray-600">
                 Drag and drop images here or <span className="text-blue-600">browse files</span>
               </p>
-              {uploadedImages.length > 0 && (
-                <p className="text-xs text-gray-500 mt-1">
-                  {uploadedImages.length} image{uploadedImages.length > 1 ? 's' : ''} selected
-                </p>
-              )}
+              <p className="text-xs text-gray-500 mt-1">
+                {editMode && existingImages.length > 0 && `${existingImages.length} existing image${existingImages.length > 1 ? 's' : ''}`}
+                {editMode && existingImages.length > 0 && uploadedImages.length > 0 && ' • '}
+                {uploadedImages.length > 0 && `${uploadedImages.length} new image${uploadedImages.length > 1 ? 's' : ''} selected`}
+                {!editMode && uploadedImages.length === 0 && existingImages.length === 0 && 'No images selected'}
+              </p>
             </label>
           </div>
         </div>
@@ -711,7 +854,10 @@ export default function AddApartmentModal({ open, onClose, onSuccess }: AddApart
             className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isLoading ? 'Adding Apartment...' : 'Add Apartment'}
+            {isLoading ? 
+              `${editMode ? 'Updating' : 'Adding'} Apartment...` : 
+              `${editMode ? 'Update' : 'Add'} Apartment`
+            }
           </button>
         </div>
       </div>

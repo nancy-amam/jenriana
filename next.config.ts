@@ -1,7 +1,17 @@
-import type { NextConfig } from "next";
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  images: {
+    domains: ['gateway.pinata.cloud'],
+    // Or if you're using the newer remotePatterns (Next.js 12.3+)
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'gateway.pinata.cloud',
+        port: '',
+        pathname: '/ipfs/**',
+      },
+    ],
+  },
+}
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
-
-export default nextConfig;
+module.exports = nextConfig
