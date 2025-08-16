@@ -6,6 +6,7 @@ import AdminSidebar from './components/admin-sidebar';
 import AdminNavbar from './components/admin-navbar';
 import { useState } from 'react';
 import AddApartmentModal from './components/add-apartment';
+import Link from 'next/link';
 
 const getPageTitle = (path: string) => {
   if (path.includes('/apartments')) return 'Apartment Management';
@@ -36,7 +37,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="md:hidden bg-white">
           <nav className="flex items-center justify-between px-4 py-3">
             {/* Logo */}
-            <div className="text-lg font-bold text-gray-800">Jenrianna</div>
+             <Link href="/" className="text-2xl font-semibold text-[#1e1e1e]">
+          Jenrianna
+        </Link>
                       
             {/* Menu button */}
             <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle Menu">
