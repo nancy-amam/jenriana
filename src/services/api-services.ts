@@ -201,3 +201,26 @@ export async function updateApartment(
   }
 }
 
+export async function deleteApartment(apartmentId: string): Promise<any> {
+     try {
+      if (!apartmentId?.trim()) {
+        throw new Error("Apartment ID is required for deletion")
+      }
+
+         console.log(`Deleting apartment with ID: ${apartmentId}`);
+
+       const response = await apiHandler(`/api/apartment/${apartmentId}`, {
+        method: 'DELETE',
+       }) 
+        console.log("Apartment deleted successfully:", response);
+       return response 
+     } catch (error: any) {
+       console.error('failed to delete apartment:', error);
+
+       if (error.status && error.message) {
+        throw error;
+       }
+
+       throw new Error(error.message || 'failed to delete apartment. Please try again')
+     }
+}

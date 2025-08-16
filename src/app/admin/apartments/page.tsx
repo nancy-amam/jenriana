@@ -1,10 +1,12 @@
 'use client';
 
-import { Pencil, Trash2, MapPin, BedDouble, DollarSign, Users, Bath } from 'lucide-react';
+import { Pencil, Trash2, MapPin, BedDouble, DollarSign, Users, Bath, X, Home } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import AddEditApartmentModal from '../components/add-apartment';
 import { getApartments } from '@/services/api-services';
+import { deleteApartment } from '@/services/api-services';
+import ApartmentLoadingPage from '@/components/loading';
 
 type Apartment = {
   _id: string;
@@ -45,11 +47,25 @@ type ModalState = {
   apartmentData: (ApartmentData & { id?: string }) | undefined;
 };
 
+type DeleteModalState = {
+  open: boolean;
+  apartmentId: string | null;
+  apartmentName: string;
+  isDeleting: boolean;
+};
+
 export default function ApartmentsManagementPage() {
   const [modalState, setModalState] = useState<ModalState>({
     open: false,
     editMode: false,
     apartmentData: undefined,
+  });
+
+  const [deleteModalState, setDeleteModalState] = useState<DeleteModalState>({
+    open: false,
+    apartmentId: null,
+    apartmentName: '',
+    isDeleting: false,
   });
 
   const [apartments, setApartments] = useState<Apartment[]>([]);
@@ -123,12 +139,56 @@ export default function ApartmentsManagementPage() {
     handleCloseModal();
   };
 
+  // Delete confirmation modal handlers
+  const handleDeleteClick = (apartment: Apartment) => {
+    setDeleteModalState({
+      open: true,
+      apartmentId: apartment._id,
+      apartmentName: apartment.name,
+      isDeleting: false,
+    });
+  };
+
+  const handleCloseDeleteModal = () => {
+    if (!deleteModalState.isDeleting) {
+      setDeleteModalState({
+        open: false,
+        apartmentId: null,
+        apartmentName: '',
+        isDeleting: false,
+      });
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModalState.apartmentId) return;
+
+    try {
+      setDeleteModalState(prev => ({ ...prev, isDeleting: true }));
+      
+      const response = await deleteApartment(deleteModalState.apartmentId);
+      
+      // Remove the deleted apartment from the list
+      setApartments(prev => prev.filter(apt => apt._id !== deleteModalState.apartmentId));
+      
+      // Close the modal
+      handleCloseDeleteModal();
+      
+      // You can show a success message here if needed
+      console.log('Apartment deleted successfully:', response);
+      
+    } catch (err: any) {
+      console.error('Error deleting apartment:', err);
+      alert(err.message || 'Failed to delete apartment');
+    } finally {
+      setDeleteModalState(prev => ({ ...prev, isDeleting: false }));
+    }
+  };
+
   if (loading) {
     return (
-      <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading apartments...</div>
-        </div>
+        <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
+         <ApartmentLoadingPage />
       </div>
     );
   }
@@ -145,7 +205,7 @@ export default function ApartmentsManagementPage() {
 
   return (
     <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
-      <div className="w-full mb-10 h-[82px] bg-white shadow-md rounded-lg flex items-center px-4 gap-4 mt-[-20px]">
+      <div className="w-full max-w-[1200px] mb-10 h-[82px] bg-white shadow-md rounded-lg flex items-center px-4 gap-4 mt-[-20px]">
         <input
           type="text"
           placeholder="Search by apartment name or location"
@@ -153,7 +213,7 @@ export default function ApartmentsManagementPage() {
         />
       </div>
 
-      <div className="hidden md:block w-full bg-white shadow-md rounded-lg p-4 mt-10 overflow-x-auto">
+      <div className="hidden md:block w-full max-w-[1200px] bg-white shadow-md rounded-lg p-4 mt-10 overflow-x-auto">
         <table className="w-full text-sm font-normal text-left table-fixed">
           <thead className="text-xs text-[#4b5566] uppercase">
             <tr>
@@ -212,11 +272,14 @@ export default function ApartmentsManagementPage() {
                   <div className="flex gap-2 items-center">
                     <button 
                       onClick={() => handleEditApartment(apt)}
-                      className="text-blue-600 hover:underline flex items-center gap-1 text-xs"
+                      className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1 text-xs"
                     >
                       <Pencil className="w-3 h-3" /> Edit
                     </button>
-                    <button className="text-red-600 hover:underline flex items-center gap-1 text-xs">
+                    <button 
+                      className="text-red-600 hover:underline cursor-pointer flex items-center gap-1 text-xs"
+                      onClick={() => handleDeleteClick(apt)}
+                    >
                       <Trash2 className="w-3 h-3" /> Delete
                     </button>
                   </div>
@@ -276,11 +339,14 @@ export default function ApartmentsManagementPage() {
             <div className="flex gap-4 mt-2">
               <button
                 onClick={() => handleEditApartment(apt)}
-                className="flex-1 bg-[#f3f4f6] text-[#374151] text-sm py-2 rounded-md flex items-center justify-center gap-1"
+                className="flex-1 bg-[#f3f4f6] text-[#374151] cursor-pointer text-sm py-2 rounded-md flex items-center justify-center gap-1"
               >
                 <Pencil className="w-4 h-4" /> Edit
               </button>
-              <button className="flex-1 bg-[#fef2f2] text-[#dc2626] text-sm py-2 rounded-md flex items-center justify-center gap-1">
+              <button 
+                className="flex-1 bg-[#fef2f2] text-[#dc2626] cursor-pointer text-sm py-2 rounded-md flex items-center justify-center gap-1"
+                onClick={() => handleDeleteClick(apt)}
+              >
                 <Trash2 className="w-4 h-4" /> Delete
               </button>
             </div>
@@ -299,6 +365,55 @@ export default function ApartmentsManagementPage() {
           <button className="px-3 py-1 border rounded">Next</button>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalState.open && (
+        <div className="fixed inset-0  flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="flex justify-between items-center p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-900 cursor-pointer">Delete Apartment</h3>
+              <button
+                onClick={handleCloseDeleteModal}
+                disabled={deleteModalState.isDeleting}
+                className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <p className="text-sm text-gray-600 mb-4">
+                Are you sure you want to delete <span className="font-semibold">"{deleteModalState.apartmentName}"</span>? 
+                This action cannot be undone.
+              </p>
+              
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={handleCloseDeleteModal}
+                  disabled={deleteModalState.isDeleting}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={deleteModalState.isDeleting}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {deleteModalState.isDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Apartment'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AddEditApartmentModal 
         open={modalState.open}

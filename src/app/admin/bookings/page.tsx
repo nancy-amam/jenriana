@@ -36,7 +36,7 @@ export default function AdminBookingPage() {
   return (
     <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
       {/* Search Card */}
-      <div className="w-full max-w-[1090px] h-[82px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 mb-6 mt-[-20px]">
+      <div className="w-full max-w-[1200px] h-[82px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 mb-6 mt-[-20px]">
         <input
           type="text"
           placeholder="Search by booking name or ID"
@@ -47,7 +47,7 @@ export default function AdminBookingPage() {
       </div>
 
       {/* Desktop Table */}
-      <div className=" hidden lg:block w-full max-w-[1090px] bg-white rounded-lg shadow-md p-4">
+      <div className=" hidden lg:block w-full max-w-[1200px] bg-white rounded-lg shadow-md p-4">
         <table className="w-full text-sm text-left ">
           <thead className="text-xs text-[#4b5566] uppercase ">
             <tr>
@@ -159,7 +159,7 @@ export default function AdminBookingPage() {
       </div>
 
       {/* Pagination */}
-      <div className="w-full max-w-[1090px] bottom-0   flex flex-col sm:flex-row items-center justify-between mt-6 text-sm text-gray-500">
+      <div className="w-full max-w-[1200px] bottom-0   flex flex-col sm:flex-row items-center justify-between mt-6 text-sm text-gray-500">
         <span className="mb-2 sm:mb-0">Showing 1 to 10 of 20 bookings</span>
         <div className="flex gap-2">
           <button className="px-3 py-1 border rounded">Prev</button>
