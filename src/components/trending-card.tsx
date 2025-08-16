@@ -1,12 +1,15 @@
-import Image from "next/image"
-import { StarIcon } from "lucide-react"
-import type { Apartment } from "@/lib/interface"
+import Image from "next/image";
+import { StarIcon } from "lucide-react";
+import type { Apartment } from "@/lib/interface";
 
 interface TrendingApartmentCardProps {
-  apartment: Apartment
+  apartment: Apartment;
 }
 
 export function TrendingApartmentCard({ apartment }: TrendingApartmentCardProps) {
+  // Default to 4.8 if rating is undefined or not a number
+  const displayRating = typeof apartment.rating === "number" && !isNaN(apartment.rating) ? apartment.rating.toFixed(1) : "4.8";
+
   return (
     <div className="w-[313px] h-[464px] flex-shrink-0 rounded-[20px] shadow-lg overflow-hidden bg-white">
       <div className="w-full h-[332px] overflow-hidden rounded-t-[20px]">
@@ -25,10 +28,10 @@ export function TrendingApartmentCard({ apartment }: TrendingApartmentCardProps)
           <span className="text-base text-[#1e1e1e] font-normal">{apartment.price}</span>
           <div className="flex items-center gap-1">
             <StarIcon className="h-4 w-4 text-amber-400 fill-amber-400" />
-            <span className="text-sm font-medium">{apartment.rating.toFixed(1)}</span>
+            <span className="text-sm font-medium">{displayRating}</span>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

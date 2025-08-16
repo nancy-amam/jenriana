@@ -1,12 +1,12 @@
 'use client';
 
-import { Pencil, Trash2, MapPin, BedDouble, DollarSign, Users, Bath, X, Home } from 'lucide-react';
+import { Pencil, Trash2, MapPin, BedDouble, DollarSign, Users, Bath, X, Home, Plus } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import AddEditApartmentModal from '../components/add-apartment';
-import { getApartments } from '@/services/api-services';
-import { deleteApartment } from '@/services/api-services';
+import { getApartments, deleteApartment } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
+import { useApartmentModal } from '@/context/apartment-context'
 
 type Apartment = {
   _id: string;
@@ -27,26 +27,6 @@ type Apartment = {
   __v?: number;
 };
 
-interface ApartmentData {
-  name: string;
-  location: string;
-  address: string;
-  pricePerNight: number;
-  rooms: number;
-  bathrooms: number;
-  maxGuests: number;
-  features: string[];
-  rules: string[];
-  gallery: string[];
-  isTrending: boolean;
-}
-
-type ModalState = {
-  open: boolean;
-  editMode: boolean;
-  apartmentData: (ApartmentData & { id?: string }) | undefined;
-};
-
 type DeleteModalState = {
   open: boolean;
   apartmentId: string | null;
@@ -55,22 +35,16 @@ type DeleteModalState = {
 };
 
 export default function ApartmentsManagementPage() {
-  const [modalState, setModalState] = useState<ModalState>({
-    open: false,
-    editMode: false,
-    apartmentData: undefined,
-  });
-
+  const { modalState, openAddModal, openEditModal, closeModal } = useApartmentModal();
+  const [apartments, setApartments] = useState<Apartment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<null | string>(null);
   const [deleteModalState, setDeleteModalState] = useState<DeleteModalState>({
     open: false,
     apartmentId: null,
     apartmentName: '',
     isDeleting: false,
   });
-
-  const [apartments, setApartments] = useState<Apartment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<null | string>(null);
 
   useEffect(() => {
     const fetchApartments = async () => {
@@ -90,45 +64,6 @@ export default function ApartmentsManagementPage() {
     fetchApartments();
   }, []);
 
-  const handleAddApartment = () => {
-    setModalState({
-      open: true,
-      editMode: false,
-      apartmentData: undefined,
-    });
-  };
-
-  const handleEditApartment = (apartment: Apartment) => {
-    const transformedApartment: ApartmentData & { id?: string } = {
-      id: apartment._id,
-      name: apartment.name,
-      location: apartment.location,
-      address: apartment.address || '',
-      pricePerNight: apartment.pricePerNight,
-      rooms: apartment.rooms,
-      bathrooms: apartment.bathrooms || 0,
-      maxGuests: apartment.maxGuests || 1,
-      features: apartment.features || [],
-      rules: apartment.rules || [],
-      gallery: apartment.gallery || [],
-      isTrending: apartment.isTrending || false,
-    };
-
-    setModalState({
-      open: true,
-      editMode: true,
-      apartmentData: transformedApartment,
-    });
-  };
-
-  const handleCloseModal = () => {
-    setModalState({
-      open: false,
-      editMode: false,
-      apartmentData: undefined,
-    });
-  };
-
   const handleSuccess = async () => {
     try {
       const response = await getApartments();
@@ -136,10 +71,9 @@ export default function ApartmentsManagementPage() {
     } catch (err: any) {
       console.error('Error refreshing apartments:', err);
     }
-    handleCloseModal();
+    closeModal();
   };
 
-  // Delete confirmation modal handlers
   const handleDeleteClick = (apartment: Apartment) => {
     setDeleteModalState({
       open: true,
@@ -165,18 +99,10 @@ export default function ApartmentsManagementPage() {
 
     try {
       setDeleteModalState(prev => ({ ...prev, isDeleting: true }));
-      
-      const response = await deleteApartment(deleteModalState.apartmentId);
-      
-      // Remove the deleted apartment from the list
+      await deleteApartment(deleteModalState.apartmentId);
       setApartments(prev => prev.filter(apt => apt._id !== deleteModalState.apartmentId));
-      
-      // Close the modal
       handleCloseDeleteModal();
-      
-      // You can show a success message here if needed
-      console.log('Apartment deleted successfully:', response);
-      
+      console.log('Apartment deleted successfully');
     } catch (err: any) {
       console.error('Error deleting apartment:', err);
       alert(err.message || 'Failed to delete apartment');
@@ -187,8 +113,8 @@ export default function ApartmentsManagementPage() {
 
   if (loading) {
     return (
-        <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
-         <ApartmentLoadingPage />
+      <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
+        <ApartmentLoadingPage />
       </div>
     );
   }
@@ -211,6 +137,7 @@ export default function ApartmentsManagementPage() {
           placeholder="Search by apartment name or location"
           className="w-[90%] p-3 rounded-[8px] border border-[#d1d5db]/30 text-sm outline-none"
         />
+       
       </div>
 
       <div className="hidden md:block w-full max-w-[1200px] bg-white shadow-md rounded-lg p-4 mt-10 overflow-x-auto">
@@ -271,7 +198,20 @@ export default function ApartmentsManagementPage() {
                 <td className="py-3">
                   <div className="flex gap-2 items-center">
                     <button 
-                      onClick={() => handleEditApartment(apt)}
+                      onClick={() => openEditModal({
+                        id: apt._id,
+                        name: apt.name,
+                        location: apt.location,
+                        address: apt.address || '',
+                        pricePerNight: apt.pricePerNight,
+                        rooms: apt.rooms,
+                        bathrooms: apt.bathrooms || 0,
+                        maxGuests: apt.maxGuests || 1,
+                        features: apt.features || [],
+                        rules: apt.rules || [],
+                        gallery: apt.gallery || [],
+                        isTrending: apt.isTrending || false,
+                      })}
                       className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1 text-xs"
                     >
                       <Pencil className="w-3 h-3" /> Edit
@@ -338,7 +278,20 @@ export default function ApartmentsManagementPage() {
             </div>
             <div className="flex gap-4 mt-2">
               <button
-                onClick={() => handleEditApartment(apt)}
+                onClick={() => openEditModal({
+                  id: apt._id,
+                  name: apt.name,
+                  location: apt.location,
+                  address: apt.address || '',
+                  pricePerNight: apt.pricePerNight,
+                  rooms: apt.rooms,
+                  bathrooms: apt.bathrooms || 0,
+                  maxGuests: apt.maxGuests || 1,
+                  features: apt.features || [],
+                  rules: apt.rules || [],
+                  gallery: apt.gallery || [],
+                  isTrending: apt.isTrending || false,
+                })}
                 className="flex-1 bg-[#f3f4f6] text-[#374151] cursor-pointer text-sm py-2 rounded-md flex items-center justify-center gap-1"
               >
                 <Pencil className="w-4 h-4" /> Edit
@@ -358,17 +311,14 @@ export default function ApartmentsManagementPage() {
         <span className="mb-2 sm:mb-0">Showing 1 to {apartments.length} of {apartments.length} apartments</span>
         <div className="flex gap-2">
           <button className="px-3 py-1 border rounded">Prev</button>
-          <button className="px-3 py-1 border rounded bg-black text-white">
-            1
-          </button>
+          <button className="px-3 py-1 border rounded bg-black text-white">1</button>
           <button className="px-3 py-1 border rounded">2</button>
           <button className="px-3 py-1 border rounded">Next</button>
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
       {deleteModalState.open && (
-        <div className="fixed inset-0  flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center p-6 border-b">
               <h3 className="text-lg font-semibold text-gray-900 cursor-pointer">Delete Apartment</h3>
@@ -380,13 +330,11 @@ export default function ApartmentsManagementPage() {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            
             <div className="p-6">
               <p className="text-sm text-gray-600 mb-4">
                 Are you sure you want to delete <span className="font-semibold">"{deleteModalState.apartmentName}"</span>? 
                 This action cannot be undone.
               </p>
-              
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={handleCloseDeleteModal}
@@ -417,7 +365,7 @@ export default function ApartmentsManagementPage() {
 
       <AddEditApartmentModal 
         open={modalState.open}
-        onClose={handleCloseModal}
+        onClose={closeModal}
         onSuccess={handleSuccess}
         editMode={modalState.editMode}
         apartmentData={modalState.apartmentData}

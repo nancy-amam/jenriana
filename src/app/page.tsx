@@ -1,12 +1,67 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import { ApartmentCard } from "@/components/apartment-card";
-import { TestimonialCard } from "@/components/testimonial-card";
-import { TrendingApartmentCard } from "@/components/trending-card";
-import { featuredApartments, locationFeatures, testimonials, trendingApartments } from "@/lib/dummy-data";
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { getApartments } from '@/services/api-services';
+import { ApartmentCard } from '@/components/apartment-card';
+import { TestimonialCard } from '@/components/testimonial-card';
+import { TrendingApartmentCard } from '@/components/trending-card';
+import ApartmentLoadingPage from '@/components/loading';
+import { locationFeatures, testimonials } from '@/lib/dummy-data';
+
+interface Apartment {
+  _id: string;
+  name: string;
+  location: string;
+  pricePerNight: number;
+  ratings?: number;
+  maxGuests?: number;
+  rooms?: number;
+  bathrooms?: number;
+  gallery?: string[];
+  isTrending: boolean;
+}
 
 export default function HomePage() {
+  const [featuredApartments, setFeaturedApartments] = useState<Apartment[]>([]);
+  const [trendingApartments, setTrendingApartments] = useState<Apartment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchApartments = async () => {
+    try {
+      setLoading(true);
+      const response = await getApartments();
+      const apartments: Apartment[] = response.data || [];
+
+      // Select 5 random apartments for Featured Listings
+      const shuffled = [...apartments].sort(() => Math.random() - 0.5);
+      const selectedFeatured = shuffled.slice(0, 5);
+
+      // Select 4 random trending apartments (isTrending: true)
+      let trending = apartments.filter((apt) => apt.isTrending);
+      if (trending.length === 0) {
+        // Fallback: select 4 random apartments if no trending apartments
+        trending = [...apartments].sort(() => Math.random() - 0.5).slice(0, 4);
+      } else {
+        trending = [...trending].sort(() => Math.random() - 0.5).slice(0, 4);
+      }
+
+      setFeaturedApartments(selectedFeatured);
+      setTrendingApartments(trending);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch apartments');
+      console.error('Error fetching apartments:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchApartments();
+  }, []);
+
   return (
     <main>
       {/* Hero Section */}
@@ -16,7 +71,7 @@ export default function HomePage() {
           backgroundImage: "url('/images/hero-bg.png')",
         }}
       >
-        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="absolute inset-0 bg-black/80"></div>
         <div className="relative z-10 h-full flex flex-col justify-end pb-6 px-4 md:px-16 mb-5">
           <div className="flex flex-col items-start text-white mb-6 md:mb-[160px]">
             <h1 className="text-[30px] md:text-[45px] font-bold">
@@ -28,7 +83,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* Search Bar */}
       <div className="mt-10 md:-mt-[170px] px-4 md:px-16 z-20 relative">
         <div className="bg-white text-[#1e1e1e] rounded-xl shadow-lg p-4 md:p-6 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
@@ -82,8 +136,6 @@ export default function HomePage() {
         <h2 className="text-[28px] md:text-[36px] font-medium mb-6 md:mb-8 text-[#1e1e1e] text-left">
           Explore Features
         </h2>
-
-        {/* Mobile: Horizontal scroll */}
         <div className="md:hidden flex gap-4 overflow-x-auto no-scrollbar">
           {locationFeatures.map((feature, idx) => (
             <div key={idx} className="min-w-[260px] flex-shrink-0 rounded-[20px] overflow-hidden">
@@ -102,10 +154,7 @@ export default function HomePage() {
             </div>
           ))}
         </div>
-
-        {/* Desktop: Asymmetric grid */}
         <div className="space-y-6 hidden md:block">
-          {/* First row: 1 col + 1 col + 2 col */}
           <div className="grid grid-cols-4 gap-6">
             <div className="col-span-1">
               <div className="relative w-full h-[323px]">
@@ -150,8 +199,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-
-          {/* Second row: 2 col + 1 col + 1 col */}
           <div className="grid grid-cols-4 gap-6">
             <div className="col-span-2">
               <div className="relative w-full h-[323px]">
@@ -204,15 +251,34 @@ export default function HomePage() {
         <h2 className="text-[28px] md:text-[36px] font-medium mb-6 md:mb-8 text-[#1e1e1e] text-left">
           Featured Listings
         </h2>
-        <div className="flex overflow-x-auto pb-4 space-x-4 no-scrollbar">
-          {featuredApartments.map((apartment) => (
-            <ApartmentCard
-              key={apartment.id}
-              {...apartment}
-              price={apartment.price.toLocaleString("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 })}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <ApartmentLoadingPage />
+        ) : error ? (
+          <div className="p-4 text-center text-red-500">
+            <p>Error: {error}</p>
+          </div>
+        ) : featuredApartments.length === 0 ? (
+          <div className="p-4 text-center">
+            <p>No featured apartments available.</p>
+          </div>
+        ) : (
+          <div className="flex overflow-x-auto pb-4 space-x-4 no-scrollbar">
+            {featuredApartments.map((apartment) => (
+              <ApartmentCard
+                key={apartment._id}
+                id={apartment._id}
+                imageUrl={apartment.gallery?.[0] || '/placeholder.svg'}
+                name={apartment.name}
+                location={apartment.location}
+                price={`₦${apartment.pricePerNight.toLocaleString('en-NG', { maximumFractionDigits: 0 })}`}
+                rating={apartment.ratings || 0}
+                guests={apartment.maxGuests || 1}
+                beds={apartment.rooms || 1}
+                baths={apartment.bathrooms || 1}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Guest Testimonials */}
@@ -232,11 +298,33 @@ export default function HomePage() {
         <h2 className="text-[28px] md:text-[36px] font-medium mb-6 md:mb-8 text-[#1e1e1e] text-left">
           Trending This Week
         </h2>
-        <div className="flex overflow-x-auto gap-4 no-scrollbar">
-          {trendingApartments.map((apartment) => (
-            <TrendingApartmentCard key={apartment.id} apartment={apartment} />
-          ))}
-        </div>
+        {loading ? (
+          <ApartmentLoadingPage />
+        ) : error ? (
+          <div className="p-4 text-center text-red-500">
+            <p>Error: {error}</p>
+          </div>
+        ) : trendingApartments.length === 0 ? (
+          <div className="p-4 text-center">
+            <p>No trending apartments available.</p>
+          </div>
+        ) : (
+          <div className="flex overflow-x-auto gap-4 no-scrollbar">
+            {trendingApartments.map((apartment) => (
+              <TrendingApartmentCard
+                key={apartment._id}
+                apartment={{
+                  id: apartment._id,
+                  imageUrl: apartment.gallery?.[0] || '/placeholder.svg',
+                  name: apartment.name,
+                  location: apartment.location,
+                  price: `₦${apartment.pricePerNight.toLocaleString('en-NG', { maximumFractionDigits: 0 })}`,
+                  rating: apartment.ratings || 0,
+                }}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Contact Us Section */}

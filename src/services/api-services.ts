@@ -120,6 +120,34 @@ export async function getApartments(): Promise<any> {
   }
 }
 
+export async function getApartmentById(apartmentId: string): Promise<any> {
+  try {
+    if (!apartmentId?.trim()) {
+      throw new Error("Apartment ID is required");
+    }
+
+    console.log(`Fetching apartment with ID: ${apartmentId}`);
+
+    const response = await apiHandler(`/api/apartment/${apartmentId}`, {
+      method: "GET",
+    });
+
+    console.log("Apartment fetched successfully:", response);
+    return response;
+  } catch (error: any) {
+    console.error(`Failed to fetch apartment with ID ${apartmentId}:`, error);
+
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    throw new Error(
+      error.message ||
+        "Failed to fetch apartment. Please try again later."
+    );
+  }
+}
+
 export async function updateApartment(
   apartmentId: string,
   apartmentData: ApartmentData,
@@ -202,25 +230,28 @@ export async function updateApartment(
 }
 
 export async function deleteApartment(apartmentId: string): Promise<any> {
-     try {
-      if (!apartmentId?.trim()) {
-        throw new Error("Apartment ID is required for deletion")
-      }
+  try {
+    if (!apartmentId?.trim()) {
+      throw new Error("Apartment ID is required for deletion");
+    }
 
-         console.log(`Deleting apartment with ID: ${apartmentId}`);
+    console.log(`Deleting apartment with ID: ${apartmentId}`);
 
-       const response = await apiHandler(`/api/apartment/${apartmentId}`, {
-        method: 'DELETE',
-       }) 
-        console.log("Apartment deleted successfully:", response);
-       return response 
-     } catch (error: any) {
-       console.error('failed to delete apartment:', error);
+    const response = await apiHandler(`/api/apartment/${apartmentId}`, {
+      method: "DELETE",
+    });
 
-       if (error.status && error.message) {
-        throw error;
-       }
+    console.log("Apartment deleted successfully:", response);
+    return response;
+  } catch (error: any) {
+    console.error("Failed to delete apartment:", error);
 
-       throw new Error(error.message || 'failed to delete apartment. Please try again')
-     }
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    throw new Error(
+      error.message || "Failed to delete apartment. Please try again."
+    );
+  }
 }

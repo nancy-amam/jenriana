@@ -96,10 +96,10 @@ export async function GET(req: Request, { params }: RouteContext) {
   // Await params to get the actual values
   const { id } = await params;
 
-  const user = await getUserFromRequest();
-  if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
+  // const user = await getUserFromRequest();
+  // if (!user) {
+  //   return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  // }
   
   try {
     const { searchParams } = new URL(req.url);

@@ -24,54 +24,48 @@ export default function LoginPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setLoading(true)
-  setError(null)
-
-  try {
-    const res = await signIn(formData)
-    console.log('Sign in success:', res)
-    
-    // Store user data in localStorage
-    if (res.user) {
-      localStorage.setItem('user', JSON.stringify(res.user))
-      localStorage.setItem('userId', res.user.id)
-      localStorage.setItem('userRole', res.user.role)
-    }
-    
-    // Clear all form fields on success
-    setFormData({
-      email: '',
-      password: '',
-    })
-    
-    // Clear any existing errors
+    e.preventDefault()
+    setLoading(true)
     setError(null)
-    
-    // Redirect based on user role
-    if (res.user.role === 'admin') {
-      router.push('/admin') // Admin dashboard
-    } else {
-      router.push('/') // Regular user home
+
+    try {
+      const res = await signIn(formData)
+      console.log('Sign in success:', res)
+
+      // ✅ No need to store token manually — cookie is set automatically
+      // But you can keep minimal info for client-side logic
+      if (res.user) {
+        localStorage.setItem('userId', res.user.id)
+        localStorage.setItem('userRole', res.user.role)
+      }
+
+      // Clear form
+      setFormData({ email: '', password: '' })
+
+      // Redirect based on user role
+      if (res.user?.role === 'admin') {
+        router.push('/admin')
+      } else {
+        router.push('/')
+      }
+
+    } catch (err: any) {
+      console.error('Sign in failed:', err)
+      setError(err.message || 'Something went wrong')
+    } finally {
+      setLoading(false)
     }
-    
-  } catch (err: any) {
-    console.error('Sign in failed:', err)
-    setError(err.message || 'Something went wrong')
-  } finally {
-    setLoading(false)
   }
-}
 
   return (
     <div className="flex flex-col-reverse md:flex-row min-h-screen">
       {/* Left Section: Login Form */}
-      <div className="flex flex-col items-center justify-center p-8 md:p-16 w-full md:w-4/10 ">
+      <div className="flex flex-col items-center justify-center p-8 md:p-16 w-full md:w-4/10">
         <div className="w-full max-w-[448px] mx-auto">
-          <h1 className="text-[30px] font-normal text-[#111827] mb-2 text-center ">
+          <h1 className="text-[30px] font-normal text-[#111827] mb-2 text-center">
             Welcome back to Jenriana
           </h1>
-          <p className="text-base text-[#4b5563] mb-8 text-center ">
+          <p className="text-base text-[#4b5563] mb-8 text-center">
             Log in to access your bookings and saved apartments.
           </p>
 
@@ -101,7 +95,7 @@ export default function LoginPage() {
                 placeholder="Enter your password"
                 className="w-full h-[58px] rounded-lg border border-gray-300 px-4 py-2 pr-12 text-base placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
               />
-                <span
+              <span
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-[55px] -translate-y-1/2 cursor-pointer text-gray-500"
               >
@@ -126,7 +120,7 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          <p className="text-center text-[#4b5566] ">
+          <p className="text-center text-[#4b5566]">
             Don&apos;t have an account?{' '}
             <Link href="/sign-up" className="text-[#111827] hover:underline font-medium">
               Sign up
@@ -135,7 +129,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right Section: Image and Text (identical to signup page) */}
+      {/* Right Section: Image */}
       <div className="relative w-full md:w-7/10 h-[400px] md:h-screen overflow-hidden">
         <Image
           src="/images/image20.png"
@@ -144,18 +138,15 @@ export default function LoginPage() {
           className="object-cover"
           priority
         />
-
         <div className="absolute bottom-8 left-8 right-8 text-white flex flex-col justify-end">
-          <p className="text-lg font-normal ">
+          <p className="text-lg font-normal">
             Ikoyi Heights — Luxury Balcony with Lagoon View
           </p>
           <div className="flex justify-end gap-2">
             {[...Array(5)].map((_, i) => (
               <div
                 key={i}
-                className={`w-2 h-2 rounded-full ${
-                  i === 0 ? 'bg-white' : 'bg-gray-400'
-                }`}
+                className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-white' : 'bg-gray-400'}`}
               />
             ))}
           </div>
