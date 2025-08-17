@@ -47,7 +47,19 @@ export async function PUT(req: Request, { params }: RouteContext) {
 
     if (formData.has("features")) updateData.features = formData.getAll("features") as string[];
     if (formData.has("rules")) updateData.rules = formData.getAll("rules") as string[];
+    if (formData.get("addons")) {
+  const newAddons = JSON.parse(formData.get("addons") as string);
+  const merged = [
+    ...(existingApartment.addons || []),
+    ...newAddons
+  ];
 
+  // Remove duplicates by addon.name
+  updateData.addons = merged.filter(
+    (addon, index, self) =>
+      index === self.findIndex(a => a.name === addon.name)
+  );
+    }
     // Handle gallery uploads (merge with existing)
     const galleryFiles = formData.getAll("gallery") as File[];
     if (galleryFiles.length > 0) {

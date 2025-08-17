@@ -5,64 +5,206 @@ import connectDB from '../lib/mongodb';
 import Booking from '../../../models/bookings';
 import { getUserFromRequest } from '../lib/getUserFromRequest';
 import Apartment from '@/models/apartment';
-import { PaystackService } from '../lib/paystack.service';
+
+// export async function POST(req: NextRequest) {
+//   try {
+//     await connectDB();
+//     const user = await getUserFromRequest();
+//     if (!user) {
+//       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+//     }
+
+//     const { apartmentId, checkInDate, checkOutDate, guests, paymentMethod, selectedAddons = [] } =
+//       await req.json();
+
+//     if (!apartmentId || !checkInDate || !checkOutDate || !guests || !paymentMethod) {
+//       return NextResponse.json({ message: "Missing fields" }, { status: 400 });
+//     }
+
+//     // Fetch apartment
+//     const apartment = await Apartment.findById(apartmentId);
+//     if (!apartment) {
+//       return NextResponse.json({ message: "Apartment not found" }, { status: 404 });
+//     }
+
+//     // Calculate stay duration
+//     const checkIn = new Date(checkInDate);
+//     const checkOut = new Date(checkOutDate);
+//     const days = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+//     if (days <= 0) {
+//       return NextResponse.json({ message: "Invalid check-in/check-out dates" }, { status: 400 });
+//     }
+
+//     // Base cost
+//     const baseCost = days * apartment.pricePerNight;
+
+//     // Addons
+//     const addonsDetails: any[] = [];
+//     let addonsTotal = 0;
+
+//     for (const addonId of selectedAddons) {
+//       const addon = apartment.addons.find((a) => a?._id.toString() === addonId);
+//       if (!addon || !addon.active) continue;
+
+//       const total = addon.pricingType === "perNight" ? addon.price * days : addon.price;
+//       addonsTotal += total;
+
+//       addonsDetails.push({
+//         name: addon.name,
+//         price: addon.price,
+//         pricingType: addon.pricingType,
+//         total,
+//       });
+//     }
+
+//     // Charges
+//     const subtotal = baseCost + addonsTotal;
+//     const serviceCharge = subtotal * 0.05;
+//     const tax = subtotal * 0.1;
+//     const totalAmount = subtotal + serviceCharge + tax;
+
+//     // Create pending booking
+//     const booking = await Booking.create({
+//       userId: user._id,
+//       apartmentId,
+//       checkInDate,
+//       checkOutDate,
+//       guests,
+//       paymentMethod,
+//       addons: addonsDetails,
+//       serviceCharge,
+//       tax,
+//       totalAmount,
+//       status: "pending",
+//     });
+
+//     return NextResponse.json(
+//       {
+//         message: "Booking created. Proceed to checkout.",
+//         bookingId: booking._id,
+//         totalAmount,
+//       },
+//       { status: 201 }
+//     );
+//   } catch (error: any) {
+//     console.error("Booking error:", error);
+//     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+//   }
+// }
 
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
     const user = await getUserFromRequest();
-    const { apartmentId, checkInDate, checkOutDate, guests, paymentMethod } = await req.json();
+    if (!user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!apartmentId || !checkInDate || !checkOutDate || !guests || !paymentMethod) {
+    const formData = await req.formData();
+
+    // ✅ Extract fields from FormData
+    const apartmentId = formData.get("apartmentId") as string;
+    const checkInDate = formData.get("checkInDate") as string;
+    const checkOutDate = formData.get("checkOutDate") as string;
+    const guests = Number(formData.get("guests"));
+    const paymentMethod = formData.get("paymentMethod") as "card" | "bank";
+    const selectedAddons = formData.getAll("selectedAddons") as string[];
+
+    // 👇 New user details from form
+    const customerName = formData.get("customerName") as string;
+    const customerEmail = formData.get("customerEmail") as string;
+    const customerPhone = formData.get("customerPhone") as string;
+    const specialRequest = formData.get("specialRequest") as string | null;
+
+    if (
+      !apartmentId ||
+      !checkInDate ||
+      !checkOutDate ||
+      !guests ||
+      !paymentMethod ||
+      !customerName ||
+      !customerEmail ||
+      !customerPhone
+    ) {
       return NextResponse.json({ message: "Missing fields" }, { status: 400 });
     }
 
-    // Fetch apartment price
+    // Fetch apartment
     const apartment = await Apartment.findById(apartmentId);
     if (!apartment) {
       return NextResponse.json({ message: "Apartment not found" }, { status: 404 });
     }
 
-    // Calculate total amount
+    // Calculate stay duration
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
-    const timeDiff = checkOut.getTime() - checkIn.getTime();
-    if (timeDiff <= 0) {
-      return NextResponse.json({ message: 'Invalid check-in/check-out dates' }, { status: 400 });
+    const days = Math.ceil(
+      (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (days <= 0) {
+      return NextResponse.json({ message: "Invalid check-in/check-out dates" }, { status: 400 });
     }
-    const days = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-    const totalAmount = days * apartment.pricePerNight;
 
-    // Create booking in "pending" state
+    // Base cost
+    const baseCost = days * apartment.pricePerNight;
+
+    // Addons
+    const addonsDetails: any[] = [];
+    let addonsTotal = 0;
+    for (const addonId of selectedAddons) {
+      const addon = apartment.addons.find((a) => a?._id?.toString() === addonId);
+      if (!addon || !addon.active) continue;
+
+      const total = addon.pricingType === "perNight" ? addon.price * days : addon.price;
+      addonsTotal += total;
+      addonsDetails.push({
+        name: addon.name,
+        price: addon.price,
+        pricingType: addon.pricingType,
+        total,
+      });
+    }
+
+    // Charges
+    const subtotal = baseCost + addonsTotal;
+    const serviceCharge = subtotal * 0.05;
+    const tax = subtotal * 0.1;
+    const totalAmount = subtotal + serviceCharge + tax;
+
+    // Create booking
     const booking = await Booking.create({
-      userId: user?._id,
+      userId: user._id,
       apartmentId,
       checkInDate,
       checkOutDate,
       guests,
-      totalAmount,
       paymentMethod,
+      addons: addonsDetails,
+      serviceCharge,
+      tax,
+      totalAmount,
       status: "pending",
-    });
 
-    // Initialize Paystack payment
-    const paystack = new PaystackService();
-const transaction = await paystack.initializeTransaction({
-  email: user?.email as any,
-  amount: totalAmount,
-  callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/verify?bookingId=${booking._id}`
-});
+      // ✅ Store user details
+      customerName,
+      customerEmail,
+      customerPhone,
+      specialRequest,
+    });
 
     return NextResponse.json(
       {
-        message: "Booking created. Proceed to payment.",
+        message: "Booking created. Proceed to checkout.",
         bookingId: booking._id,
-        payment: transaction, // includes authorization_url
+        totalAmount,
       },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Booking error:", error);
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
