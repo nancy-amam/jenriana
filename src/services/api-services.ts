@@ -38,6 +38,19 @@ export async function addApartment(
     if (!apartmentData.maxGuests || apartmentData.maxGuests <= 0) {
       throw new Error("Max guests must be greater than 0");
     }
+    if (apartmentData.addons?.length) {
+      apartmentData.addons.forEach((addon, index) => {
+        if (!addon.name?.trim()) {
+          throw new Error(`Addon ${index + 1} name is required`);
+        }
+        if (!addon.price || addon.price <= 0) {
+          throw new Error(`Addon ${index + 1} price must be greater than 0`);
+        }
+        if (!addon.pricingType || !['perNight', 'oneTime'].includes(addon.pricingType)) {
+          throw new Error(`Addon ${index + 1} pricing type must be 'perNight' or 'oneTime'`);
+        }
+      });
+    }
 
     // Prepare FormData
     const formData = new FormData();
@@ -64,6 +77,11 @@ export async function addApartment(
       apartmentData.rules.forEach((rule) => {
         formData.append("rules", rule);
       });
+    }
+
+    // Append addons array
+    if (apartmentData.addons?.length) {
+      formData.append("addons", JSON.stringify(apartmentData.addons));
     }
 
     // Append images if provided
@@ -176,6 +194,19 @@ export async function updateApartment(
     if (!apartmentData.maxGuests || apartmentData.maxGuests <= 0) {
       throw new Error("Max guests must be greater than 0");
     }
+    if (apartmentData.addons?.length) {
+      apartmentData.addons.forEach((addon, index) => {
+        if (!addon.name?.trim()) {
+          throw new Error(`Addon ${index + 1} name is required`);
+        }
+        if (!addon.price || addon.price <= 0) {
+          throw new Error(`Addon ${index + 1} price must be greater than 0`);
+        }
+        if (!addon.pricingType || !['perNight', 'oneTime'].includes(addon.pricingType)) {
+          throw new Error(`Addon ${index + 1} pricing type must be 'perNight' or 'oneTime'`);
+        }
+      });
+    }
 
     // Prepare FormData for sending updated data
     const formData = new FormData();
@@ -189,18 +220,26 @@ export async function updateApartment(
     formData.append("maxGuests", String(apartmentData.maxGuests));
     formData.append("isTrending", String(apartmentData.isTrending || false));
 
+    // Append features array
     if (apartmentData.features?.length) {
       apartmentData.features.forEach((feature) => {
         formData.append("features", feature);
       });
     }
 
+    // Append rules array
     if (apartmentData.rules?.length) {
       apartmentData.rules.forEach((rule) => {
         formData.append("rules", rule);
       });
     }
 
+    // Append addons array
+    if (apartmentData.addons?.length) {
+      formData.append("addons", JSON.stringify(apartmentData.addons));
+    }
+
+    // Append images if provided
     if (images.length > 0) {
       images.forEach((file) => {
         formData.append("gallery", file);
@@ -209,7 +248,7 @@ export async function updateApartment(
 
     // Send request to update apartment
     const response = await apiHandler(`/api/apartment/${apartmentId}`, {
-      method: "PUT", // assuming PUT is used for full updates
+      method: "PUT",
       body: formData,
     });
 

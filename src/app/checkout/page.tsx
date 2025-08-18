@@ -1,47 +1,85 @@
-"use client";
+'use client';
 
-import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { services } from "@/lib/dummy-data"; // keep your services list for add-ons
-import Image from "next/image";
-import { format, addDays } from "date-fns";
-import { BedIcon, BathIcon } from "lucide-react";
-import Link from "next/link";
-import { Apartment } from "@/lib/interface";
-import { getApartmentById } from "@/services/api-services";
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
+import { format } from 'date-fns';
+import { BedIcon, BathIcon } from 'lucide-react';
+import Link from 'next/link';
+import { getApartmentById } from '@/services/api-services';
+
+// Define Apartment interface based on API response
+interface Addon {
+  _id: string;
+  name: string;
+  price: number;
+  pricingType: string;
+  active: boolean;
+}
+
+interface Apartment {
+  _id: string;
+  name: string;
+  location: string;
+  pricePerNight: number;
+  rooms: number;
+  bathrooms: number;
+  maxGuests: number;
+  features: string[];
+  gallery: string[];
+  rules: string[];
+  addons?: Addon[];
+  address: string;
+  averageRating: number | null;
+  isTrending: boolean;
+  ratings: any[];
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+  imageUrl?: string;
+  beds: number;
+  baths: number;
+}
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
-  const apartmentId = searchParams.get("apartmentId");
-  const nights = Number(searchParams.get("nights"));
-  const guests = Number(searchParams.get("guests"));
+  const apartmentId = searchParams.get('apartmentId');
+  const nights = Number(searchParams.get('nights'));
+  const guests = Number(searchParams.get('guests'));
+  const checkIn = searchParams.get('checkIn');
+  const checkOut = searchParams.get('checkOut');
+  const price = Number(searchParams.get('price')); // Get price from query params
 
   const [apartment, setApartment] = useState<Apartment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
-
   const [guestInfo, setGuestInfo] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    specialRequest: "",
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    specialRequest: '',
   });
 
   useEffect(() => {
     async function fetchApartment() {
       if (!apartmentId) {
-        setError("No apartment selected.");
+        setError('No apartment selected.');
         setLoading(false);
         return;
       }
       try {
         const res = await getApartmentById(apartmentId);
-        setApartment(res);
+        setApartment({
+          ...res,
+          beds: res.rooms,
+          baths: res.bathrooms,
+          imageUrl: res.gallery?.[0] || '/placeholder.svg', // Used for summary image
+        });
       } catch (err: any) {
-        console.error("CheckoutPage: Failed to fetch apartment:", err);
-        setError("Failed to load apartment details.");
+        console.error('CheckoutPage: Failed to fetch apartment:', err);
+        setError('Failed to load apartment details.');
       } finally {
         setLoading(false);
       }
@@ -57,7 +95,7 @@ function CheckoutContent() {
     );
   }
 
-  if (error || !apartment || isNaN(nights) || isNaN(guests)) {
+  if (error || !apartment || isNaN(nights) || isNaN(guests) || !checkIn || !checkOut || isNaN(price)) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-lg font-semibold">
         Invalid booking information
@@ -65,39 +103,39 @@ function CheckoutContent() {
     );
   }
 
-  const handleCheckboxChange = (serviceId: string) => {
+  const handleCheckboxChange = (addonId: string) => {
     setSelectedServices((prevSelected) =>
-      prevSelected.includes(serviceId)
-        ? prevSelected.filter((id) => id !== serviceId)
-        : [...prevSelected, serviceId]
+      prevSelected.includes(addonId)
+        ? prevSelected.filter((id) => id !== addonId)
+        : [...prevSelected, addonId]
     );
   };
 
   // Pricing logic
-  const basePrice = apartment.pricePerNight || 0;
+  const basePrice = price; // Use price from query params
   const totalCost = basePrice * nights;
   const serviceFee = 5000;
   const taxes = 0.075 * totalCost;
 
-  const selectedServicesTotal = selectedServices.reduce((sum, serviceId) => {
-    const service = services.find((s) => s.id === serviceId);
-    return sum + (service ? service.price : 0);
+  const selectedServicesTotal = selectedServices.reduce((sum, addonId) => {
+    const addon = apartment.addons?.find((a) => a._id === addonId);
+    return sum + (addon && addon.active ? addon.price : 0);
   }, 0);
 
   const grandTotal = totalCost + serviceFee + taxes + selectedServicesTotal;
 
-  const checkInDate = new Date();
-  const checkOutDate = addDays(checkInDate, nights);
-  const formattedCheckIn = format(checkInDate, "MMM d, yyyy");
-  const formattedCheckOut = format(checkOutDate, "MMM d, yyyy");
+  const checkInDate = new Date(checkIn);
+  const checkOutDate = new Date(checkOut);
+  const formattedCheckIn = format(checkInDate, 'MMM d, yyyy');
+  const formattedCheckOut = format(checkOutDate, 'MMM d, yyyy');
 
-  // Construct booking engine URL with real apartmentId + selected services
-  const bookingEngineUrl = `/booking-engine?apartmentId=${apartment.id}&nights=${nights}&guests=${guests}&selectedServices=${selectedServices.join(",")}`;
+  // Construct booking engine URL with real apartmentId + selected add-ons
+  const bookingEngineUrl = `/booking-engine?apartmentId=${apartment._id}&nights=${nights}&guests=${guests}&checkIn=${checkIn}&checkOut=${checkOut}&selectedServices=${selectedServices.join(',')}`;
 
   return (
     <div className="relative min-h-screen bg-black text-white px-4 py-12 md:px-16 overflow-hidden">
       <Image
-        src={apartment.imageUrl || "/placeholder.svg"}
+        src={apartment.gallery?.[0] || '/placeholder.svg'} // Use first gallery image as background
         alt="Apartment background"
         fill
         className="object-cover z-0"
@@ -111,11 +149,10 @@ function CheckoutContent() {
         <div className="flex flex-col md:flex-row gap-8 w-full items-start">
           {/* Guest Info */}
           <div className="bg-white text-black rounded-[12px] p-6 space-y-6 w-full md:flex-1 max-w-3xl">
-            <h2 className="text-2xl font-medium mb-2" style={{ color: "#111827" }}>
+            <h2 className="text-2xl font-medium mb-2" style={{ color: '#111827' }}>
               Guest Information
             </h2>
             <form className="space-y-5">
-              {/* Full Name */}
               <div className="space-y-1">
                 <label className="block text-base font-medium">Full Name</label>
                 <input
@@ -128,7 +165,6 @@ function CheckoutContent() {
                   className="w-full px-4 py-2 rounded border text-black"
                 />
               </div>
-              {/* Email */}
               <div className="space-y-1">
                 <label className="block text-base font-medium">Email Address</label>
                 <input
@@ -141,7 +177,6 @@ function CheckoutContent() {
                   className="w-full px-4 py-2 rounded border text-black"
                 />
               </div>
-              {/* Phone */}
               <div className="space-y-1">
                 <label className="block text-base font-medium">Phone Number</label>
                 <input
@@ -154,7 +189,6 @@ function CheckoutContent() {
                   className="w-full px-4 py-2 rounded border text-black"
                 />
               </div>
-              {/* Address */}
               <div className="space-y-1">
                 <label className="block text-base font-medium">Residential Address</label>
                 <input
@@ -167,7 +201,6 @@ function CheckoutContent() {
                   className="w-full px-4 py-2 rounded border text-black"
                 />
               </div>
-              {/* Special Request */}
               <div className="space-y-1">
                 <label className="block text-base font-medium">
                   Special Request (Optional)
@@ -185,7 +218,6 @@ function CheckoutContent() {
                   className="w-full px-4 py-2 rounded border text-black"
                 ></textarea>
               </div>
-              {/* Optional Services */}
               <div className="px-4 mb-10">
                 <h2 className="text-[20px] font-normal text-[#111827] text-left mb-2">
                   Enhance Your Stay
@@ -194,46 +226,53 @@ function CheckoutContent() {
                   Select optional services to upgrade your experience
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {services.map((service) => (
-                    <div
-                      key={service.id}
-                      className="flex justify-between items-center border border-gray-200 rounded-[12px] p-6"
-                    >
-                      <div className="flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          id={service.id}
-                          checked={selectedServices.includes(service.id)}
-                          onChange={() => handleCheckboxChange(service.id)}
-                          className="mt-1 w-5 h-5"
-                        />
-                        <div className="flex flex-col">
-                          <label
-                            htmlFor={service.id}
-                            className="font-normal text-base text-[#111827] cursor-pointer"
-                          >
-                            {service.name}
-                          </label>
-                          <p className="text-sm text-[#4b5566]">
-                            {service.description}
-                          </p>
+                  {apartment.addons && apartment.addons.length > 0 ? (
+                    apartment.addons
+                      .filter((addon) => addon.active)
+                      .map((addon) => (
+                        <div
+                          key={addon._id}
+                          className="flex justify-between items-center border border-gray-200 rounded-[12px] p-6"
+                        >
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              id={addon._id}
+                              checked={selectedServices.includes(addon._id)}
+                              onChange={() => handleCheckboxChange(addon._id)}
+                              className="mt-1 w-5 h-5"
+                            />
+                            <div className="flex flex-col">
+                              <label
+                                htmlFor={addon._id}
+                                className="font-normal text-base text-[#111827] cursor-pointer"
+                              >
+                                {addon.name}
+                              </label>
+                              <p className="text-sm text-[#4b5566]">
+                                {addon.pricingType === 'perNight'
+                                  ? 'Per night'
+                                  : 'One-time charge'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-base font-normal text-[#111827] flex-shrink-0 ml-4">
+                            ₦{addon.price.toLocaleString()}
+                            <span className="text-sm font-normal text-[#4b5566]">
+                              {addon.pricingType === 'perNight' ? '/night' : ''}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-base font-normal text-[#111827] flex-shrink-0 ml-4">
-                        ₦{service.price.toLocaleString()}
-                        <span className="text-sm font-normal text-[#4b5566]">
-                          {service.unit}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                      ))
+                  ) : (
+                    <p className="text-sm text-[#4b5563]">No add-ons available.</p>
+                  )}
                 </div>
               </div>
             </form>
           </div>
           {/* Booking Summary */}
           <div className="bg-white text-black rounded-[12px] p-6 space-y-6 w-full md:w-[424px] max-w-full">
-            {/* Apartment Info */}
             <div className="flex gap-4">
               {apartment.imageUrl && (
                 <Image
@@ -265,7 +304,6 @@ function CheckoutContent() {
                 </div>
               </div>
             </div>
-            {/* Check-in / Check-out */}
             <div className="flex justify-between text-black font-normal text-sm pt-4">
               <div>
                 <p className="text-[#6b7280] font-normal">Check-in</p>
@@ -276,8 +314,13 @@ function CheckoutContent() {
                 <p>{formattedCheckOut}</p>
               </div>
             </div>
-            {/* Pricing Breakdown */}
             <div className="text-sm text-[#6b7280] space-y-2 font-normal pt-4">
+              <div className="flex justify-between">
+                <span>Apartment Price (per night)</span>
+                <span className="text-[#111827]">
+                  ₦{basePrice.toLocaleString()}
+                </span>
+              </div>
               <div className="flex justify-between">
                 <span>
                   ₦{basePrice.toLocaleString()} x {nights} night(s)
@@ -292,13 +335,13 @@ function CheckoutContent() {
                   ₦{serviceFee.toLocaleString()}
                 </span>
               </div>
-              {selectedServices.map((serviceId) => {
-                const service = services.find((s) => s.id === serviceId);
-                return service ? (
-                  <div key={service.id} className="flex justify-between">
-                    <span>{service.name}</span>
+              {selectedServices.map((addonId) => {
+                const addon = apartment.addons?.find((a) => a._id === addonId);
+                return addon ? (
+                  <div key={addon._id} className="flex justify-between">
+                    <span>{addon.name} {addon.pricingType === 'perNight' ? '(Per night)' : '(One-time)'}</span>
                     <span className="text-[#111827]">
-                      ₦{service.price.toLocaleString()}
+                      ₦{addon.price.toLocaleString()}
                     </span>
                   </div>
                 ) : null;

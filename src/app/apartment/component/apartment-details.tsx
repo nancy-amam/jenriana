@@ -1,40 +1,85 @@
-"use client";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { BathIcon, BedIcon, MapPinIcon, UsersIcon, StarIcon, AirVent, Wifi, Utensils, Laptop, Dumbbell, ParkingSquare, ShieldCheck, Tv, Ban, Baby, Info } from 'lucide-react';
-import { Apartment } from "@/lib/interface";
+'use client';
+
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import {
+  BathIcon,
+  BedIcon,
+  MapPinIcon,
+  UsersIcon,
+  StarIcon,
+  AirVent,
+  Wifi,
+  Utensils,
+  Tv,
+  Laptop,
+  Dumbbell,
+  ParkingSquare,
+  ShieldCheck,
+  Ban,
+  Baby,
+  Info,
+  Battery,
+} from 'lucide-react';
+import { Apartment } from '@/lib/interface';
 
 export default function ApartmentDetails({ apartment }: { apartment: Apartment }) {
   const router = useRouter();
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
+  const [checkIn, setCheckIn] = useState('');
+  const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(1);
 
   const handleBooking = () => {
     if (!checkIn || !checkOut) {
-      alert("Please select both check-in and check-out dates.");
+      alert('Please select both check-in and check-out dates.');
       return;
     }
-    const nights =
-      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
-      (1000 * 60 * 60 * 24);
+    const nights = (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24);
     if (nights <= 0) {
-      alert("Check-out date must be after check-in date.");
+      alert('Check-out date must be after check-in date.');
       return;
     }
-    if (!guests || guests <= 0) {
-      alert("Please select number of guests.");
+    if (!guests || guests <= 0 || guests > apartment.maxGuests) {
+      alert(`Please select a valid number of guests (max ${apartment.maxGuests}).`);
       return;
     }
-    const price = parseFloat(apartment.price.toString());
+    const price = apartment.pricePerNight;
     if (isNaN(price)) {
-      alert("Invalid apartment price.");
+      alert('Invalid apartment price.');
       return;
     }
     router.push(
-      `/checkout?apartmentId=${apartment.id}&nights=${nights}&guests=${guests}&price=${price}`
+      `/checkout?apartmentId=${apartment._id}&nights=${nights}&guests=${guests}&price=${price}&checkIn=${checkIn}&checkOut=${checkOut}`
     );
+  };
+
+  // Map API features to icons and names, aligned with AddEditApartmentModal
+  const featureMapping = {
+    wifi: { name: 'WiFi', icon: Wifi },
+    parking: { name: 'Parking', icon: ParkingSquare },
+    gym: { name: 'Gym', icon: Dumbbell },
+    ac: { name: 'Air Conditioning', icon: AirVent },
+    kitchen: { name: 'Kitchen', icon: Utensils },
+    tv: { name: 'Smart TV', icon: Tv },
+    washing: { name: 'Washing Machine', icon: Laptop },
+    security: { name: '24/7 Security', icon: ShieldCheck },
+    'air-conditioning': { name: 'Air Conditioning', icon: AirVent },
+    'smart-tv': { name: 'Smart TV', icon: Tv },
+    'washing-machine': { name: 'Washing Machine', icon: Laptop },
+    '24-7-security': { name: '24/7 Security', icon: ShieldCheck },
+    generator: { name: 'Backup Generator', icon: Battery },
+  };
+
+  // Map API rules to icons and names
+  const ruleMapping = {
+    'no-smoking': { name: 'No smoking', icon: Ban, color: 'text-red-500' },
+    'no-parties': { name: 'No parties or events', icon: Ban, color: 'text-yellow-500' },
+    'pets-allowed': { name: 'Pets allowed', icon: Baby, color: 'text-green-500' },
+    'children-allowed': { name: 'Children allowed', icon: Baby, color: 'text-green-500' },
+    'do-not-exceed-guest-count': { name: 'Do not exceed booked guests count', icon: UsersIcon, color: 'text-blue-500' },
+    'max-guests-enforced': { name: 'Do not exceed booked guests count', icon: UsersIcon, color: 'text-blue-500' },
+    'check-in-3pm-11pm': { name: 'Check-in time: 3:00PM – 11:00PM', icon: Info, color: 'text-purple-500' },
   };
 
   return (
@@ -42,7 +87,7 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
       {/* Background Image Section */}
       <div className="relative w-full h-[841px] mb-6 md:mb-0">
         <Image
-          src={apartment.imageUrl || "/placeholder.svg"}
+          src={apartment.imageUrl || '/placeholder.svg'}
           alt={apartment.name}
           fill
           className="object-cover"
@@ -54,10 +99,10 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
             <p className="text-lg md:text-[20px] mt-2">{apartment.location}</p>
             <div className="flex mt-2 items-center gap-2 text-sm">
               <StarIcon className="w-4 h-4 text-yellow-400" />
-              <span className="text-[#d1d5db]">{apartment.rating} (views)</span>
+              <span className="text-[#d1d5db]">{apartment.averageRating} (views)</span>
             </div>
             <div className="text-2xl md:text-[30px] mt-2 font-normal">
-              ${apartment.price}<span className="text-sm"> / night</span>
+              ₦{apartment.pricePerNight.toLocaleString()}<span className="text-sm"> / night</span>
             </div>
           </div>
         </div>
@@ -68,7 +113,7 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
         <div className="bg-[#f1f1f1] text-[#1e1e1e] rounded-xl p-6 w-full border border-gray-200 shadow-md">
           <div className="flex mb-2 justify-center items-center mx-auto">
             <p className="text-[36px] text-[#111827] font-bold">
-              ${apartment.price} <span className="text-sm mb-5 text-gray-500">/ night</span>
+              ₦{apartment.pricePerNight.toLocaleString()} <span className="text-sm mb-5 text-gray-500">/ night</span>
             </p>
           </div>
           <div className="flex gap-2 mb-2 text-[#1e1e1e]">
@@ -83,16 +128,16 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
               onChange={(e) => setCheckOut(e.target.value)}
             />
           </div>
-          <label className="mb-2 text-sm text-[#1e1e1e]">Guest</label>
+          <label className="mb-2 text-sm text-[#1e1e1e]">Guests</label>
           <select
             className="border border-[#ffffff] rounded px-4 py-2 w-full"
             value={guests}
             onChange={(e) => setGuests(Number(e.target.value))}
           >
             <option value="">Select guests</option>
-            {[...Array(10)].map((_, i) => (
+            {[...Array(apartment.maxGuests)].map((_, i) => (
               <option key={i + 1} value={i + 1}>
-                {i + 1} Guest{i > 0 ? "s" : ""}
+                {i + 1} Guest{i > 0 ? 's' : ''}
               </option>
             ))}
           </select>
@@ -111,7 +156,7 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
         <div className="grid grid-cols-2 sm:grid-cols-4 mb-5 gap-8 p-6 text-[#111827] px-10 max-w-[1400px] mx-auto">
           <div className="border border-gray-200 rounded-[12px] p-4 flex flex-col items-center">
             <UsersIcon className="w-5 h-5 mb-1 text-[#111827]" />
-            <span className="text-sm font-medium">{apartment.guests} Guests</span>
+            <span className="text-sm font-medium">{apartment.maxGuests} Guests</span>
           </div>
           <div className="border border-gray-200 rounded-[12px] p-4 flex flex-col items-center">
             <BedIcon className="w-5 h-5 mb-1 text-[#111827]" />
@@ -131,23 +176,23 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
         <div className="px-6 max-w-[1400px] mx-auto mb-10">
           <h2 className="text-[36px] font-normal text-[#111827] mb-4">Apartment Gallery</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {apartment.galleryImages && apartment.galleryImages.length > 0 ? (
+            {apartment.gallery && apartment.gallery.length > 0 ? (
               <>
                 <div className="md:col-span-2">
                   <Image
-                    src={apartment.galleryImages[0].src || "/placeholder.svg"}
-                    alt={apartment.galleryImages[0].alt}
+                    src={apartment.gallery[0] || '/placeholder.svg'}
+                    alt={`${apartment.name} main image`}
                     width={700}
                     height={500}
                     className="w-full h-full object-cover rounded-lg"
                   />
                 </div>
                 <div className="flex flex-col gap-4">
-                  {apartment.galleryImages.slice(1).map((img) => (
+                  {apartment.gallery.slice(1).map((img, index) => (
                     <Image
-                      key={img.id}
-                      src={img.src || "/placeholder.svg"}
-                      alt={img.alt}
+                      key={index}
+                      src={img || '/placeholder.svg'}
+                      alt={`${apartment.name} image ${index + 2}`}
                       width={250}
                       height={190}
                       className="w-full h-auto object-cover rounded-lg"
@@ -165,45 +210,49 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
         <div className="max-w-[1400] mx-auto px-4 mb-10">
           <h2 className="text-[36px] font-normal text-[#111827] text-left mb-6">What This Apartment Offers</h2>
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(apartment.amenities || []).map((amenity) => {
-              const IconComponent = {
-                AirVent,
-                Wifi,
-                Utensils,
-                Tv,
-                Laptop,
-                Dumbbell,
-                ParkingSquare,
-                ShieldCheck,
-              }[amenity.icon];
-              const getColor = (iconName: string) => {
-                switch (iconName) {
-                  case "Wifi":
-                    return "text-blue-500";
-                  case "Utensils":
-                    return "text-red-500";
-                  case "Tv":
-                    return "text-purple-500";
-                  case "Laptop":
-                    return "text-indigo-500";
-                  case "Dumbbell":
-                    return "text-green-500";
-                  case "ParkingSquare":
-                    return "text-yellow-500";
-                  case "ShieldCheck":
-                    return "text-teal-500";
+            {apartment.features.map((feature) => {
+              const featureData = featureMapping[feature as keyof typeof featureMapping];
+              if (!featureData) {
+                console.warn(`Feature not mapped: ${feature}`);
+                return null;
+              }
+              const { name, icon: IconComponent } = featureData;
+              const getColor = (featureId: string) => {
+                switch (featureId) {
+                  case 'wifi':
+                    return 'text-green-500';
+                  case 'parking':
+                    return 'text-teal-500';
+                  case 'gym':
+                    return 'text-green-500';
+                  case 'ac':
+                  case 'air-conditioning':
+                    return 'text-blue-500';
+                  case 'kitchen':
+                    return 'text-orange-500';
+                  case 'tv':
+                  case 'smart-tv':
+                    return 'text-red-500';
+                  case 'washing':
+                  case 'washing-machine':
+                    return 'text-purple-500';
+                  case 'security':
+                  case '24-7-security':
+                    return 'text-indigo-500';
+                  case 'generator':
+                    return 'text-yellow-500';
                   default:
-                    return "text-gray-500";
+                    return 'text-gray-500';
                 }
               };
-              const colorClass = getColor(amenity.icon);
+              const colorClass = getColor(feature);
               return (
                 <div
-                  key={amenity.id}
+                  key={feature}
                   className="w-full h-[108px] border border-gray-200 rounded-[12px] p-6 flex flex-col items-center justify-center gap-2 text-center"
                 >
-                  {IconComponent && <IconComponent size={28} className={`${colorClass}`} />}
-                  <div className="text-sm text-gray-800">{amenity.name}</div>
+                  {IconComponent && <IconComponent size={28} className={colorClass} />}
+                  <div className="text-sm text-gray-800">{name}</div>
                 </div>
               );
             })}
@@ -216,7 +265,7 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="w-full h-[300px] rounded-lg overflow-hidden">
               <iframe
-                src={`https://www.google.com/maps?q=${encodeURIComponent(apartment.location)}&output=embed`}
+                src={`https://www.google.com/maps?q=${encodeURIComponent(apartment.address)}&output=embed`}
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
@@ -227,26 +276,24 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
             </div>
             <div className="flex flex-col gap-4">
               <h3 className="text-xl font-semibold mb-2">Things to know before booking</h3>
-              <div className="flex items-start gap-2 text-gray-800">
-                <Ban className="w-5 h-5 mt-1 text-red-500" />
-                <span>No smoking</span>
-              </div>
-              <div className="flex items-start gap-2 text-gray-800">
-                <Ban className="w-5 h-5 mt-1 text-yellow-500" />
-                <span>No parties or events</span>
-              </div>
-              <div className="flex items-start gap-2 text-gray-800">
-                <Baby className="w-5 h-5 mt-1 text-green-500" />
-                <span>Children allowed</span>
-              </div>
-              <div className="flex items-start gap-2 text-gray-800">
-                <UsersIcon className="w-5 h-5 mt-1 text-blue-500" />
-                <span>Do not exceed booked guests count</span>
-              </div>
-              <div className="flex items-start gap-2 text-gray-800">
-                <Info className="w-5 h-5 mt-1 text-purple-500" />
-                <span>Check-in time: 3:00PM – 11:00PM</span>
-              </div>
+              {apartment.rules.length > 0 ? (
+                apartment.rules.map((rule) => {
+                  const ruleData = ruleMapping[rule as keyof typeof ruleMapping];
+                  if (!ruleData) {
+                    console.warn(`Rule not mapped: ${rule}`);
+                    return null;
+                  }
+                  const { name, icon: IconComponent, color } = ruleData;
+                  return (
+                    <div key={rule} className="flex items-start gap-2 text-gray-800">
+                      <IconComponent className={`w-5 h-5 mt-1 ${color}`} />
+                      <span>{name}</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-gray-500">No rules specified.</p>
+              )}
             </div>
           </div>
         </div>

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { 
   X, 
@@ -16,7 +18,9 @@ import {
   Trash2,
   Upload,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Car, // New icon for Parking
+  Shield // New icon for 24/7 Security
 } from 'lucide-react';
 import { addApartment, updateApartment } from '@/services/api-services';
 import { ApartmentData } from '@/lib/interface';
@@ -107,7 +111,9 @@ export default function AddEditApartmentModal({
     { id: 'washing', name: 'Washing Machine', icon: WashingMachine },
     { id: 'generator', name: 'Generator', icon: Zap },
     { id: 'tv', name: 'Smart TV', icon: Tv },
-    { id: 'kitchen', name: 'Kitchen', icon: ChefHat }
+    { id: 'kitchen', name: 'Kitchen', icon: ChefHat },
+    { id: 'parking', name: 'Parking', icon: Car }, // New feature
+    { id: 'security', name: '24/7 Security', icon: Shield } // New feature
   ];
 
   const rulesList: Rule[] = [
@@ -125,7 +131,9 @@ export default function AddEditApartmentModal({
     'washing-machine': 'washing',
     'generator': 'generator',
     'smart-tv': 'tv',
-    'kitchen': 'kitchen'
+    'kitchen': 'kitchen',
+    'parking': 'parking', // New mapping
+    '24-7-security': 'security' // New mapping
   };
 
   const reverseFeatureMapping = {
@@ -134,18 +142,20 @@ export default function AddEditApartmentModal({
     'washing': 'washing-machine',
     'generator': 'generator',
     'tv': 'smart-tv',
-    'kitchen': 'kitchen'
+    'kitchen': 'kitchen',
+    'parking': 'parking', // New mapping
+    'security': '24-7-security' // New mapping
   };
 
-  // Rules mapping for API (updated to match backend)
+  // Rules mapping for API
   const rulesMapping = {
     'no-smoking': 'noSmoking',
     'no-parties': 'noParties',
     'pets-allowed': 'petsAllowed',
     'children-allowed': 'childrenAllowed',
-    'do-not-exceed-guest-count': 'maxGuests', // Updated to match backend
-    'max-guests-enforced': 'maxGuests', // Keep both for compatibility
-    'check-in-3pm-11pm': 'maxGuests' // This doesn't map to our UI, handle separately
+    'do-not-exceed-guest-count': 'maxGuests',
+    'max-guests-enforced': 'maxGuests',
+    'check-in-3pm-11pm': 'maxGuests'
   };
 
   // Initialize form with existing data in edit mode
@@ -185,7 +195,6 @@ export default function AddEditApartmentModal({
           if (ruleKey) {
             newRules[ruleKey as keyof RulesState] = true;
           }
-          // Handle the max guests rule specifically
           if (rule === 'do-not-exceed-guest-count' || rule === 'max-guests-enforced') {
             newRules.maxGuests = true;
           }
@@ -196,6 +205,18 @@ export default function AddEditApartmentModal({
       // Set existing images
       if (apartmentData.gallery) {
         setExistingImages(apartmentData.gallery);
+      }
+
+      // Set add-ons
+      if (apartmentData.addons) {
+        setAddOns(apartmentData.addons.map((addon, index) => ({
+          id: addon._id || Date.now() + index,
+          name: addon.name || '',
+          pricing: addon.pricingType || '',
+          description: '',
+          price: addon.price.toString() || '',
+          active: addon.active || true
+        })));
       }
 
       // Clear uploaded images when switching to edit mode
@@ -238,7 +259,9 @@ export default function AddEditApartmentModal({
       washing: 'text-purple-500',
       generator: 'text-yellow-500',
       tv: 'text-red-500',
-      kitchen: 'text-orange-500'
+      kitchen: 'text-orange-500',
+      parking: 'text-teal-500', // New color for Parking
+      security: 'text-indigo-500' // New color for 24/7 Security
     };
     return colors[featureId as keyof typeof colors] || 'text-gray-500';
   };
@@ -355,7 +378,7 @@ export default function AddEditApartmentModal({
       if (rules.noParties) rulesArray.push('no-parties');
       if (rules.petsAllowed) rulesArray.push('pets-allowed');
       if (rules.childrenAllowed) rulesArray.push('children-allowed');
-      if (rules.maxGuests) rulesArray.push('do-not-exceed-guest-count'); // Updated to match backend
+      if (rules.maxGuests) rulesArray.push('do-not-exceed-guest-count');
 
       const apartmentPayload: ApartmentData = {
         name: formData.name.trim(),
@@ -366,17 +389,16 @@ export default function AddEditApartmentModal({
         bathrooms: formData.bathrooms,
         maxGuests: formData.maxGuests,
         features: selectedFeatureNames,
-        gallery: existingImages, // Keep existing images, backend will handle new ones
+        gallery: existingImages,
         rules: rulesArray,
+        addons: addOns.map(addon => ({
+          name: addon.name,
+          price: parseFloat(addon.price) || 0,
+          pricingType: addon.pricing,
+          active: addon.active
+        })),
         isTrending: apartmentData?.isTrending || false
       };
-
-      // Debug: Log the apartment ID for updates
-      if (editMode && apartmentData?.id) {
-        console.log('Apartment ID for update:', apartmentData.id);
-        console.log('Clean apartment payload:', apartmentPayload);
-        console.log('Images being uploaded:', uploadedImages.length);
-      }
 
       let response;
       if (editMode && apartmentData?.id) {
@@ -685,14 +707,14 @@ export default function AddEditApartmentModal({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#4b5566] mb-1">
-                    Pricing
+                    Pricing type
                   </label>
                   <input
                     type="text"
                     value={addon.pricing}
                     onChange={(e) => !isLoading && updateAddOn(addon.id, 'pricing', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    placeholder="$0"
+                    placeholder="eg per/day"
                     disabled={isLoading}
                   />
                 </div>

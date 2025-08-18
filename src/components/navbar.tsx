@@ -6,13 +6,14 @@ import { Menu, X } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const isLoggedIn = typeof window !== 'undefined' && !!localStorage.getItem('userId');
 
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Apartments', href: '/apartment' },
     { name: 'Contact', href: '/contact-us' },
     { name: 'My Bookings', href: '/my-bookings' },
-    { name: 'Admin', href: '/admin'}
+    { name: 'Admin', href: '/admin' },
   ];
 
   return (
@@ -29,7 +30,7 @@ const Navbar = () => {
             <Link
               key={link.name}
               href={link.href}
-              className=" text-[#1e1e1e] hover:text-black transition font-medium"
+              className="text-[#1e1e1e] hover:text-black transition font-medium"
             >
               {link.name}
             </Link>
@@ -37,12 +38,14 @@ const Navbar = () => {
         </div>
 
         {/* Right: Book Now button */}
-        <Link
-          href="/sign-up"
-          className="hidden md:inline-block bg-black text-white px-5 py-2 rounded hover:bg-gray-900 transition text-sm font-medium"
-        >
-          Book Now
-        </Link>
+        {!isLoggedIn && (
+          <Link
+            href="/sign-up"
+            className="hidden md:inline-block bg-black text-white px-5 py-2 rounded hover:bg-gray-900 transition text-sm font-medium"
+          >
+            Book Now
+          </Link>
+        )}
 
         {/* Mobile Menu Button */}
         <button
@@ -55,24 +58,26 @@ const Navbar = () => {
 
       {/* Mobile Menu Dropdown */}
       {isOpen && (
-        <div className="md:hidden absolute top-8 left-0 w-full bg-white z-50  px-4 py-3 space-y-3">
+        <div className="md:hidden absolute top-8 left-0 w-full bg-white z-50 px-4 py-3 space-y-3">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               href={link.href}
-              className="block text-[#1e1e1e] "
+              className="block text-[#1e1e1e]"
               onClick={() => setIsOpen(false)}
             >
               {link.name}
             </Link>
           ))}
-          <Link
-            href="/sign-up"
-            className="block bg-[#212121] text-white px-4 py-2 rounded-lg text-center"
-            onClick={() => setIsOpen(false)}
-          >
-            Book Now
-          </Link>
+          {!isLoggedIn && (
+            <Link
+              href="/sign-up"
+              className="block bg-[#212121] text-white px-4 py-2 rounded-lg text-center"
+              onClick={() => setIsOpen(false)}
+            >
+              Book Now
+            </Link>
+          )}
         </div>
       )}
     </nav>
