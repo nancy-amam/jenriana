@@ -1,14 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/api/bookings/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '../lib/mongodb';
-import Booking from '../../../models/bookings';
-import { getUserFromRequest } from '../lib/getUserFromRequest';
-import Apartment from '@/models/apartment';
+import { getUserFromRequest } from "@/app/api/lib/getUserFromRequest";
+import connectDB from "@/app/api/lib/mongodb";
+import Apartment from "@/models/apartment";
+import { NextRequest, NextResponse } from "next/server";
+import Booking from '@/models/bookings';
 
-export async function POST(req: NextRequest) {
+
+interface RouteContext {
+  params: Promise<{ id: string }>
+}
+export async function POST(req: NextRequest, { params }: RouteContext) {
   try {
     await connectDB();
+
+    const { id } = await params;
     const user = await getUserFromRequest();
     if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -17,7 +22,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
 
     // ✅ Extract fields from FormData
-    const apartmentId = formData.get("apartmentId") as string;
+    // const apartmentId = formData.get("apartmentId") as string;
     const checkInDate = formData.get("checkInDate") as string;
     const checkOutDate = formData.get("checkOutDate") as string;
     const guests = Number(formData.get("guests"));
@@ -31,7 +36,7 @@ export async function POST(req: NextRequest) {
     const specialRequest = formData.get("specialRequest") as string | null;
 
     if (
-      !apartmentId ||
+    //   !apartmentId ||
       !checkInDate ||
       !checkOutDate ||
       !guests ||
@@ -44,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch apartment
-    const apartment = await Apartment.findById(apartmentId);
+    const apartment = await Apartment.findById(id);
     if (!apartment) {
       return NextResponse.json({ message: "Apartment not found" }, { status: 404 });
     }
@@ -102,7 +107,7 @@ export async function POST(req: NextRequest) {
     // Create booking
     const booking = await Booking.create({
       userId: user._id,
-      apartmentId,
+      apartmentId: id,
       checkInDate,
       checkOutDate,
       guests,
