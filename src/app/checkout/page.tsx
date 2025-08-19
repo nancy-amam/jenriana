@@ -7,13 +7,14 @@ import { format } from 'date-fns';
 import { BedIcon, BathIcon } from 'lucide-react';
 import Link from 'next/link';
 import { getApartmentById } from '@/services/api-services';
+import ApartmentLoadingPage from '@/components/loading';
 
 // Define Apartment interface based on API response
 interface Addon {
   _id: string;
   name: string;
   price: number;
-  pricingType: string;
+  pricingType: 'perNight' | 'oneTime';
   active: boolean;
 }
 
@@ -49,6 +50,7 @@ function CheckoutContent() {
   const checkIn = searchParams.get('checkIn');
   const checkOut = searchParams.get('checkOut');
   const price = Number(searchParams.get('price')); // Get price from query params
+  const passedImage = searchParams.get('image');
 
   const [apartment, setApartment] = useState<Apartment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,11 +73,12 @@ function CheckoutContent() {
       }
       try {
         const res = await getApartmentById(apartmentId);
+        console.log('CheckoutPage: Apartment data:', res.data);
         setApartment({
-          ...res,
-          beds: res.rooms,
-          baths: res.bathrooms,
-          imageUrl: res.gallery?.[0] || '/placeholder.svg', // Used for summary image
+          ...res.data,
+          beds: res.data.rooms,
+          baths: res.data.bathrooms,
+          imageUrl: decodeURIComponent(passedImage || res.data.gallery?.[0] || '/images/placeholder.svg'),
         });
       } catch (err: any) {
         console.error('CheckoutPage: Failed to fetch apartment:', err);
@@ -85,12 +88,12 @@ function CheckoutContent() {
       }
     }
     fetchApartment();
-  }, [apartmentId]);
+  }, [apartmentId, passedImage]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white">
-        Loading apartment details...
+        <ApartmentLoadingPage />
       </div>
     );
   }
@@ -119,7 +122,10 @@ function CheckoutContent() {
 
   const selectedServicesTotal = selectedServices.reduce((sum, addonId) => {
     const addon = apartment.addons?.find((a) => a._id === addonId);
-    return sum + (addon && addon.active ? addon.price : 0);
+    if (addon && addon.active) {
+      return sum + (addon.pricingType === 'perNight' ? addon.price * nights : addon.price);
+    }
+    return sum;
   }, 0);
 
   const grandTotal = totalCost + serviceFee + taxes + selectedServicesTotal;
@@ -129,16 +135,29 @@ function CheckoutContent() {
   const formattedCheckIn = format(checkInDate, 'MMM d, yyyy');
   const formattedCheckOut = format(checkOutDate, 'MMM d, yyyy');
 
+  // Map API pricingType to display text
+  const displayPricingType = (pricingType: string) => {
+    switch (pricingType) {
+      case 'perNight':
+        return 'Per night';
+      case 'oneTime':
+        return 'One-time';
+      default:
+        return pricingType;
+    }
+  };
+
   // Construct booking engine URL with real apartmentId + selected add-ons
-  const bookingEngineUrl = `/booking-engine?apartmentId=${apartment._id}&nights=${nights}&guests=${guests}&checkIn=${checkIn}&checkOut=${checkOut}&selectedServices=${selectedServices.join(',')}`;
+  const bookingEngineUrl = `/booking-engine?apartmentId=${apartment._id}&nights=${nights}&guests=${guests}&checkIn=${checkIn}&checkOut=${checkOut}&selectedServices=${selectedServices.join(',')}&image=${encodeURIComponent(apartment.imageUrl || '')}`;
 
   return (
     <div className="relative min-h-screen bg-black text-white px-4 py-12 md:px-16 overflow-hidden">
       <Image
-        src={apartment.gallery?.[0] || '/placeholder.svg'} // Use first gallery image as background
+        src={apartment.imageUrl}
         alt="Apartment background"
         fill
         className="object-cover z-0"
+        unoptimized
       />
       <div className="absolute inset-0 bg-black/80 z-10"></div>
       <div className="relative z-20 max-w-7xl mx-auto">
@@ -250,14 +269,12 @@ function CheckoutContent() {
                                 {addon.name}
                               </label>
                               <p className="text-sm text-[#4b5566]">
-                                {addon.pricingType === 'perNight'
-                                  ? 'Per night'
-                                  : 'One-time charge'}
+                                {displayPricingType(addon.pricingType)}
                               </p>
                             </div>
                           </div>
                           <div className="text-base font-normal text-[#111827] flex-shrink-0 ml-4">
-                            ₦{addon.price.toLocaleString()}
+                            ₦{(addon.pricingType === 'perNight' ? addon.price * nights : addon.price).toLocaleString()}
                             <span className="text-sm font-normal text-[#4b5566]">
                               {addon.pricingType === 'perNight' ? '/night' : ''}
                             </span>
@@ -277,28 +294,29 @@ function CheckoutContent() {
               {apartment.imageUrl && (
                 <Image
                   src={apartment.imageUrl}
-                  alt={apartment.name}
+                  alt={apartment.name || 'Apartment'}
                   width={120}
                   height={80}
                   className="rounded-md object-cover"
+                  unoptimized
                 />
               )}
-              <div>
-                <h3 className="text-sm text-[#111827] font-normal">
-                  {apartment.name}
+              <div className=' md:mt-5'>
+                <h3 className="text-base text-[#111827] font-normal">
+                  {apartment.name || 'Unknown Apartment'}
                 </h3>
-                <p className="text-sm text-[#4b5563]">{apartment.location}</p>
-                <div className="flex gap-3 mt-2">
+                <p className="text-base text-[#4b5563]">{apartment.location || 'Unknown Location'}</p>
+                <div className="flex gap-3 mt-2 md:mt-2">
                   <div className="p-1 flex gap-1 items-center">
                     <BedIcon className="w-5 h-5 mb-1 text-[#6b7280]" />
                     <span className="text-sm text-[#6b7280]">
-                      {apartment.beds} Beds
+                      {apartment.beds || 0} Beds
                     </span>
                   </div>
                   <div className="p-1 flex gap-1 items-center">
                     <BathIcon className="w-5 h-5 mb-1 text-[#6b7280]" />
                     <span className="text-sm text-[#6b7280]">
-                      {apartment.baths} Baths
+                      {apartment.baths || 0} Baths
                     </span>
                   </div>
                 </div>
@@ -339,9 +357,9 @@ function CheckoutContent() {
                 const addon = apartment.addons?.find((a) => a._id === addonId);
                 return addon ? (
                   <div key={addon._id} className="flex justify-between">
-                    <span>{addon.name} {addon.pricingType === 'perNight' ? '(Per night)' : '(One-time)'}</span>
+                    <span>{addon.name} ({displayPricingType(addon.pricingType)})</span>
                     <span className="text-[#111827]">
-                      ₦{addon.price.toLocaleString()}
+                      ₦{(addon.pricingType === 'perNight' ? addon.price * nights : addon.price).toLocaleString()}
                     </span>
                   </div>
                 ) : null;
@@ -376,7 +394,7 @@ export default function CheckoutPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center text-white">
-          Loading...
+          <ApartmentLoadingPage />
         </div>
       }
     >

@@ -151,6 +151,9 @@ export async function getApartmentById(apartmentId: string): Promise<any> {
     });
 
     console.log("Apartment fetched successfully:", response);
+    if (!response.success || !response.data) {
+      throw new Error("Invalid response from server");
+    }
     return response;
   } catch (error: any) {
     console.error(`Failed to fetch apartment with ID ${apartmentId}:`, error);

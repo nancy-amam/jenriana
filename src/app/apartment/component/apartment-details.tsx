@@ -49,9 +49,12 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
       alert('Invalid apartment price.');
       return;
     }
+
+      const image = encodeURIComponent(apartment.imageUrl || '/placeholder.svg');
+
     router.push(
-      `/checkout?apartmentId=${apartment._id}&nights=${nights}&guests=${guests}&price=${price}&checkIn=${checkIn}&checkOut=${checkOut}`
-    );
+    `/checkout?apartmentId=${apartment._id}&nights=${nights}&guests=${guests}&price=${price}&checkIn=${checkIn}&checkOut=${checkOut}&image=${image}`
+  );
   };
 
   // Map API features to icons and names, aligned with AddEditApartmentModal
@@ -109,47 +112,70 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
       </div>
 
       {/* Booking Card */}
-      <div className="relative z-10 mx-auto px-4 md:px-0 w-full md:absolute md:top-[460px] md:right-10 md:max-w-[460px]">
-        <div className="bg-[#f1f1f1] text-[#1e1e1e] rounded-xl p-6 w-full border border-gray-200 shadow-md">
-          <div className="flex mb-2 justify-center items-center mx-auto">
-            <p className="text-[36px] text-[#111827] font-bold">
-              ₦{apartment.pricePerNight.toLocaleString()} <span className="text-sm mb-5 text-gray-500">/ night</span>
-            </p>
-          </div>
-          <div className="flex gap-2 mb-2 text-[#1e1e1e]">
-            <input
-              type="date"
-              className="border border-[#ffffff] w-1/2 px-3 py-2 rounded-md text-sm"
-              onChange={(e) => setCheckIn(e.target.value)}
-            />
-            <input
-              type="date"
-              className="border border-[#ffffff] w-1/2 px-3 py-2 rounded-md text-sm"
-              onChange={(e) => setCheckOut(e.target.value)}
-            />
-          </div>
-          <label className="mb-2 text-sm text-[#1e1e1e]">Guests</label>
-          <select
-            className="border border-[#ffffff] rounded px-4 py-2 w-full"
-            value={guests}
-            onChange={(e) => setGuests(Number(e.target.value))}
-          >
-            <option value="">Select guests</option>
-            {[...Array(apartment.maxGuests)].map((_, i) => (
-              <option key={i + 1} value={i + 1}>
-                {i + 1} Guest{i > 0 ? 's' : ''}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={handleBooking}
-            className="mt-4 bg-black text-white w-full rounded-md py-2 hover:bg-gray-800 transition"
-          >
-            Book Now
-          </button>
-          <p className="text-xs text-[#6b7280] mt-2 text-center">No stress. No pressure. Cancel anytime.</p>
-        </div>
+     <div className="relative z-10 mx-auto px-4 md:px-0 w-full md:absolute md:top-[460px] md:right-10 md:max-w-[460px]">
+  <div className="bg-[#f1f1f1] text-[#1e1e1e] md:rounded-xl p-6 w-full md:border md:border-gray-200 md:shadow-md">
+    {/* Price */}
+    <div className="flex mb-2 justify-center items-center mx-auto">
+      <p className="text-[28px] md:text-[36px] text-[#111827] font-bold">
+        ₦{apartment.pricePerNight.toLocaleString()}{" "}
+        <span className="text-sm mb-5 text-gray-500">/ night</span>
+      </p>
+    </div>
+
+    {/* Dates */}
+    <div className="flex gap-2 mb-2 text-[#1e1e1e]">
+      <div className="w-1/2">
+        <label htmlFor="check-in" className="block text-base mb-2 md:mb-1 text-[#1e1e1e]">
+          Check In
+        </label>
+        <input
+          id="check-in"
+          type="date"
+          className="border border-[#ffffff] w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent text-sm"
+          onChange={(e) => setCheckIn(e.target.value)}
+        />
       </div>
+      <div className="w-1/2">
+        <label htmlFor="check-out" className="block text-sm mb-2 md:mb-1 text-[#1e1e1e]">
+          Check Out
+        </label>
+        <input
+          id="check-out"
+          type="date"
+          className="border border-[#ffffff] w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent text-sm"
+          onChange={(e) => setCheckOut(e.target.value)}
+        />
+      </div>
+    </div>
+
+    {/* Guests */}
+    <label className="mb-2 text-base text-[#1e1e1e]">Guests</label>
+    <select
+      className="border border-[#ffffff]  px-4 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent w-full"
+      value={guests}
+      onChange={(e) => setGuests(Number(e.target.value))}
+    >
+      <option value="">Select guests</option>
+      {[...Array(apartment.maxGuests)].map((_, i) => (
+        <option key={i + 1} value={i + 1}>
+          {i + 1} Guest{i > 0 ? "s" : ""}
+        </option>
+      ))}
+    </select>
+
+    {/* Button */}
+    <button
+      onClick={handleBooking}
+      className="mt-4 bg-black text-white w-full rounded-md py-2 hover:bg-gray-800 transition"
+    >
+      Book Now
+    </button>
+    <p className="text-xs text-[#6b7280] mt-2 text-center">
+      No stress. No pressure. Cancel anytime.
+    </p>
+  </div>
+</div>
+
 
       <div className="relative z-0">
         {/* Small Stat Cards */}
@@ -174,7 +200,7 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
 
         {/* Apartment Gallery */}
         <div className="px-6 max-w-[1400px] mx-auto mb-10">
-          <h2 className="text-[36px] font-normal text-[#111827] mb-4">Apartment Gallery</h2>
+          <h2 className="text-2xl md:text-[36px] font-normal text-[#111827] mb-4">Apartment Gallery</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {apartment.gallery && apartment.gallery.length > 0 ? (
               <>
@@ -184,7 +210,7 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
                     alt={`${apartment.name} main image`}
                     width={700}
                     height={500}
-                    className="w-full h-full object-cover rounded-lg"
+                    className="w-full h-full object-cover rounded-xl  "
                   />
                 </div>
                 <div className="flex flex-col gap-4">
@@ -195,7 +221,7 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
                       alt={`${apartment.name} image ${index + 2}`}
                       width={250}
                       height={190}
-                      className="w-full h-auto object-cover rounded-lg"
+                      className="w-full h-auto object-cover rounded-xl"
                     />
                   ))}
                 </div>
@@ -208,7 +234,7 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
 
         {/* What This Apartment Offers */}
         <div className="max-w-[1400] mx-auto px-4 mb-10">
-          <h2 className="text-[36px] font-normal text-[#111827] text-left mb-6">What This Apartment Offers</h2>
+          <h2 className="text-2xl md:text-[36px] font-normal text-[#111827] text-left mb-6">What This Apartment Offers</h2>
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {apartment.features.map((feature) => {
               const featureData = featureMapping[feature as keyof typeof featureMapping];
@@ -261,9 +287,9 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
 
         {/* Location Section */}
         <div className="max-w-[1400] mx-auto px-4 mb-10 gap-6">
-          <h2 className="text-[36px] font-normal text-[#111827] text-left mb-6">Location</h2>
+          <h2 className="text-2xl md:text-[36px] font-normal text-[#111827] text-left mb-6">Location</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="w-full h-[300px] rounded-lg overflow-hidden">
+            <div className="w-full h-[500px] rounded-lg overflow-hidden">
               <iframe
                 src={`https://www.google.com/maps?q=${encodeURIComponent(apartment.address)}&output=embed`}
                 width="100%"
@@ -274,8 +300,8 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
                 className="rounded-lg"
               ></iframe>
             </div>
-            <div className="flex flex-col gap-4">
-              <h3 className="text-xl font-semibold mb-2">Things to know before booking</h3>
+            <div className="flex flex-col gap-4 md:mt-20 ">
+              <h3 className="text-lg font-semibold mb-2">Things to know before booking</h3>
               {apartment.rules.length > 0 ? (
                 apartment.rules.map((rule) => {
                   const ruleData = ruleMapping[rule as keyof typeof ruleMapping];

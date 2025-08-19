@@ -19,8 +19,8 @@ import {
   Upload,
   Loader2,
   CheckCircle,
-  Car, // New icon for Parking
-  Shield // New icon for 24/7 Security
+  Car,
+  Shield
 } from 'lucide-react';
 import { addApartment, updateApartment } from '@/services/api-services';
 import { ApartmentData } from '@/lib/interface';
@@ -40,7 +40,7 @@ interface Rule {
 interface AddOn {
   id: number;
   name: string;
-  pricing: string;
+  pricingType: 'per/day' | 'per/night' | 'one time fee' | '';
   description: string;
   price: string;
   active: boolean;
@@ -88,7 +88,7 @@ export default function AddEditApartmentModal({
     maxGuests: true
   });
   const [addOns, setAddOns] = useState<AddOn[]>([
-    { id: 1, name: '', pricing: '', description: '', price: '', active: true }
+    { id: 1, name: '', pricingType: '', description: '', price: '', active: true }
   ]);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
@@ -112,8 +112,8 @@ export default function AddEditApartmentModal({
     { id: 'generator', name: 'Generator', icon: Zap },
     { id: 'tv', name: 'Smart TV', icon: Tv },
     { id: 'kitchen', name: 'Kitchen', icon: ChefHat },
-    { id: 'parking', name: 'Parking', icon: Car }, // New feature
-    { id: 'security', name: '24/7 Security', icon: Shield } // New feature
+    { id: 'parking', name: 'Parking', icon: Car },
+    { id: 'security', name: '24/7 Security', icon: Shield }
   ];
 
   const rulesList: Rule[] = [
@@ -124,7 +124,6 @@ export default function AddEditApartmentModal({
     { key: 'maxGuests', name: 'Don\'t Exceed Max Guests', icon: Users }
   ];
 
-  // Feature mapping for API
   const featureMapping = {
     'air-conditioning': 'ac',
     'wifi': 'wifi',
@@ -132,8 +131,8 @@ export default function AddEditApartmentModal({
     'generator': 'generator',
     'smart-tv': 'tv',
     'kitchen': 'kitchen',
-    'parking': 'parking', // New mapping
-    '24-7-security': 'security' // New mapping
+    'parking': 'parking',
+    '24-7-security': 'security'
   };
 
   const reverseFeatureMapping = {
@@ -143,11 +142,10 @@ export default function AddEditApartmentModal({
     'generator': 'generator',
     'tv': 'smart-tv',
     'kitchen': 'kitchen',
-    'parking': 'parking', // New mapping
-    'security': '24-7-security' // New mapping
+    'parking': 'parking',
+    'security': '24-7-security'
   };
 
-  // Rules mapping for API
   const rulesMapping = {
     'no-smoking': 'noSmoking',
     'no-parties': 'noParties',
@@ -158,10 +156,21 @@ export default function AddEditApartmentModal({
     'check-in-3pm-11pm': 'maxGuests'
   };
 
-  // Initialize form with existing data in edit mode
+  // Map modal pricingType to API pricingType
+  const pricingTypeToApi = {
+    'per/day': 'perNight',
+    'per/night': 'perNight',
+    'one time fee': 'oneTime'
+  };
+
+  // Reverse mapping for edit mode
+  const apiToPricingType = {
+    'perNight': 'per/night',
+    'oneTime': 'one time fee'
+  };
+
   useEffect(() => {
     if (editMode && apartmentData && open) {
-      // Set form data
       setFormData({
         name: apartmentData.name || '',
         location: apartmentData.location || '',
@@ -172,7 +181,6 @@ export default function AddEditApartmentModal({
         maxGuests: apartmentData.maxGuests || 0
       });
 
-      // Set features
       if (apartmentData.features) {
         const mappedFeatures = apartmentData.features
           .map(feature => featureMapping[feature as keyof typeof featureMapping])
@@ -180,7 +188,6 @@ export default function AddEditApartmentModal({
         setSelectedFeatures(mappedFeatures);
       }
 
-      // Set rules
       const newRules: RulesState = {
         noSmoking: false,
         noParties: false,
@@ -202,27 +209,23 @@ export default function AddEditApartmentModal({
       }
       setRules(newRules);
 
-      // Set existing images
       if (apartmentData.gallery) {
         setExistingImages(apartmentData.gallery);
       }
 
-      // Set add-ons
       if (apartmentData.addons) {
         setAddOns(apartmentData.addons.map((addon, index) => ({
           id: addon._id || Date.now() + index,
           name: addon.name || '',
-          pricing: addon.pricingType || '',
+          pricingType: apiToPricingType[addon.pricingType as keyof typeof apiToPricingType] || 'per/night',
           description: '',
           price: addon.price.toString() || '',
           active: addon.active || true
         })));
       }
 
-      // Clear uploaded images when switching to edit mode
       setUploadedImages([]);
     } else if (!editMode && open) {
-      // Reset form for add mode
       resetForm();
     }
   }, [editMode, apartmentData, open]);
@@ -247,7 +250,7 @@ export default function AddEditApartmentModal({
     });
     setUploadedImages([]);
     setExistingImages([]);
-    setAddOns([{ id: 1, name: '', pricing: '', description: '', price: '', active: true }]);
+    setAddOns([{ id: 1, name: '', pricingType: '', description: '', price: '', active: true }]);
     setError(null);
     setSuccessMessage(null);
   };
@@ -260,8 +263,8 @@ export default function AddEditApartmentModal({
       generator: 'text-yellow-500',
       tv: 'text-red-500',
       kitchen: 'text-orange-500',
-      parking: 'text-teal-500', // New color for Parking
-      security: 'text-indigo-500' // New color for 24/7 Security
+      parking: 'text-teal-500',
+      security: 'text-indigo-500'
     };
     return colors[featureId as keyof typeof colors] || 'text-gray-500';
   };
@@ -301,7 +304,7 @@ export default function AddEditApartmentModal({
     setAddOns(prev => [...prev, {
       id: Date.now(),
       name: '',
-      pricing: '',
+      pricingType: '',
       description: '',
       price: '',
       active: true
@@ -359,6 +362,24 @@ export default function AddEditApartmentModal({
       setError('Max guests must be greater than 0');
       return false;
     }
+    for (const addon of addOns) {
+      if (addon.name.trim() && (!addon.pricingType || !['per/day', 'per/night', 'one time fee'].includes(addon.pricingType))) {
+        setError(`Pricing type for add-on "${addon.name}" must be "per/day", "per/night", or "one time fee"`);
+        return false;
+      }
+      if (addon.name.trim() && !addon.price) {
+        setError(`Price for add-on "${addon.name}" is required`);
+        return false;
+      }
+      if (addon.name.trim() && isNaN(parseFloat(addon.price))) {
+        setError(`Price for add-on "${addon.name}" must be a valid number`);
+        return false;
+      }
+      if (addon.name.trim() && parseFloat(addon.price) <= 0) {
+        setError(`Price for add-on "${addon.name}" must be greater than 0`);
+        return false;
+      }
+    }
     return true;
   };
 
@@ -391,12 +412,14 @@ export default function AddEditApartmentModal({
         features: selectedFeatureNames,
         gallery: existingImages,
         rules: rulesArray,
-        addons: addOns.map(addon => ({
-          name: addon.name,
-          price: parseFloat(addon.price) || 0,
-          pricingType: addon.pricing,
-          active: addon.active
-        })),
+        addons: addOns
+          .filter(addon => addon.name.trim() && addon.pricingType && !isNaN(parseFloat(addon.price)))
+          .map(addon => ({
+            name: addon.name.trim(),
+            price: parseFloat(addon.price),
+            pricingType: pricingTypeToApi[addon.pricingType as keyof typeof pricingTypeToApi],
+            active: addon.active
+          })),
         isTrending: apartmentData?.isTrending || false
       };
 
@@ -707,16 +730,19 @@ export default function AddEditApartmentModal({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#4b5566] mb-1">
-                    Pricing type
+                    Pricing Type
                   </label>
-                  <input
-                    type="text"
-                    value={addon.pricing}
-                    onChange={(e) => !isLoading && updateAddOn(addon.id, 'pricing', e.target.value)}
+                  <select
+                    value={addon.pricingType}
+                    onChange={(e) => !isLoading && updateAddOn(addon.id, 'pricingType', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    placeholder="eg per/day"
                     disabled={isLoading}
-                  />
+                  >
+                    <option value="">Select pricing type</option>
+                    <option value="per/day">Per Day</option>
+                    <option value="per/night">Per Night</option>
+                    <option value="one time fee">One Time Fee</option>
+                  </select>
                 </div>
               </div>
               
@@ -782,7 +808,6 @@ export default function AddEditApartmentModal({
         <div className="mb-6">
           <h3 className="text-left text-lg font-semibold text-[#111827] mb-4">Images</h3>
           
-          {/* Existing Images (Edit Mode) */}
           {editMode && existingImages.length > 0 && (
             <div className="mb-4">
               <h4 className="text-sm font-medium text-gray-700 mb-2">Current Images</h4>
@@ -808,7 +833,6 @@ export default function AddEditApartmentModal({
             </div>
           )}
           
-          {/* New Images */}
           {uploadedImages.length > 0 && (
             <div className="mb-4">
               <h4 className="text-sm font-medium text-gray-700 mb-2">
