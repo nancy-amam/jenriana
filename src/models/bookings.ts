@@ -1,9 +1,9 @@
 // models/bookings.ts
-import mongoose, { Schema, Document, Model, Types } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface IBooking extends Document {
-  userId: Types.ObjectId;
-  apartmentId: Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
+  apartmentId: mongoose.Types.ObjectId;
   checkInDate: Date;
   checkOutDate: Date;
   guests: number;

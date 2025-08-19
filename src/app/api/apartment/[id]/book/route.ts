@@ -71,7 +71,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const addonsDetails: any[] = [];
     let addonsTotal = 0;
     for (const addonId of selectedAddons) {
-      const addon = apartment.addons.find((a) => a?._id?.toString() === addonId);
+      const addon = apartment.addons.find((a: any ) => a?._id?.toString() === addonId);
 
   if (!addon) {
     return NextResponse.json(
