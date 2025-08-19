@@ -131,18 +131,18 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
         <input
           id="check-in"
           type="date"
-          className="border border-[#ffffff] w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent text-sm"
+          className="border border-[#ffffff] w-full px-3 py-3 rounded-xl md:border-none bg-white text-sm"
           onChange={(e) => setCheckIn(e.target.value)}
         />
       </div>
       <div className="w-1/2">
-        <label htmlFor="check-out" className="block text-sm mb-2 md:mb-1 text-[#1e1e1e]">
+        <label htmlFor="check-out" className="block text-base mb-2 md:mb-1 text-[#1e1e1e]">
           Check Out
         </label>
         <input
           id="check-out"
           type="date"
-          className="border border-[#ffffff] w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent text-sm"
+          className="border border-[#ffffff] md:border-none w-full px-3 py-3 rounded-xl  bg-white  text-sm"
           onChange={(e) => setCheckOut(e.target.value)}
         />
       </div>
@@ -151,7 +151,7 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
     {/* Guests */}
     <label className="mb-2 text-base text-[#1e1e1e]">Guests</label>
     <select
-      className="border border-[#ffffff]  px-4 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent w-full"
+      className="border border-[#ffffff]  px-4 py-3 rounded-xl md:border-none bg-white w-full"
       value={guests}
       onChange={(e) => setGuests(Number(e.target.value))}
     >
