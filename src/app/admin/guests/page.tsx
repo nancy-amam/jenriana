@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import { getAllUsers } from '@/services/api-services';
+import ApartmentLoadingPage from '@/components/loading';
 
 interface User {
   _id: string;
@@ -81,7 +82,7 @@ export default function AdminGuestsPage() {
     return (
       <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg text-gray-600">Loading users...</div>
+          <ApartmentLoadingPage />
         </div>
       </div>
     );

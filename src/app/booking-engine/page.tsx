@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { format, differenceInDays } from 'date-fns';
 import { MapPin, Wallet, Banknote, Lock } from 'lucide-react';
-import { getApartmentById, initiateCheckout } from '@/services/api-services';
+import { getApartmentById, initiateCheckout, verifyPayment } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
 
 interface Addon {
@@ -47,6 +47,8 @@ function BookingEngineContent() {
   const router = useRouter();
   const bookingId = searchParams.get('bookingId');
   const passedImage = searchParams.get('image');
+  const verify = searchParams.get('verify'); // Check for verification flag
+  const reference = searchParams.get('reference'); // Paystack reference
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,29 @@ function BookingEngineContent() {
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
   useEffect(() => {
+    // Handle payment verification
+    if (verify === 'true' && reference && bookingId) {
+      const verifyPaymentAndRedirect = async () => {
+        try {
+          const response = await verifyPayment(reference, bookingId);
+          if (response.message === 'Payment successful, booking confirmed') {
+            alert('Payment successful! Your booking is confirmed.');
+            router.push('/'); // Redirect to homepage
+          } else {
+            setError('Payment verification failed. Please contact support.');
+            setLoading(false);
+          }
+        } catch (err: any) {
+          console.error('BookingEnginePage: Payment verification failed:', err);
+          setError('Failed to verify payment. Please try again or contact support.');
+          setLoading(false);
+        }
+      };
+      verifyPaymentAndRedirect();
+      return;
+    }
+
+    // Existing booking fetch logic
     if (!bookingId) {
       setError('No booking selected.');
       setLoading(false);
@@ -98,7 +123,7 @@ function BookingEngineContent() {
       setError('Failed to load booking details.');
       setLoading(false);
     }
-  }, [bookingId, passedImage]);
+  }, [bookingId, passedImage, verify, reference]);
 
   const handleConfirmAndPay = async () => {
     if (!booking) return;
@@ -112,6 +137,7 @@ function BookingEngineContent() {
           `Account Number: ${response.bankDetails.accountNumber}\n\n` +
           `${response.bankDetails.note}`
         );
+        router.push('/'); // Redirect to homepage after bank transfer
       } else {
         window.location.href = response.payment.authorization_url;
       }
@@ -340,12 +366,12 @@ function BookingEngineContent() {
           >
             Confirm and Pay ₦{booking.totalAmount.toLocaleString()}
           </button>
-          <p className="text-sm text-[#4b5566] mt-2">
+          <p className="text-sm text-[#4b5566] text-center  mt-2">
             {paymentMethod === 'card'
               ? 'You will be redirected to Paystack to complete your payment.'
               : 'Please complete the bank transfer to confirm your booking.'}
           </p>
-          <div className="text-xs text-[#4b5566] mt-2 flex items-center gap-1">
+          <div className="text-xs text-[#4b5566] mt-2 flex items-center justify-center gap-1">
             <Lock className="w-4 h-4" />
             <p>Your payment information is secure and encrypted</p>
           </div>
@@ -357,14 +383,14 @@ function BookingEngineContent() {
 
 export default function BookingEnginePage() {
   return (
-        <Suspense
-              fallback={
-                <div className="min-h-screen flex items-center justify-center text-white">
-                  <ApartmentLoadingPage />
-                </div>
-              }
-            >
-              <BookingEngineContent />
-            </Suspense>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center text-white">
+          <ApartmentLoadingPage />
+        </div>
+      }
+    >
+      <BookingEngineContent />
+    </Suspense>
   );
 }

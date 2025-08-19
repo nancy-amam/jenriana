@@ -17,8 +17,8 @@ export default function ContactUsPage() {
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-16">
           {/* Left Side: Get in Touch Text */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left  mb-10 lg:mb-0">
-            <h1 className="text-[40px] md:text-[80px] font-extrabold text-white leading-[56px] mb-4">Get in touch</h1>
-            <p className=" text-[20px] md:text-[28px] font-bold text-white ">
+            <h1 className="text-2xl md:text-[80px] font-extrabold text-white leading-[56px] mb-4">Get in touch</h1>
+            <p className=" text-xl md:text-[28px] font-bold text-white ">
               Please fill the form and we will be happy to assist you.
             </p>
           </div>
@@ -79,7 +79,7 @@ export default function ContactUsPage() {
             </a>
           </div>
           </div>
-          <p className=" text-[22px] md:text-[48px] text-white">Let us know what we can do for you</p>
+          <p className=" text-xl md:text-[48px] text-white">Let us know what we can do for you</p>
         </div>
 
         {/* Three Contact Cards Section */}

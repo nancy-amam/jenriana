@@ -2,22 +2,23 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { MapPinIcon, UsersIcon, CalendarDays, CalendarCheck, ChevronDownIcon, StarIcon } from "lucide-react";
+import { MapPinIcon, UsersIcon, CalendarDays, CalendarCheck, ChevronDown, StarIcon } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import { getActiveBookings, getBookingHistory, postApartmentComment } from "@/services/api-services";
+import ApartmentLoadingPage from "@/components/loading";
 
-interface ApartmentId {
+interface ApartmentData {
   _id: string;
   name: string;
   location: string;
   pricePerNight: number;
+  gallery: string[];
 }
 
 interface Booking {
   id: string;
-  apartmentId: string; // Added for comment API
-  apartmentName: string;
-  apartmentLocation: string;
+  apartmentId: string;
+  apartmentData: ApartmentData;
   checkInDate: string;
   checkOutDate: string;
   guests: number;
@@ -30,7 +31,7 @@ interface Booking {
 interface Review {
   rating: number;
   comment: string;
-  userImage: string; // Placeholder for user image
+  userImage: string;
 }
 
 export default function MyBookingsPage() {
@@ -39,7 +40,7 @@ export default function MyBookingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showReviewModal, setShowReviewModal] = useState<string | null>(null);
-  const [rating, setRating] = useState(4); // Default 4 stars
+  const [rating, setRating] = useState(4);
   const [comment, setComment] = useState("");
   const [postedReview, setPostedReview] = useState<Review | null>(null);
 
@@ -53,8 +54,13 @@ export default function MyBookingsPage() {
         const mappedBookings: Booking[] = apiBookings.map((booking: any) => ({
           id: booking._id,
           apartmentId: booking.apartmentId._id,
-          apartmentName: booking.apartmentId.name,
-          apartmentLocation: booking.apartmentId.location,
+          apartmentData: {
+            _id: booking.apartmentId._id,
+            name: booking.apartmentId.name,
+            location: booking.apartmentId.location,
+            pricePerNight: booking.apartmentId.pricePerNight,
+            gallery: booking.apartmentId.gallery || []
+          },
           checkInDate: booking.checkInDate,
           checkOutDate: booking.checkOutDate,
           guests: booking.guests,
@@ -103,9 +109,9 @@ export default function MyBookingsPage() {
       setPostedReview({
         rating,
         comment,
-        userImage: "/placeholder-user.jpg", // Placeholder; update with actual user image source
+        userImage: "/images/user.png",
       });
-      alert(response.message); // "Feedback added and rating updated"
+      alert(response.message);
     } catch (err: any) {
       console.error(`Failed to post review for apartment ${apartmentId}:`, err);
       alert(`Failed to post review: ${err.message || "Please try again."}`);
@@ -115,7 +121,7 @@ export default function MyBookingsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f1f1f1] flex items-center justify-center text-black">
-        Loading bookings...
+        <ApartmentLoadingPage />
       </div>
     );
   }
@@ -136,7 +142,7 @@ export default function MyBookingsPage() {
         <div className="flex flex-wrap gap-4 mb-8">
           <button
             onClick={() => setActiveFilter("active")}
-            className={`w-[156px] h-[44px] rounded-lg border px-[19px] py-[11px] text-base font-normal transition-colors ${
+            className={` rounded-lg border px-4 py-4 text-base font-normal transition-colors ${
               activeFilter === "active"
                 ? "bg-black text-white border-black"
                 : "bg-white text-[#4b5563] border-gray-300 hover:bg-gray-50"
@@ -146,7 +152,7 @@ export default function MyBookingsPage() {
           </button>
           <button
             onClick={() => setActiveFilter("history")}
-            className={`w-[156px] h-[44px] rounded-lg border px-[19px] py-[11px] text-base font-normal transition-colors ${
+            className={` rounded-lg border px-4 py-4 text-base font-normal transition-colors ${
               activeFilter === "history"
                 ? "bg-black text-white border-black"
                 : "bg-white text-[#4b5563] border-gray-300 hover:bg-gray-50"
@@ -164,7 +170,9 @@ export default function MyBookingsPage() {
         ) : (
           <div className="space-y-6">
             {bookings.map((booking) => {
-              const apartmentImage = "/placeholder.svg?height=150&width=200&text=Apartment";
+              // Use the first gallery image or fallback to default
+              const apartmentImage = booking.apartmentData.gallery?.[0] || '/images/image20.png';
+              
               return (
                 <div
                   key={booking.id}
@@ -172,14 +180,18 @@ export default function MyBookingsPage() {
                 >
                   {/* Mobile Layout */}
                   <div className="lg:hidden">
-                    {/* Image with Confirmed badge */}
+                    {/* Image with Status badge */}
                     <div className="relative w-full h-[200px] rounded-t-lg overflow-hidden">
                       <Image
                         src={apartmentImage}
-                        alt={booking.apartmentName}
+                        alt={booking.apartmentData.name}
                         width={800}
                         height={800}
                         className="object-cover w-full h-full"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/images/image20.png';
+                        }}
                       />
                       <div className="absolute top-4 right-4 w-[104px] h-[36px] rounded-lg bg-green-100 text-[#00a699] px-[10px] py-[7px] text-sm font-medium flex items-center justify-center">
                         {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
@@ -190,10 +202,10 @@ export default function MyBookingsPage() {
                     <div className="p-4">
                       <div className="flex items-start justify-between gap-4 mb-4">
                         <div className="flex-1">
-                          <h2 className="text-xl font-normal text-[#111827]">{booking.apartmentName}</h2>
+                          <h2 className="text-xl font-normal text-[#111827]">{booking.apartmentData.name}</h2>
                           <p className="text-base text-[#4b5566] flex items-center gap-1 mt-1">
                             <MapPinIcon className="w-4 h-4 text-[#111827]" />
-                            {booking.apartmentLocation}
+                            {booking.apartmentData.location}
                           </p>
                         </div>
                         <button
@@ -237,12 +249,10 @@ export default function MyBookingsPage() {
                               </p>
                             </div>
                           </div>
-                          {activeFilter === "history" && (
-                            <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleRateStay(booking.id)}>
-                              <span className="text-sm text-[#111827] font-normal">Rate Your Stay</span>
-                              <ChevronDownIcon className="w-4 h-4 text-[#4b5566]" />
-                            </div>
-                          )}
+                          <div className="flex items-center justify-between cursor-pointer">
+                            <span className="text-sm text-[#111827] font-normal">Rate Your Stay</span>
+                           
+                          </div>
                         </div>
                         <div className="space-y-3">
                           <div className="flex items-start gap-2">
@@ -254,7 +264,7 @@ export default function MyBookingsPage() {
                           </div>
                           <div className="flex items-start gap-2">
                             <span className="text-lg text-black font-bold mt-0.5">₦</span>
-                            <div>
+                            <div className="flex-1">
                               <span className="text-sm font-medium text-[#4b5566] block">Total Paid</span>
                               <div className="flex flex-col">
                                 <span className="text-sm text-black font-bold">{booking.totalPrice.toLocaleString()}</span>
@@ -264,6 +274,10 @@ export default function MyBookingsPage() {
                               </div>
                             </div>
                           </div>
+                           <div className="flex items-center" onClick={() => handleRateStay(booking.id)}>
+  {/* your other content here */}
+  <ChevronDown className="w-6 h-6 " />
+</div>
                         </div>
                       </div>
 
@@ -289,19 +303,23 @@ export default function MyBookingsPage() {
                     <div className="flex-shrink-0 w-[300px] h-auto relative rounded-l-lg overflow-hidden">
                       <Image
                         src={apartmentImage}
-                        alt={booking.apartmentName}
+                        alt={booking.apartmentData.name}
                         width={800}
                         height={800}
                         className="object-cover w-full h-full"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/images/image20.png';
+                        }}
                       />
                     </div>
 
                     <div className="flex-grow grid grid-cols-[2fr_1fr] gap-4 w-full p-6">
                       <div className="flex flex-col justify-between">
-                        <h2 className="text-xl font-normal text-[#111827]">{booking.apartmentName}</h2>
+                        <h2 className="text-xl font-normal text-[#111827]">{booking.apartmentData.name}</h2>
                         <p className="text-base text-[#4b5566] flex items-center gap-1 mt-1">
                           <MapPinIcon className="w-4 h-4 text-[#111827]" />
-                          {booking.apartmentLocation}
+                          {booking.apartmentData.location}
                         </p>
                         <div className="text-sm text-[#374151] mt-2">
                           <div className="flex items-start gap-2">
@@ -322,7 +340,7 @@ export default function MyBookingsPage() {
                               </p>
                             </div>
                           </div>
-                          <div className="mt-3">
+                            <div className="mt-3">
                             <div className="flex items-center gap-2 text-sm text-[#111827] font-normal">
                               <CalendarCheck className="w-4 h-4" />
                               <span>Booked on</span>
@@ -335,12 +353,9 @@ export default function MyBookingsPage() {
                               })}
                             </p>
                           </div>
-                          {activeFilter === "history" && (
-                            <div className="mt-3 flex items-center gap-2 cursor-pointer" onClick={() => handleRateStay(booking.id)}>
-                              <span className="text-sm text-[#111827] font-normal">Rate Your Stay</span>
-                              <ChevronDownIcon className="w-4 h-4 text-[#4b5566]" />
-                            </div>
-                          )}
+                          <div className="mt-3" onClick={() => handleRateStay(booking.id)}>
+                            <span className="text-base text-[#111827] font-normal">Rate Your Stay</span>
+                          </div>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2 mt-4">
                           <button
@@ -363,7 +378,7 @@ export default function MyBookingsPage() {
                       <div className="w-[104px] h-[36px] rounded-lg bg-green-100 text-[#00a699] px-[10px] py-[7px] text-sm font-medium flex items-center justify-center">
                         {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                       </div>
-                      <div className="text-sm mt-8 flex items-center gap-2">
+                      <div className="text-sm mt-2 flex items-center gap-2">
                         <UsersIcon className="w-5 h-5 text-[#4b5566]" />
                         <div>
                           <span className="font-normal text-[#4b5566] block">Guests</span>
@@ -373,17 +388,23 @@ export default function MyBookingsPage() {
                       <div className="text-sm text-[#4b5566]">
                         <div className="flex items-center gap-2 text-black font-bold">
                           <span className="text-xl">₦</span>
-                          <div className="flex flex-col">
+                          <div className="flex flex-col flex-1">
                             <span className="text-sm font-medium text-[#4b5566]">Total Paid</span>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center">
                               <span className="text-base">{booking.totalPrice.toLocaleString()}</span>
-                              <span className="text-sm font-medium text-[#6b7280]">
+                              <span className="text-sm font-medium text-[#6b7280] ml-2">
                                 for {booking.nights} {booking.nights === 1 ? "night" : "nights"}
                               </span>
                             </div>
                           </div>
                         </div>
+                                <div className="flex items-center" onClick={() => handleRateStay(booking.id)}>
+  {/* your other content here */}
+  <ChevronDown className="w-6 h-6 " />
+</div>
+
                       </div>
+                         
                       <button
                         onClick={() => handleRebook(booking.id)}
                         className="w-[141px] h-[50px] rounded-lg bg-black text-white px-[18px] py-[12px] text-base font-medium hover:bg-gray-800 transition-colors flex items-center justify-center"
@@ -396,24 +417,22 @@ export default function MyBookingsPage() {
                   {/* Review Modal */}
                   {showReviewModal === booking.id && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                      <div
-                        className="bg-white rounded-[20px] p-4 w-[1006px] h-[395px] flex flex-col gap-[17px]"
-                        style={{ opacity: 1 }}
-                      >
+                      <div className="bg-white rounded-[20px] p-6 w-[500px] max-h-[600px] flex flex-col gap-4">
                         <div className="flex justify-between items-center">
                           <h2 className="text-xl font-normal text-[#111827]">Rating</h2>
                           <button
                             onClick={() => setShowReviewModal(null)}
-                            className="text-[#4b5566] hover:text-black"
+                            className="text-[#4b5566] hover:text-black text-xl"
                           >
                             ✕
                           </button>
                         </div>
+                        
                         <div className="flex gap-1">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <StarIcon
                               key={star}
-                              className={`w-6 h-6 cursor-pointer ${
+                              className={`w-8 h-8 cursor-pointer ${
                                 star <= rating ? "text-[#FFD700]" : "text-gray-300"
                               }`}
                               fill={star <= rating ? "#FFD700" : "none"}
@@ -421,23 +440,25 @@ export default function MyBookingsPage() {
                             />
                           ))}
                         </div>
+                        
                         <div className="text-base font-normal text-[#111827]">Your Review</div>
+                        
                         <textarea
                           placeholder="Share your experience"
                           value={comment}
                           onChange={(e) => setComment(e.target.value)}
                           className="w-full h-[120px] p-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black resize-none"
                         />
-                        <div className="flex items-center">
-                          <button
-                            onClick={() => handlePostReview(booking.apartmentId)}
-                            className="w-[150px] h-[50px] rounded-lg bg-black text-white px-4 py-3 text-base font-normal hover:bg-gray-800 transition-colors"
-                          >
-                            Post Review
-                          </button>
-                        </div>
+                        
+                        <button
+                          onClick={() => handlePostReview(booking.apartmentId)}
+                          className="w-[150px] h-[50px] rounded-lg bg-black text-white px-4 py-3 text-base font-normal hover:bg-gray-800 transition-colors"
+                        >
+                          Post Review
+                        </button>
+                        
                         {postedReview && (
-                          <div className="flex items-start gap-3">
+                          <div className="flex items-start gap-3 mt-4 p-4 bg-gray-50 rounded-lg">
                             <Image
                               src={postedReview.userImage}
                               alt="User"
@@ -445,19 +466,22 @@ export default function MyBookingsPage() {
                               height={40}
                               className="rounded-full"
                             />
-                            <div>
-                              <div className="flex gap-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <StarIcon
-                                    key={star}
-                                    className={`w-5 h-5 ${
-                                      star <= postedReview.rating ? "text-[#FFD700]" : "text-gray-300"
-                                    }`}
-                                    fill={star <= postedReview.rating ? "#FFD700" : "none"}
-                                  />
-                                ))}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-sm font-medium text-[#111827]">Your Review</span>
+                                <div className="flex gap-1">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <StarIcon
+                                      key={star}
+                                      className={`w-4 h-4 ${
+                                        star <= postedReview.rating ? "text-[#FFD700]" : "text-gray-300"
+                                      }`}
+                                      fill={star <= postedReview.rating ? "#FFD700" : "none"}
+                                    />
+                                  ))}
+                                </div>
                               </div>
-                              <p className="text-sm text-[#374151] mt-2">{postedReview.comment}</p>
+                              <p className="text-sm text-[#374151]">{postedReview.comment}</p>
                             </div>
                           </div>
                         )}

@@ -377,23 +377,13 @@ export async function initiateCheckout(bookingId: string, paymentMethod: 'card' 
       throw new Error("Booking ID is required");
     }
 
-    console.log(`Initiating checkout for booking ID: ${bookingId} with payment method: ${paymentMethod}`);
-
-    if (paymentMethod === 'bank-transfer') {
-      return {
-        success: true,
-        bankDetails: {
-          bankName: "Jenrianna Bank",
-          accountName: "Jenrianna Apartments",
-          accountNumber: "1234567890",
-          note: "Your booking will be confirmed upon receipt of payment."
-        }
-      };
-    }
-
+  
     const response = await apiHandler(`/api/booking/${bookingId}/checkout`, {
       method: "POST",
-      data: { paymentMethod },
+      data: { 
+        paymentMethod,
+        callback_url: 'http://localhost:3000/booking?verify=true' // Paystack redirect URL
+      },
     });
 
     console.log("Checkout initialized successfully:", response);
@@ -414,18 +404,18 @@ export async function initiateCheckout(bookingId: string, paymentMethod: 'card' 
     );
   }
 }
-
-
+    
 export async function getActiveBookings(): Promise<any> {
   try {
     console.log("Fetching active bookings");
 
-    const response = await apiHandler(`/api/booking?status=active`, {
+    const response = await apiHandler(`/api/booking/user?type=active`, {
       method: "GET",
     });
 
     console.log("Active bookings fetched successfully:", response);
-    if (!response.success || !response.bookings) {
+    // Remove the success check since your API doesn't return a success field
+    if (!response.bookings || !Array.isArray(response.bookings)) {
       throw new Error("Invalid response from server");
     }
     return response;
@@ -443,16 +433,20 @@ export async function getActiveBookings(): Promise<any> {
   }
 }
 
+   
+    
+
 export async function getBookingHistory(): Promise<any> {
   try {
     console.log("Fetching booking history");
 
-    const response = await apiHandler(`/api/booking?status=history`, {
+    const response = await apiHandler(`/api/booking/user?type=history`, {
       method: "GET",
     });
 
     console.log("Booking history fetched successfully:", response);
-    if (!response.success || !response.bookings) {
+    // Remove the success check since your API doesn't return a success field
+    if (!response.bookings || !Array.isArray(response.bookings)) {
       throw new Error("Invalid response from server");
     }
     return response;
@@ -575,6 +569,37 @@ export async function getAllUsers(page: number = 1, limit: number = 10, search?:
     throw new Error(
       error.message ||
         "Failed to fetch users. Please try again later."
+    );
+  }
+}
+
+export async function verifyPayment(reference: string, bookingId: string): Promise<any> {
+  try {
+    if (!reference?.trim()) {
+      throw new Error("Payment reference is required");
+    }
+    if (!bookingId?.trim()) {
+      throw new Error("Booking ID is required");
+    }
+
+    console.log(`Verifying payment for booking ID: ${bookingId}, reference: ${reference}`);
+
+    const response = await apiHandler(`/api/payment/verify?reference=${reference}&bookingId=${bookingId}`, {
+      method: "GET",
+    });
+
+    console.log("Payment verified successfully:", response);
+    return response;
+  } catch (error: any) {
+    console.error(`Failed to verify payment for booking ID ${bookingId}:`, error);
+
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    throw new Error(
+      error.message ||
+        "Failed to verify payment. Please try again later."
     );
   }
 }
