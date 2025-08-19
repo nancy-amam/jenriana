@@ -16,7 +16,7 @@ export function TestimonialCard({ testimonial }: TestimonialCardProps) {
         ))}
       </div>
       {/* Testimonial Text */}
-      <p className="text-base text-[#374151] flex-grow mt-2">{testimonial.text}</p>
+      <p className="text-base text-[#374151] text-left flex-grow mt-2">{testimonial.text}</p>
       {/* Author Info */}
       <div className="flex items-center gap-3">
          <div className="relative w-10 h-10">
