@@ -1,16 +1,33 @@
+export interface Addon {
+  _id: string;
+  name: string;
+  price: number;
+  pricingType: string;
+  active: boolean;
+}
+
 export interface Apartment {
-  id: string
-  imageUrl: string
-  name: string
-  location: string
-  price: number
-  rating: number
-  guests: number
-  beds: number
-  baths: number
-  description?: string // Added for detailed view
-  amenities?: Amenity[] // Added for detailed view
-  galleryImages?: GalleryImage[] // Added for detailed view
+  _id: string;
+  name: string;
+  location: string;
+  pricePerNight: number;
+  rooms: number;
+  bathrooms: number;
+  maxGuests: number;
+  features: string[];
+  gallery: string[];
+  rules: string[];
+  addons?: Addon[];
+  address: string;
+  averageRating: number;
+  isTrending: boolean;
+  ratings: any[];
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+  imageUrl?: string;
+  beds: number;
+  baths: number;
 }
 
 export interface LocationFeature {

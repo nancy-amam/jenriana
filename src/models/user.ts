@@ -6,6 +6,7 @@ export interface IUser extends Document {
   phone: string;
   password: string
   role: "admin" | "user";
+  totalBookings: number
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,7 +17,8 @@ const UserSchema: Schema = new Schema(
     fullname: { type: String, required: true },
     phone: { type: String, required: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["admin", "user"], default: "user"}
+    role: { type: String, enum: ["admin", "user"], default: "user"},
+    totalBookings: { type: Number, default: 0 }
   },
   { timestamps: true }
 );

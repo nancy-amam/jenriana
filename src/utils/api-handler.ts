@@ -7,24 +7,32 @@ interface AxiosOptions {
   [key: string]: any;
 }
 
-// Empty BASE_URL means relative path
-const BASE_URL = "";
+const isServer = typeof window === "undefined";
+
+const BASE_URL = isServer
+  ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
+  : "";
+
+// ✅ ensure axios always handles cookies
+axios.defaults.withCredentials = true;
 
 export async function apiHandler(
   path: string,
   { method = "GET", headers = {}, body = null, ...otherOptions }: AxiosOptions = {}
 ) {
-  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const isFormData =
+    typeof FormData !== "undefined" && body instanceof FormData;
 
   try {
     const response = await axios({
-      url: `${BASE_URL}${path}`, // e.g., "/api/apartment"
+      url: `${BASE_URL}${path}`, // server -> absolute, client -> relative
       method,
       headers: {
         ...(isFormData ? {} : { "Content-Type": "application/json" }),
         ...headers,
       },
       data: body,
+      withCredentials: true, // 🔑 important for cookies
       ...otherOptions,
     });
 

@@ -2,7 +2,7 @@
 
 import { NextResponse } from "next/server";
 import connectDB from "../lib/mongodb";
-import Apartment from "@/models/apartment";
+import Apartment, { IAddon } from "@/models/apartment";
 import { uploadToPinata } from "../lib/pinata";
 import { getUserFromRequest } from "../lib/getUserFromRequest";
 
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       const url = await uploadToPinata(file);
       galleryUrls.push(url);
     }
-
+    const addons = JSON.parse(formData.get("addons") as string) as IAddon[];
     // Create apartment in DB
     const apartment = await Apartment.create({
       name,
@@ -95,6 +95,7 @@ export async function POST(request: Request) {
       features,
       rules,
       gallery: galleryUrls,
+      addons
     });
 
     return NextResponse.json(

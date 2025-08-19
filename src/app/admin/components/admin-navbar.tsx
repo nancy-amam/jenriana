@@ -2,8 +2,9 @@
 
 import { usePathname } from 'next/navigation';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import AddApartmentModal from './add-apartment';
+import { useApartmentModal } from '@/context/apartment-context';
+import { useEffect, useState } from 'react';
+import { getAllBookings, getAllUsers, getApartments } from '@/services/api-services';
 
 const getPageTitle = (path: string) => {
   if (path.includes('/apartments')) return 'Apartment Management';
@@ -12,44 +13,68 @@ const getPageTitle = (path: string) => {
   return 'Analytics';
 };
 
-const getPageCount = (path: string) => {
-  if (path.includes('/bookings')) return '47 total bookings';
-  if (path.includes('/apartments')) return '32 total apartments';
-  if (path.includes('/guests')) return '126 total users';
+const getPageCount = (path: string, counts: { bookings: number; apartments: number; users: number }) => {
+  if (path.includes('/bookings')) return `${counts.bookings} total ${counts.bookings === 1 ? 'booking' : 'bookings'}`;
+  if (path.includes('/apartments')) return `${counts.apartments} total ${counts.apartments === 1 ? 'apartment' : 'apartments'}`;
+  if (path.includes('/guests')) return `${counts.users} total ${counts.users === 1 ? 'user' : 'users'}`;
   return '';
 };
 
-
 export default function AdminNavbar() {
   const pathname = usePathname();
-  const title = getPageTitle(pathname);
-  const count = getPageCount(pathname);
-  const isApartmentsPage = pathname.includes('/apartments');
+  const { openAddModal } = useApartmentModal();
+  const [counts, setCounts] = useState({ bookings: 0, apartments: 0, users: 0 });
+  const [loading, setLoading] = useState(true);
 
-   const [isModalOpen, setIsModalOpen] = useState(false);
+  useEffect(() => {
+    const fetchCounts = async () => {
+      setLoading(true);
+      try {
+        const bookingsResponse = await getAllBookings(1, 1);
+        const bookingsCount = bookingsResponse.total || bookingsResponse.bookings?.length || 0;
+
+        const usersResponse = await getAllUsers(1, 1);
+        const usersCount = usersResponse.total || usersResponse.users?.length || 0;
+
+        const apartmentsResponse = await getApartments();
+        const apartmentsCount = apartmentsResponse.data?.length || 0;
+
+        setCounts({
+          bookings: bookingsCount,
+          apartments: apartmentsCount,
+          users: usersCount,
+        });
+      } catch {
+        setCounts({ bookings: 47, apartments: 32, users: 126 });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCounts();
+  }, [pathname]);
+
+  const title = getPageTitle(pathname);
+  const count = getPageCount(pathname, counts);
 
   return (
-    <>
     <nav className="hidden md:block bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        {/* Left side: Title + Count */}
         <div className="flex items-center gap-2">
           <p className="text-gray-800 font-semibold text-lg">{title}</p>
-          {count && <span className="text-gray-500 text-sm">{count}</span>}
+          {count && <span className="text-gray-500 text-sm">{loading ? 'Loading...' : count}</span>}
         </div>
 
-        {/* Right side: New Apartment button */}
-        {isApartmentsPage && (
+        {pathname.includes('/apartments') && (
           <button
-             onClick={() => setIsModalOpen(true)}
-           className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition">
+            onClick={openAddModal}
+            className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition"
+          >
             <Plus size={16} />
             New Apartment
           </button>
         )}
       </div>
     </nav>
-      <AddApartmentModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
-    </>  
   );
 }

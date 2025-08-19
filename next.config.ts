@@ -9,8 +9,10 @@ const nextConfig = {
         hostname: "gateway.pinata.cloud",
         port: "",
         pathname: "/ipfs/**",
+        
       },
     ],
+    
   },
   eslint: {
     ignoreDuringBuilds: true, // ✅ Skip ESLint checks during build
