@@ -414,3 +414,167 @@ export async function initiateCheckout(bookingId: string, paymentMethod: 'card' 
     );
   }
 }
+
+
+export async function getActiveBookings(): Promise<any> {
+  try {
+    console.log("Fetching active bookings");
+
+    const response = await apiHandler(`/api/booking?status=active`, {
+      method: "GET",
+    });
+
+    console.log("Active bookings fetched successfully:", response);
+    if (!response.success || !response.bookings) {
+      throw new Error("Invalid response from server");
+    }
+    return response;
+  } catch (error: any) {
+    console.error("Failed to fetch active bookings:", error);
+
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    throw new Error(
+      error.message ||
+        "Failed to fetch active bookings. Please try again later."
+    );
+  }
+}
+
+export async function getBookingHistory(): Promise<any> {
+  try {
+    console.log("Fetching booking history");
+
+    const response = await apiHandler(`/api/booking?status=history`, {
+      method: "GET",
+    });
+
+    console.log("Booking history fetched successfully:", response);
+    if (!response.success || !response.bookings) {
+      throw new Error("Invalid response from server");
+    }
+    return response;
+  } catch (error: any) {
+    console.error("Failed to fetch booking history:", error);
+
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    throw new Error(
+      error.message ||
+        "Failed to fetch booking history. Please try again later."
+    );
+  }
+}
+
+export async function postApartmentComment(apartmentId: string, rating: number, comment: string): Promise<any> {
+  try {
+    if (!apartmentId?.trim()) {
+      throw new Error("Apartment ID is required");
+    }
+    if (!rating || rating < 1 || rating > 5) {
+      throw new Error("Valid rating (1-5) is required");
+    }
+    if (!comment?.trim()) {
+      throw new Error("Comment is required");
+    }
+
+    console.log(`Posting comment for apartment ID: ${apartmentId}`);
+
+    const response = await apiHandler(`/api/apartment/${apartmentId}/comment`, {
+      method: "POST",
+      data: { rating, comment },
+    });
+
+    console.log("Comment posted successfully:", response);
+    if (!response.success) {
+      throw new Error("Invalid response from server");
+    }
+    return response;
+  } catch (error: any) {
+    console.error(`Failed to post comment for apartment ID ${apartmentId}:`, error);
+
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    throw new Error(
+      error.message ||
+        "Failed to post comment. Please try again later."
+    );
+  }
+}
+
+
+
+export async function getAllBookings(page: number = 1, limit: number = 10, search?: string): Promise<any> {
+  try {
+    console.log(`Fetching all bookings - Page: ${page}, Limit: ${limit}`, search ? `Search: ${search}` : '');
+
+    // Build query parameters
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
+
+    if (search?.trim()) {
+      params.append('search', search.trim());
+    }
+
+    const response = await apiHandler(`/api/booking/admin?${params.toString()}`, {
+      method: "GET",
+    });
+
+    console.log("All bookings fetched successfully:", response);
+    return response;
+  } catch (error: any) {
+    console.error("Failed to fetch all bookings:", error);
+
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    throw new Error(
+      error.message ||
+        "Failed to fetch bookings. Please try again later."
+    );
+  }
+}
+
+
+export async function getAllUsers(page: number = 1, limit: number = 10, search?: string): Promise<any> {
+  try {
+    console.log(`Fetching all users - Page: ${page}, Limit: ${limit}`, search ? `Search: ${search}` : '');
+
+    // Build query parameters
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
+
+    if (search?.trim()) {
+      params.append('search', search.trim());
+    }
+
+    const response = await apiHandler(`/api/users/admin?${params.toString()}`, {
+      method: "GET",
+    });
+
+    console.log("All users fetched successfully:", response);
+    return response;
+  } catch (error: any) {
+    console.error("Failed to fetch all users:", error);
+
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    throw new Error(
+      error.message ||
+        "Failed to fetch users. Please try again later."
+    );
+  }
+}

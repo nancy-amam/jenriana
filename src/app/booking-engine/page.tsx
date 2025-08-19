@@ -80,7 +80,7 @@ function BookingEngineContent() {
               ? gallery.slice(0, 3)
               : passedImage
                 ? [decodeURIComponent(passedImage), decodeURIComponent(passedImage), decodeURIComponent(passedImage)]
-                : ['/images/placeholder1.jpg', '/images/placeholder2.jpg', '/images/placeholder3.jpg']
+                : ['/images/image18.png', '/images/image19.png', '/images/image20.png']
           );
         } catch (err: any) {
           console.error('BookingEnginePage: Failed to fetch apartment gallery:', err);
@@ -169,7 +169,7 @@ function BookingEngineContent() {
               <MapPin className="w-4 h-4 mr-1 text-[#4b5566]" />
               {booking.apartmentLocation}
             </p>
-            <p className="text-[30px] font-normal text-[#111827] mb-4">
+            <p className="text-[24px] md:text-[30px] font-normal text-[#111827] mb-4">
               ₦{((booking.totalAmount - booking.serviceCharge - booking.tax - booking.addons.reduce((sum, a) => sum + a.total, 0)) / nights).toLocaleString(undefined, { maximumFractionDigits: 0 })}
               <span className="text-sm font-normal text-[#6b7280]">/night</span>
             </p>
@@ -255,7 +255,7 @@ function BookingEngineContent() {
         </div>
         {/* Right Column: Payment Details Card */}
         <div className="bg-white rounded-lg p-6 shadow-md w-full md:max-h-[550px] mt-4 md:mt-0">
-          <h2 className="text-2xl font-normal text-[#111827] mb-2">Payment Details</h2>
+          <h2 className="text-xl md:text-2xl font-normal text-[#111827] mb-2">Payment Details</h2>
           <p className="text-[#4b5566] mb-2">Payment Method</p>
           <div className="space-y-4 mb-6 font-normal">
             <label className="flex items-center gap-3 w-full px-4 py-2 border border-gray-300 rounded-[8px] cursor-pointer">
@@ -357,8 +357,14 @@ function BookingEngineContent() {
 
 export default function BookingEnginePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-black">Loading...</div>}>
-      <BookingEngineContent />
-    </Suspense>
+        <Suspense
+              fallback={
+                <div className="min-h-screen flex items-center justify-center text-white">
+                  <ApartmentLoadingPage />
+                </div>
+              }
+            >
+              <BookingEngineContent />
+            </Suspense>
   );
 }

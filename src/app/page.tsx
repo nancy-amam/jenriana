@@ -36,7 +36,7 @@ export default function HomePage() {
 
       // Select 5 random apartments for Featured Listings
       const shuffled = [...apartments].sort(() => Math.random() - 0.5);
-      const selectedFeatured = shuffled.slice(0, 5);
+      const selectedFeatured = shuffled
 
       // Select 4 random trending apartments (isTrending: true)
       let trending = apartments.filter((apt) => apt.isTrending);
@@ -341,13 +341,13 @@ export default function HomePage() {
         />
         <div className="absolute inset-0 bg-black/50 z-10"></div>
         <div className="relative z-20 max-w-3xl px-6">
-          <h2 className="text-[28px] md:text-[36px] font-normal mb-4">
+          <h2 className="text-xl md:text-2xl md:text-[36px] font-normal mb-4">
             Can&apos;t Decide? Let&apos;s Help You Find the Perfect Apartment.
           </h2>
-          <p className="text-base md:text-base mb-8">
+          <p className="text-sm md:text-base mb-8">
             Not sure where to start? Our team is ready to assist you in choosing an apartment that fits your needs — no stress, no pressure.
           </p>
-          <button className="bg-[#212121] mt-5 text-white py-4 px-10 rounded-lg text-base font-normal hover:bg-gray-800 transition">
+          <button className="bg-[#212121] mt-5 text-white text-sm py-4 px-10 rounded-lg  font-normal hover:bg-gray-800 transition">
             Contact Us
           </button>
         </div>

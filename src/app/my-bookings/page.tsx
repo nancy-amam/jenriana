@@ -2,30 +2,77 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { MapPinIcon, UsersIcon, CalendarDays, CalendarCheck } from "lucide-react";
-import { detailedApartments } from "@/lib/dummy-data";
-import { Apartment, Booking } from "@/lib/interface"; // Import Apartment type
+import { MapPinIcon, UsersIcon, CalendarDays, CalendarCheck, ChevronDownIcon, StarIcon } from "lucide-react";
+import { differenceInDays } from "date-fns";
+import { getActiveBookings, getBookingHistory, postApartmentComment } from "@/services/api-services";
+
+interface ApartmentId {
+  _id: string;
+  name: string;
+  location: string;
+  pricePerNight: number;
+}
+
+interface Booking {
+  id: string;
+  apartmentId: string; // Added for comment API
+  apartmentName: string;
+  apartmentLocation: string;
+  checkInDate: string;
+  checkOutDate: string;
+  guests: number;
+  totalPrice: number;
+  bookingDate: string;
+  nights: number;
+  status: string;
+}
+
+interface Review {
+  rating: number;
+  comment: string;
+  userImage: string; // Placeholder for user image
+}
 
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [activeFilter, setActiveFilter] = useState<"active" | "history">("active");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState<string | null>(null);
+  const [rating, setRating] = useState(4); // Default 4 stars
+  const [comment, setComment] = useState("");
+  const [postedReview, setPostedReview] = useState<Review | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("myBookings");
-    if (stored) {
-      setBookings(JSON.parse(stored));
-    }
-  }, []);
-
-  const filteredBookings = bookings.filter((booking) => {
-    const checkOut = new Date(booking.checkOutDate);
-    const now = new Date();
-    if (activeFilter === "active") {
-      return checkOut >= now;
-    } else {
-      return checkOut < now;
-    }
-  });
+    const fetchBookings = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = activeFilter === "active" ? await getActiveBookings() : await getBookingHistory();
+        const apiBookings = response.bookings || [];
+        const mappedBookings: Booking[] = apiBookings.map((booking: any) => ({
+          id: booking._id,
+          apartmentId: booking.apartmentId._id,
+          apartmentName: booking.apartmentId.name,
+          apartmentLocation: booking.apartmentId.location,
+          checkInDate: booking.checkInDate,
+          checkOutDate: booking.checkOutDate,
+          guests: booking.guests,
+          totalPrice: booking.totalAmount,
+          bookingDate: booking.createdAt,
+          nights: differenceInDays(new Date(booking.checkOutDate), new Date(booking.checkInDate)),
+          status: booking.status,
+        }));
+        setBookings(mappedBookings);
+      } catch (err: any) {
+        console.error(`Failed to fetch ${activeFilter} bookings:`, err);
+        setError(`Failed to load ${activeFilter} bookings. Please try again.`);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBookings();
+  }, [activeFilter]);
 
   const handleViewDetails = (bookingId: string) => {
     alert(`Viewing details for booking: ${bookingId}`);
@@ -35,7 +82,6 @@ export default function MyBookingsPage() {
     if (confirm(`Are you sure you want to cancel booking ${bookingId}?`)) {
       const updatedBookings = bookings.filter((b) => b.id !== bookingId);
       setBookings(updatedBookings);
-      localStorage.setItem("myBookings", JSON.stringify(updatedBookings));
       alert(`Booking ${bookingId} cancelled.`);
     }
   };
@@ -43,6 +89,44 @@ export default function MyBookingsPage() {
   const handleRebook = (bookingId: string) => {
     alert(`Rebooking for booking: ${bookingId}`);
   };
+
+  const handleRateStay = (bookingId: string) => {
+    setShowReviewModal(bookingId);
+    setRating(4);
+    setComment("");
+    setPostedReview(null);
+  };
+
+  const handlePostReview = async (apartmentId: string) => {
+    try {
+      const response = await postApartmentComment(apartmentId, rating, comment);
+      setPostedReview({
+        rating,
+        comment,
+        userImage: "/placeholder-user.jpg", // Placeholder; update with actual user image source
+      });
+      alert(response.message); // "Feedback added and rating updated"
+    } catch (err: any) {
+      console.error(`Failed to post review for apartment ${apartmentId}:`, err);
+      alert(`Failed to post review: ${err.message || "Please try again."}`);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f1f1f1] flex items-center justify-center text-black">
+        Loading bookings...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#f1f1f1] flex items-center justify-center text-red-600 text-lg font-semibold">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f1f1f1] py-12 px-4 md:px-16">
@@ -73,18 +157,14 @@ export default function MyBookingsPage() {
         </div>
 
         {/* Bookings List */}
-        {filteredBookings.length === 0 ? (
+        {bookings.length === 0 ? (
           <div className="bg-white rounded-lg p-6 shadow-md text-center text-gray-600">
             {activeFilter === "active" ? "You have no active bookings yet." : "You have no booking history yet."}
           </div>
         ) : (
           <div className="space-y-6">
-            {filteredBookings.map((booking) => {
-              const apartment = detailedApartments.find((apt) => apt.id === booking.apartmentId);
-              const apartmentImage =
-                apartment && apartment.galleryImages && apartment.galleryImages.length > 0
-                  ? apartment.galleryImages[0].src
-                  : "/placeholder.svg?height=150&width=200&text=Apartment";
+            {bookings.map((booking) => {
+              const apartmentImage = "/placeholder.svg?height=150&width=200&text=Apartment";
               return (
                 <div
                   key={booking.id}
@@ -102,7 +182,7 @@ export default function MyBookingsPage() {
                         className="object-cover w-full h-full"
                       />
                       <div className="absolute top-4 right-4 w-[104px] h-[36px] rounded-lg bg-green-100 text-[#00a699] px-[10px] py-[7px] text-sm font-medium flex items-center justify-center">
-                        Confirmed
+                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                       </div>
                     </div>
 
@@ -157,6 +237,12 @@ export default function MyBookingsPage() {
                               </p>
                             </div>
                           </div>
+                          {activeFilter === "history" && (
+                            <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleRateStay(booking.id)}>
+                              <span className="text-sm text-[#111827] font-normal">Rate Your Stay</span>
+                              <ChevronDownIcon className="w-4 h-4 text-[#4b5566]" />
+                            </div>
+                          )}
                         </div>
                         <div className="space-y-3">
                           <div className="flex items-start gap-2">
@@ -249,6 +335,12 @@ export default function MyBookingsPage() {
                               })}
                             </p>
                           </div>
+                          {activeFilter === "history" && (
+                            <div className="mt-3 flex items-center gap-2 cursor-pointer" onClick={() => handleRateStay(booking.id)}>
+                              <span className="text-sm text-[#111827] font-normal">Rate Your Stay</span>
+                              <ChevronDownIcon className="w-4 h-4 text-[#4b5566]" />
+                            </div>
+                          )}
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2 mt-4">
                           <button
@@ -269,7 +361,7 @@ export default function MyBookingsPage() {
 
                     <div className="flex flex-col justify-between h-full lg:h-[150px] w-full lg:w-auto lg:min-w-[200px] mt-4 lg:mt-0 p-6 gap-4">
                       <div className="w-[104px] h-[36px] rounded-lg bg-green-100 text-[#00a699] px-[10px] py-[7px] text-sm font-medium flex items-center justify-center">
-                        Confirmed
+                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                       </div>
                       <div className="text-sm mt-8 flex items-center gap-2">
                         <UsersIcon className="w-5 h-5 text-[#4b5566]" />
@@ -300,6 +392,78 @@ export default function MyBookingsPage() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Review Modal */}
+                  {showReviewModal === booking.id && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                      <div
+                        className="bg-white rounded-[20px] p-4 w-[1006px] h-[395px] flex flex-col gap-[17px]"
+                        style={{ opacity: 1 }}
+                      >
+                        <div className="flex justify-between items-center">
+                          <h2 className="text-xl font-normal text-[#111827]">Rating</h2>
+                          <button
+                            onClick={() => setShowReviewModal(null)}
+                            className="text-[#4b5566] hover:text-black"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <StarIcon
+                              key={star}
+                              className={`w-6 h-6 cursor-pointer ${
+                                star <= rating ? "text-[#FFD700]" : "text-gray-300"
+                              }`}
+                              fill={star <= rating ? "#FFD700" : "none"}
+                              onClick={() => setRating(star)}
+                            />
+                          ))}
+                        </div>
+                        <div className="text-base font-normal text-[#111827]">Your Review</div>
+                        <textarea
+                          placeholder="Share your experience"
+                          value={comment}
+                          onChange={(e) => setComment(e.target.value)}
+                          className="w-full h-[120px] p-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                        />
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => handlePostReview(booking.apartmentId)}
+                            className="w-[150px] h-[50px] rounded-lg bg-black text-white px-4 py-3 text-base font-normal hover:bg-gray-800 transition-colors"
+                          >
+                            Post Review
+                          </button>
+                        </div>
+                        {postedReview && (
+                          <div className="flex items-start gap-3">
+                            <Image
+                              src={postedReview.userImage}
+                              alt="User"
+                              width={40}
+                              height={40}
+                              className="rounded-full"
+                            />
+                            <div>
+                              <div className="flex gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <StarIcon
+                                    key={star}
+                                    className={`w-5 h-5 ${
+                                      star <= postedReview.rating ? "text-[#FFD700]" : "text-gray-300"
+                                    }`}
+                                    fill={star <= postedReview.rating ? "#FFD700" : "none"}
+                                  />
+                                ))}
+                              </div>
+                              <p className="text-sm text-[#374151] mt-2">{postedReview.comment}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
