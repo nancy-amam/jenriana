@@ -1,12 +1,11 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { BedIcon, BathIcon } from 'lucide-react';
-import Link from 'next/link';
-import { getApartmentById } from '@/services/api-services';
+import { getApartmentById, createBooking } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
 
 // Define Apartment interface based on API response
@@ -16,6 +15,7 @@ interface Addon {
   price: number;
   pricingType: 'perNight' | 'oneTime';
   active: boolean;
+  description?: string;
 }
 
 interface Apartment {
@@ -44,12 +44,13 @@ interface Apartment {
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const apartmentId = searchParams.get('apartmentId');
   const nights = Number(searchParams.get('nights'));
   const guests = Number(searchParams.get('guests'));
   const checkIn = searchParams.get('checkIn');
   const checkOut = searchParams.get('checkOut');
-  const price = Number(searchParams.get('price')); // Get price from query params
+  const price = Number(searchParams.get('price'));
   const passedImage = searchParams.get('image');
 
   const [apartment, setApartment] = useState<Apartment | null>(null);
@@ -63,6 +64,7 @@ function CheckoutContent() {
     address: '',
     specialRequest: '',
   });
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     async function fetchApartment() {
@@ -90,6 +92,62 @@ function CheckoutContent() {
     fetchApartment();
   }, [apartmentId, passedImage]);
 
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+    if (!guestInfo.name.trim()) errors.name = 'Full name is required';
+    if (!guestInfo.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestInfo.email)) {
+      errors.email = 'Invalid email format';
+    }
+    if (!guestInfo.phone.trim()) {
+      errors.phone = 'Phone number is required';
+    } else if (!/^\+?\d{10,14}$/.test(guestInfo.phone.replace(/\s/g, ''))) {
+      errors.phone = 'Invalid phone number';
+    }
+    if (!guestInfo.address.trim()) errors.address = 'Address is required';
+    // specialRequest is optional, no validation needed
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        setError('Please sign in to continue booking.');
+        router.push('/auth/signin');
+        return;
+      }
+      const bookingData = {
+        userId,
+        checkInDate: checkIn!,
+        checkOutDate: checkOut!,
+        guests,
+        paymentMethod: 'card', // Default, will be set in BookingEnginePage
+        addons: selectedServices,
+        customerName: guestInfo.name,
+        customerEmail: guestInfo.email,
+        customerPhone: guestInfo.phone,
+        specialRequest: guestInfo.specialRequest || undefined,
+      };
+      const response = await createBooking(apartmentId!, bookingData);
+      console.log('CheckoutPage: Booking created:', response);
+      // Store booking data in localStorage
+      localStorage.setItem(`booking_${response.bookingId}`, JSON.stringify({
+        ...response.booking,
+        apartmentName: apartment?.name || 'Unknown Apartment',
+        apartmentLocation: apartment?.location || 'Unknown Location',
+      }));
+      router.push(`/booking-engine?bookingId=${response.bookingId}&image=${encodeURIComponent(apartment?.imageUrl || '')}`);
+    } catch (err: any) {
+      console.error('CheckoutPage: Booking creation failed:', err);
+      setError(err.message || 'Failed to create booking. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white">
@@ -101,7 +159,7 @@ function CheckoutContent() {
   if (error || !apartment || isNaN(nights) || isNaN(guests) || !checkIn || !checkOut || isNaN(price)) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-lg font-semibold">
-        Invalid booking information
+        {error || 'Invalid booking information'}
       </div>
     );
   }
@@ -115,7 +173,7 @@ function CheckoutContent() {
   };
 
   // Pricing logic
-  const basePrice = price; // Use price from query params
+  const basePrice = price;
   const totalCost = basePrice * nights;
   const serviceFee = 5000;
   const taxes = 0.075 * totalCost;
@@ -147,9 +205,6 @@ function CheckoutContent() {
     }
   };
 
-  // Construct booking engine URL with real apartmentId + selected add-ons
-  const bookingEngineUrl = `/booking-engine?apartmentId=${apartment._id}&nights=${nights}&guests=${guests}&checkIn=${checkIn}&checkOut=${checkOut}&selectedServices=${selectedServices.join(',')}&image=${encodeURIComponent(apartment.imageUrl || '')}`;
-
   return (
     <div className="relative min-h-screen bg-black text-white px-4 py-12 md:px-16 overflow-hidden">
       <Image
@@ -171,7 +226,7 @@ function CheckoutContent() {
             <h2 className="text-2xl font-medium mb-2" style={{ color: '#111827' }}>
               Guest Information
             </h2>
-            <form className="space-y-5">
+            <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
               <div className="space-y-1">
                 <label className="block text-base font-medium">Full Name</label>
                 <input
@@ -181,8 +236,9 @@ function CheckoutContent() {
                   onChange={(e) =>
                     setGuestInfo({ ...guestInfo, name: e.target.value })
                   }
-                  className="w-full px-4 py-2 rounded border text-black"
+                  className={`w-full px-4 py-2 rounded border ${formErrors.name ? 'border-red-500' : 'border-gray-300'} text-black`}
                 />
+                {formErrors.name && <p className="text-red-500 text-sm">{formErrors.name}</p>}
               </div>
               <div className="space-y-1">
                 <label className="block text-base font-medium">Email Address</label>
@@ -193,8 +249,9 @@ function CheckoutContent() {
                   onChange={(e) =>
                     setGuestInfo({ ...guestInfo, email: e.target.value })
                   }
-                  className="w-full px-4 py-2 rounded border text-black"
+                  className={`w-full px-4 py-2 rounded border ${formErrors.email ? 'border-red-500' : 'border-gray-300'} text-black`}
                 />
+                {formErrors.email && <p className="text-red-500 text-sm">{formErrors.email}</p>}
               </div>
               <div className="space-y-1">
                 <label className="block text-base font-medium">Phone Number</label>
@@ -205,8 +262,9 @@ function CheckoutContent() {
                   onChange={(e) =>
                     setGuestInfo({ ...guestInfo, phone: e.target.value })
                   }
-                  className="w-full px-4 py-2 rounded border text-black"
+                  className={`w-full px-4 py-2 rounded border ${formErrors.phone ? 'border-red-500' : 'border-gray-300'} text-black`}
                 />
+                {formErrors.phone && <p className="text-red-500 text-sm">{formErrors.phone}</p>}
               </div>
               <div className="space-y-1">
                 <label className="block text-base font-medium">Residential Address</label>
@@ -217,8 +275,9 @@ function CheckoutContent() {
                   onChange={(e) =>
                     setGuestInfo({ ...guestInfo, address: e.target.value })
                   }
-                  className="w-full px-4 py-2 rounded border text-black"
+                  className={`w-full px-4 py-2 rounded border ${formErrors.address ? 'border-red-500' : 'border-gray-300'} text-black`}
                 />
+                {formErrors.address && <p className="text-red-500 text-sm">{formErrors.address}</p>}
               </div>
               <div className="space-y-1">
                 <label className="block text-base font-medium">
@@ -234,7 +293,7 @@ function CheckoutContent() {
                       specialRequest: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-2 rounded border text-black"
+                  className="w-full px-4 py-2 rounded border border-gray-300 text-black"
                 ></textarea>
               </div>
               <div className="px-4 mb-10">
@@ -269,7 +328,7 @@ function CheckoutContent() {
                                 {addon.name}
                               </label>
                               <p className="text-sm text-[#4b5566]">
-                                {displayPricingType(addon.pricingType)}
+                                {addon.description || displayPricingType(addon.pricingType)}
                               </p>
                             </div>
                           </div>
@@ -286,6 +345,12 @@ function CheckoutContent() {
                   )}
                 </div>
               </div>
+              <button
+                type="submit"
+                className="w-full bg-black text-white py-2 px-6 rounded-md hover:bg-gray-800 transition"
+              >
+                Confirm Booking
+              </button>
             </form>
           </div>
           {/* Booking Summary */}
@@ -301,7 +366,7 @@ function CheckoutContent() {
                   unoptimized
                 />
               )}
-              <div className=' md:mt-5'>
+              <div className="md:mt-5">
                 <h3 className="text-base text-[#111827] font-normal">
                   {apartment.name || 'Unknown Apartment'}
                 </h3>
@@ -377,11 +442,6 @@ function CheckoutContent() {
                 </span>
               </div>
             </div>
-            <Link href={bookingEngineUrl}>
-              <button className="w-full bg-black text-white py-2 px-6 rounded-md hover:bg-gray-800 transition">
-                Confirm Booking
-              </button>
-            </Link>
           </div>
         </div>
       </div>

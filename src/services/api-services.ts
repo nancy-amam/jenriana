@@ -297,3 +297,120 @@ export async function deleteApartment(apartmentId: string): Promise<any> {
     );
   }
 }
+
+export async function createBooking(
+  apartmentId: string,
+  bookingData: {
+    userId: string;
+    checkInDate: string;
+    checkOutDate: string;
+    guests: number;
+    paymentMethod: string;
+    addons: string[];
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    specialRequest?: string;
+  }
+): Promise<any> {
+  try {
+    if (!apartmentId?.trim()) {
+      throw new Error("Apartment ID is required");
+    }
+    if (!bookingData.userId?.trim()) {
+      throw new Error("User ID is required");
+    }
+    if (!bookingData.checkInDate) {
+      throw new Error("Check-in date is required");
+    }
+    if (!bookingData.checkOutDate) {
+      throw new Error("Check-out date is required");
+    }
+    if (!bookingData.guests || bookingData.guests <= 0) {
+      throw new Error("Guests must be greater than 0");
+    }
+    if (!bookingData.paymentMethod?.trim()) {
+      throw new Error("Payment method is required");
+    }
+    if (!bookingData.customerName?.trim()) {
+      throw new Error("Customer name is required");
+    }
+    if (!bookingData.customerEmail?.trim()) {
+      throw new Error("Customer email is required");
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingData.customerEmail)) {
+      throw new Error("Invalid email format");
+    }
+    if (!bookingData.customerPhone?.trim()) {
+      throw new Error("Customer phone is required");
+    }
+    if (!/^\+?\d{10,14}$/.test(bookingData.customerPhone.replace(/\s/g, ''))) {
+      throw new Error("Invalid phone number");
+    }
+
+    console.log(`Creating booking for apartment ID: ${apartmentId}`, bookingData);
+
+    const response = await apiHandler(`/api/apartment/${apartmentId}/book`, {
+      method: "POST",
+      body: bookingData,
+    });
+
+    console.log("Booking created successfully:", response);
+    return response;
+  } catch (error: any) {
+    console.error(`Failed to create booking for apartment ID ${apartmentId}:`, error);
+
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    throw new Error(
+      error.message ||
+        "Failed to create booking. Please check your data and try again."
+    );
+  }
+}
+
+export async function initiateCheckout(bookingId: string, paymentMethod: 'card' | 'bank-transfer'): Promise<any> {
+  try {
+    if (!bookingId?.trim()) {
+      throw new Error("Booking ID is required");
+    }
+
+    console.log(`Initiating checkout for booking ID: ${bookingId} with payment method: ${paymentMethod}`);
+
+    if (paymentMethod === 'bank-transfer') {
+      return {
+        success: true,
+        bankDetails: {
+          bankName: "Jenrianna Bank",
+          accountName: "Jenrianna Apartments",
+          accountNumber: "1234567890",
+          note: "Your booking will be confirmed upon receipt of payment."
+        }
+      };
+    }
+
+    const response = await apiHandler(`/api/booking/${bookingId}/checkout`, {
+      method: "POST",
+      data: { paymentMethod },
+    });
+
+    console.log("Checkout initialized successfully:", response);
+    if (!response.success || !response.payment || !response.payment.authorization_url) {
+      throw new Error("Invalid checkout response from server");
+    }
+    return response;
+  } catch (error: any) {
+    console.error(`Failed to initiate checkout for booking ID ${bookingId}:`, error);
+
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    throw new Error(
+      error.message ||
+        "Failed to initiate checkout. Please try again later."
+    );
+  }
+}
