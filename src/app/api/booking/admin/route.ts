@@ -16,7 +16,7 @@ export async function GET(req: Request) {
 
   const [bookings, total] = await Promise.all([
     Booking.find()
-      .populate("apartmentId") 
+      .populate( "apartmentId") 
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 }),
