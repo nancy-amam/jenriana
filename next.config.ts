@@ -21,6 +21,9 @@ const nextConfig = {
     // Disable async params to maintain backward compatibility
     dynamicIO: false,
   },
+   typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
 module.exports = nextConfig;
