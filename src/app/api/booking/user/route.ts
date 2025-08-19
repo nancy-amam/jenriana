@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "../../lib/getUserFromRequest";
 import connectDB from "../../lib/mongodb";
 import Booking from "../../../../models/bookings";
+import Apartment from "@/models/apartment";
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
     const type = searchParams.get('type'); // 'active' | 'history'
 
     const bookings = await Booking.find({ userId: user._id })
-      .populate('apartmentId', 'name location pricePerNight gallery')
+      .populate("apartmentId", 'name location pricePerNight gallery')
       .sort({ createdAt: -1 })
       .lean();
 
