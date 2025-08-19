@@ -21,6 +21,7 @@ interface PaystackVerifyResponse {
   status: boolean;
   message: string;
   data: {
+    _id: number;
     amount: number;
     currency: string;
     transaction_date: string;
