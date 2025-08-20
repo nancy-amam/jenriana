@@ -1,5 +1,5 @@
 // models/bookings.ts
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
 export interface IBooking extends Document {
   userId: mongoose.Types.ObjectId;
@@ -32,7 +32,11 @@ export interface IBooking extends Document {
 const BookingSchema = new Schema<IBooking>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    apartmentId: { type: Schema.Types.ObjectId, ref: "Apartment", required: true },
+    apartmentId: {
+      type: Schema.Types.ObjectId,
+      ref: "Apartment",
+      required: true,
+    },
     checkInDate: { type: Date, required: true },
     checkOutDate: { type: Date, required: true },
     guests: { type: Number, required: true },

@@ -1,19 +1,20 @@
+
 'use client';
 
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { ApartmentData } from '@/lib/interface';
+import { Apartment } from '@/lib/interface';
 
 interface ModalState {
   open: boolean;
   editMode: boolean;
-  apartmentData: (ApartmentData & { id?: string }) | undefined;
+  apartmentData: Apartment | undefined;
 }
 
 interface ApartmentModalContextType {
   modalState: ModalState;
   setModalState: (state: ModalState) => void;
   openAddModal: () => void;
-  openEditModal: (apartment: ApartmentData & { id?: string }) => void;
+  openEditModal: (apartment: Apartment) => void;
   closeModal: () => void;
 }
 
@@ -34,7 +35,7 @@ export function ApartmentModalProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const openEditModal = (apartment: ApartmentData & { id?: string }) => {
+  const openEditModal = (apartment: Apartment) => {
     setModalState({
       open: true,
       editMode: true,

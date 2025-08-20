@@ -1,32 +1,25 @@
-import Image from "next/image"
-import Link from "next/link"
-import { StarIcon } from "lucide-react"
-// import type { Apartment } from "@/lib/interface"
-
-interface TrendingApartmentCardProps {
-  apartment: Apartment
-}
+import Image from "next/image";
+import Link from "next/link";
+import { StarIcon } from "lucide-react";
 
 interface Apartment {
-  id: string
-  imageUrl: string
-  name: string
-  location: string
-  price: string
-  rating: number
-  guests: number
-  beds: number
-  baths: number
-  ratings: number
+  id: string;
+  imageUrl?: string;
+  name: string;
+  location: string;
+  price: string;
+  rating?: number;
+  guests?: number;
+  beds?: number;
+  baths?: number;
 }
 
+interface TrendingApartmentCardProps {
+  apartment: Apartment;
+}
 
 export function TrendingApartmentCard({ apartment }: TrendingApartmentCardProps) {
-  // Default to 4.8 if rating is undefined or not a number
-  const displayRating =
-    typeof apartment.ratings === "number" && !isNaN(apartment.ratings)
-      ? apartment.rating.toFixed(1)
-      : "4.8"
+  const displayRating = typeof apartment.rating === "number" ? apartment.rating.toFixed(1) : "4.8";
 
   return (
     <Link href={`/apartment/${apartment.id}`}>
@@ -53,5 +46,5 @@ export function TrendingApartmentCard({ apartment }: TrendingApartmentCardProps)
         </div>
       </div>
     </Link>
-  )
+  );
 }

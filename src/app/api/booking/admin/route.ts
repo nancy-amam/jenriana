@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "../../lib/getUserFromRequest";
 import Booking from "../../../../models/bookings";
-import Apartment from "../../../../models/apartment"; 
+import Apartment from "../../../../models/apartment";
 
 export async function GET(req: Request) {
   const user = await getUserFromRequest();
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
 
   const [bookings, total] = await Promise.all([
     Booking.find()
-      .populate( "apartmentId") 
+      .populate("apartmentId")
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 }),
