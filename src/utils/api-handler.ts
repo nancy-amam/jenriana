@@ -7,11 +7,7 @@ interface AxiosOptions {
   [key: string]: any;
 }
 
-const isServer = typeof window === "undefined";
-
-const BASE_URL = isServer
-  ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
-  : "";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 // ✅ ensure axios always handles cookies
 axios.defaults.withCredentials = true;
@@ -25,7 +21,7 @@ export async function apiHandler(
 
   try {
     const response = await axios({
-      url: `${BASE_URL}${path}`, // server -> absolute, client -> relative
+      url: `${BASE_URL}${path}`, // relative path → works on Vercel + local
       method,
       headers: {
         ...(isFormData ? {} : { "Content-Type": "application/json" }),
