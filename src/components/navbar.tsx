@@ -151,7 +151,7 @@ const Navbar = () => {
             className="hidden md:inline-block bg-red-600 text-white px-5 py-2 rounded hover:bg-red-700 transition text-sm font-medium"
             type="button"
           >
-            Log-out
+            Logout
           </button>
         )}
 
