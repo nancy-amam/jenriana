@@ -1,8 +1,7 @@
-// components/MobileNavbar.tsx
 'use client';
 
 import { Plus } from 'lucide-react';
-import { useApartmentModal } from '@/context/apartment-context'; // Adjust path
+import { useApartmentModal } from '@/context/apartment-context';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -21,13 +20,28 @@ const getPageCount = (path: string) => {
 
 interface MobileNavbarProps {
   isApartmentsPage: boolean;
+  // Optional props for edit mode
+  editMode?: boolean;
+  apartmentData?: any; // Use your Apartment interface type
 }
 
-export default function MobileNavbar({ isApartmentsPage }: MobileNavbarProps) {
+export default function MobileNavbar({ 
+  isApartmentsPage, 
+  editMode = false, 
+  apartmentData 
+}: MobileNavbarProps) {
   const pathname = usePathname();
   const title = getPageTitle(pathname);
   const count = getPageCount(pathname);
-  const { openAddModal } = useApartmentModal();
+  const { openAddModal, openEditModal } = useApartmentModal();
+
+  const handleAddEditClick = () => {
+    if (editMode && apartmentData) {
+      openEditModal(apartmentData);
+    } else {
+      openAddModal();
+    }
+  };
 
   return (
     <div className="p-4 mt-5 bg-[#f1f1f1]">
@@ -35,9 +49,9 @@ export default function MobileNavbar({ isApartmentsPage }: MobileNavbarProps) {
         <h1 className="text-[24px] font-semibold mt-5 text-[#111827]">{title}</h1>
         {isApartmentsPage ? (
           <button
-            onClick={openAddModal}
+            onClick={handleAddEditClick}
             className="flex items-center mt-5 justify-center w-10 h-10 bg-black hover:bg-gray-800 text-white rounded-full transition-colors"
-            aria-label="Add apartment"
+            aria-label={editMode ? "Edit apartment" : "Add apartment"}
           >
             <Plus className="h-5 w-5" />
           </button>

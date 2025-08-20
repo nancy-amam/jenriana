@@ -20,9 +20,15 @@ const getPageCount = (path: string, counts: { bookings: number; apartments: numb
   return '';
 };
 
-export default function AdminNavbar() {
+interface AdminNavbarProps {
+  // Optional props for edit mode
+  editMode?: boolean;
+  apartmentData?: any; // Use your Apartment interface type
+}
+
+export default function AdminNavbar({ editMode = false, apartmentData }: AdminNavbarProps) {
   const pathname = usePathname();
-  const { openAddModal } = useApartmentModal();
+  const { openAddModal, openEditModal } = useApartmentModal();
   const [counts, setCounts] = useState({ bookings: 0, apartments: 0, users: 0 });
   const [loading, setLoading] = useState(true);
 
@@ -54,6 +60,14 @@ export default function AdminNavbar() {
     fetchCounts();
   }, [pathname]);
 
+  const handleAddEditClick = () => {
+    if (editMode && apartmentData) {
+      openEditModal(apartmentData);
+    } else {
+      openAddModal();
+    }
+  };
+
   const title = getPageTitle(pathname);
   const count = getPageCount(pathname, counts);
 
@@ -67,11 +81,11 @@ export default function AdminNavbar() {
 
         {pathname.includes('/apartments') && (
           <button
-            onClick={openAddModal}
+            onClick={handleAddEditClick}
             className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition"
           >
             <Plus size={16} />
-            New Apartment
+            {editMode ? 'Edit Apartment' : 'New Apartment'}
           </button>
         )}
       </div>

@@ -4,7 +4,7 @@ import { Pencil, Trash2, MapPin, BedDouble, DollarSign, Users, Bath, X, Home, Pl
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import AddEditApartmentModal from '../components/add-apartment';
-import { getApartments, deleteApartment } from '@/services/api-services';
+import { getApartments, deleteApartment, getApartmentById } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
 import { useApartmentModal } from '@/context/apartment-context'
 
@@ -25,6 +25,7 @@ type Apartment = {
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
+  addons?: any[]; // Add this field
 };
 
 type DeleteModalState = {
@@ -39,6 +40,7 @@ export default function ApartmentsManagementPage() {
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | string>(null);
+  const [editLoading, setEditLoading] = useState<string | null>(null); // Track which apartment is loading
   const [deleteModalState, setDeleteModalState] = useState<DeleteModalState>({
     open: false,
     apartmentId: null,
@@ -72,6 +74,93 @@ export default function ApartmentsManagementPage() {
       console.error('Error refreshing apartments:', err);
     }
     closeModal();
+  };
+
+  // Fixed function to handle edit with complete apartment data
+  const handleEditClick = async (apartmentId: string) => {
+    try {
+      setEditLoading(apartmentId);
+      console.log('Fetching complete apartment data for:', apartmentId);
+      
+      // Fetch complete apartment data including addons
+      const response = await getApartmentById(apartmentId);
+      const fullApartmentData = response.data;
+      
+      console.log('Complete apartment data:', fullApartmentData);
+      
+      // Transform the data to match what the modal expects
+      const modalData = {
+        id: fullApartmentData._id,
+        _id: fullApartmentData._id,
+        name: fullApartmentData.name,
+        location: fullApartmentData.location,
+        address: fullApartmentData.address || '',
+        pricePerNight: fullApartmentData.pricePerNight,
+        rooms: fullApartmentData.rooms,
+        bathrooms: fullApartmentData.bathrooms || 0,
+        maxGuests: fullApartmentData.maxGuests || 1,
+        features: fullApartmentData.features || [],
+        rules: fullApartmentData.rules || [],
+        gallery: fullApartmentData.gallery || [],
+        isTrending: fullApartmentData.isTrending || false,
+        ratings: fullApartmentData.ratings || fullApartmentData.averageRating || 0,
+        createdAt: fullApartmentData.createdAt,
+        updatedAt: fullApartmentData.updatedAt,
+        __v: fullApartmentData.__v,
+        averageRating: fullApartmentData.averageRating || 0,
+        feedbackCount: fullApartmentData.feedbackCount || 0,
+        feedbacks: fullApartmentData.feedbacks || [],
+        // THIS IS THE KEY - include addons from the API response
+        addons: fullApartmentData.addons || [],
+        
+        // Extra fields that the modal might use
+        imageUrl: fullApartmentData.gallery?.[0] || "/placeholder.svg",
+        price: fullApartmentData.pricePerNight,
+        guests: fullApartmentData.maxGuests || 1,
+        beds: fullApartmentData.rooms || 1,
+        baths: fullApartmentData.bathrooms || 1,
+        rating: fullApartmentData.ratings || fullApartmentData.averageRating || 4.8,
+        galleryImages: (fullApartmentData.gallery || []).map(
+          (src: string, index: number) => ({
+            id: `${fullApartmentData._id}-${index}`,
+            src,
+            alt: `${fullApartmentData.name} image ${index + 1}`,
+          })
+        ),
+        amenities: (fullApartmentData.features || []).map(
+          (feature: string, index: number) => ({
+            id: `amenity-${index}`,
+            name: feature,
+            icon: getIconForFeature(feature),
+          })
+        ),
+      };
+      
+      console.log('Opening edit modal with data:', modalData);
+      openEditModal(modalData);
+    } catch (err: any) {
+      console.error('Error fetching apartment details for edit:', err);
+      alert('Failed to load apartment details for editing');
+    } finally {
+      setEditLoading(null);
+    }
+  };
+
+  // Helper function for feature icons (you might need to adjust this based on your needs)
+  const getIconForFeature = (feature: string): string => {
+    const featureIconMap: { [key: string]: string } = {
+      wifi: "Wifi",
+      "air conditioning": "AirVent",
+      kitchen: "Utensils",
+      tv: "Tv",
+      "laptop friendly": "Laptop",
+      gym: "Dumbbell",
+      parking: "ParkingSquare",
+      security: "ShieldCheck",
+    };
+
+    const lowerFeature = feature.toLowerCase();
+    return featureIconMap[lowerFeature] || "Info";
   };
 
   const handleDeleteClick = (apartment: Apartment) => {
@@ -137,7 +226,6 @@ export default function ApartmentsManagementPage() {
           placeholder="Search by apartment name or location"
           className="w-[90%] p-3 rounded-[8px] border border-[#d1d5db]/30 text-sm outline-none"
         />
-       
       </div>
 
       <div className="hidden md:block w-full max-w-[1200px] bg-white shadow-md rounded-lg p-4 mt-10 overflow-x-auto">
@@ -198,23 +286,20 @@ export default function ApartmentsManagementPage() {
                 <td className="py-3">
                   <div className="flex gap-2 items-center">
                     <button 
-                      onClick={() => openEditModal({
-                        id: apt._id,
-                        name: apt.name,
-                        location: apt.location,
-                        address: apt.address || '',
-                        pricePerNight: apt.pricePerNight,
-                        rooms: apt.rooms,
-                        bathrooms: apt.bathrooms || 0,
-                        maxGuests: apt.maxGuests || 1,
-                        features: apt.features || [],
-                        rules: apt.rules || [],
-                        gallery: apt.gallery || [],
-                        isTrending: apt.isTrending || false,
-                      })}
-                      className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1 text-xs"
+                      onClick={() => handleEditClick(apt._id)}
+                      disabled={editLoading === apt._id}
+                      className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1 text-xs disabled:opacity-50"
                     >
-                      <Pencil className="w-3 h-3" /> Edit
+                      {editLoading === apt._id ? (
+                        <>
+                          <div className="w-3 h-3 border border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          <Pencil className="w-3 h-3" /> Edit
+                        </>
+                      )}
                     </button>
                     <button 
                       className="text-red-600 hover:underline cursor-pointer flex items-center gap-1 text-xs"
@@ -278,23 +363,20 @@ export default function ApartmentsManagementPage() {
             </div>
             <div className="flex gap-4 mt-2">
               <button
-                onClick={() => openEditModal({
-                  id: apt._id,
-                  name: apt.name,
-                  location: apt.location,
-                  address: apt.address || '',
-                  pricePerNight: apt.pricePerNight,
-                  rooms: apt.rooms,
-                  bathrooms: apt.bathrooms || 0,
-                  maxGuests: apt.maxGuests || 1,
-                  features: apt.features || [],
-                  rules: apt.rules || [],
-                  gallery: apt.gallery || [],
-                  isTrending: apt.isTrending || false,
-                })}
-                className="flex-1 bg-[#f3f4f6] text-[#374151] cursor-pointer text-sm py-2 rounded-md flex items-center justify-center gap-1"
+                onClick={() => handleEditClick(apt._id)}
+                disabled={editLoading === apt._id}
+                className="flex-1 bg-[#f3f4f6] text-[#374151] cursor-pointer text-sm py-2 rounded-md flex items-center justify-center gap-1 disabled:opacity-50"
               >
-                <Pencil className="w-4 h-4" /> Edit
+                {editLoading === apt._id ? (
+                  <>
+                    <div className="w-4 h-4 border border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <Pencil className="w-4 h-4" /> Edit
+                  </>
+                )}
               </button>
               <button 
                 className="flex-1 bg-[#fef2f2] text-[#dc2626] cursor-pointer text-sm py-2 rounded-md flex items-center justify-center gap-1"

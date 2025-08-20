@@ -157,6 +157,7 @@ export default function AddEditApartmentModal({
   };
 
   useEffect(() => {
+    console.log('useEffect triggered', { editMode, open, apartmentData });
     if (editMode && apartmentData && open) {
       setFormData({
         name: apartmentData.name || '',
@@ -197,16 +198,22 @@ export default function AddEditApartmentModal({
         setExistingImages(apartmentData.gallery);
       }
 
-      if (apartmentData.addons) {
-        setAddOns(apartmentData.addons.map((addon, index) => ({
-          id: addon.id || `${Date.now()}-${index}`,
-          name: addon.name || '',
-          price: addon.price || 0,
-          pricingType: apiToPricingType[addon.pricingType as keyof typeof apiToPricingType] || 'per/night',
-          description: addon.description || '',
-          active: addon.active ?? true
-        })));
+      console.log('Received addons:', apartmentData.addons);
+      if (apartmentData.addons && apartmentData.addons.length > 0) {
+        setAddOns(apartmentData.addons.map((addon, index) => {
+          const pricingType = apiToPricingType[addon.pricingType as keyof typeof apiToPricingType] || 'per/night';
+          console.log(`Mapping addon ${index + 1}:`, { addon, mappedPricingType: pricingType });
+          return {
+            id: addon.id || `${Date.now()}-${index}`,
+            name: addon.name || '',
+            price: addon.price || 0,
+            pricingType: pricingType,
+            description: addon.description || '',
+            active: addon.active ?? true
+          };
+        }));
       } else {
+        console.log('No addons received, setting empty array');
         setAddOns([]);
       }
 
@@ -394,6 +401,7 @@ export default function AddEditApartmentModal({
             throw new Error(`Invalid pricing type for add-on "${addon.name}": ${addon.pricingType}`);
           }
           return {
+            id: addon.id,
             name: addon.name.trim(),
             price: addon.price,
             pricingType: mappedPricingType,
@@ -696,6 +704,10 @@ export default function AddEditApartmentModal({
             Attach custom services to this apartment. These will appear to users during checkout.
           </p>
           
+          {addOns.length === 0 && (
+            <p className="text-sm text-gray-500 mb-4">No add-ons available.</p>
+          )}
+          
           {addOns.map((addon, index) => (
             <div key={addon.id} className="mb-4 p-4 border border-gray-200 rounded-lg">
               <div className="flex justify-between items-center mb-3">
@@ -734,9 +746,8 @@ export default function AddEditApartmentModal({
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     disabled={isLoading}
                   >
-                    <option value="">Select pricing type</option>
-                    <option value="per/day">Per Day</option>
                     <option value="per/night">Per Night</option>
+                    <option value="per/day">Per Day</option>
                     <option value="one time fee">One Time Fee</option>
                   </select>
                 </div>
