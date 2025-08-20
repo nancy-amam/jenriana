@@ -52,9 +52,16 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
 
       const image = encodeURIComponent(apartment.imageUrl || '/placeholder.svg');
 
-    router.push(
-    `/checkout?apartmentId=${apartment._id}&nights=${nights}&guests=${guests}&price=${price}&checkIn=${checkIn}&checkOut=${checkOut}&image=${image}`
+     const apartmentId = apartment.id || apartment._id;
+
+if (!apartmentId) {
+  console.error("Cannot navigate to checkout: apartment ID is missing", apartment);
+} else {
+  router.push(
+    `/checkout?apartmentId=${apartmentId}&nights=${nights}&guests=${guests}&price=${price}&checkIn=${checkIn}&checkOut=${checkOut}&image=${encodeURIComponent(image)}`
   );
+}
+
   };
 
   // Map API features to icons and names, aligned with AddEditApartmentModal

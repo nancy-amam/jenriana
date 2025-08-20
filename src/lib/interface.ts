@@ -72,6 +72,8 @@ export interface LocationFeature extends BaseEntity, Image {
   locationName: string;
   apartmentCount: number;
   colSpan: number;
+  imageUrl?: string; 
+   altText: string
 }
 
 // Testimonial interface
@@ -80,6 +82,7 @@ export interface Testimonial extends BaseEntity {
   text: string;
   authorName: string;
   authorImage: string;
+  
 }
 
 // Amenity interface

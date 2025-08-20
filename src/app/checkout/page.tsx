@@ -208,7 +208,7 @@ function CheckoutContent() {
   return (
     <div className="relative min-h-screen bg-black text-white px-4 py-12 md:px-16 overflow-hidden">
       <Image
-        src={apartment.imageUrl}
+        src={apartment.imageUrl || '/images/image20.png'}
         alt="Apartment background"
         fill
         className="object-cover z-0"

@@ -1,17 +1,17 @@
-import Image from "next/image"
-import Link from "next/link"
-import { StarIcon, UsersIcon, BedIcon, BathIcon } from "lucide-react"
+import Image from "next/image";
+import Link from "next/link";
+import { StarIcon, UsersIcon, BedIcon, BathIcon } from "lucide-react";
 
 interface ApartmentCardProps {
-  id: string
-  imageUrl: string
-  name: string
-  location: string
-  price: string
-  rating: number
-  guests: number
-  beds: number
-  baths: number
+  id: string;
+  imageUrl?: string;
+  name: string;
+  location: string;
+  price: string;
+  rating?: number;
+  guests?: number;
+  beds?: number;
+  baths?: number;
 }
 
 export function ApartmentCard({
@@ -20,14 +20,16 @@ export function ApartmentCard({
   name,
   location,
   price,
-  rating,
-  guests,
-  beds,
-  baths,
+  rating = 4.8,
+  guests = 1,
+  beds = 1,
+  baths = 1,
 }: ApartmentCardProps) {
+  const displayRating = typeof rating === "number" ? rating.toFixed(1) : "4.8";
+
   return (
     <Link href={`/apartment/${id}`}>
-      <div className="md:w-[424px] w-[360px] flex-shrink-0 rounded-[20px]  overflow-hidden bg-white  transition-shadow duration-200 cursor-pointer">
+      <div className="md:w-[424px] w-[360px] flex-shrink-0 rounded-[20px] overflow-hidden bg-white transition-shadow duration-200 cursor-pointer">
         <div className="w-full h-[384px] overflow-hidden">
           <Image
             src={imageUrl || "/placeholder.svg"}
@@ -44,7 +46,7 @@ export function ApartmentCard({
             <span className="text-[24px] text-[#1e1e1e] font-normal">{price}/night</span>
             <div className="flex items-center gap-1">
               <StarIcon className="h-5 w-5 text-amber-400 fill-amber-400" />
-              <span className="text-base font-medium">{rating}</span>
+              <span className="text-base font-medium">{displayRating}</span>
             </div>
           </div>
           <div className="flex items-center gap-4 text-[#4b5568] text-sm">
@@ -64,5 +66,5 @@ export function ApartmentCard({
         </div>
       </div>
     </Link>
-  )
+  );
 }
