@@ -92,8 +92,8 @@ const Navbar = () => {
                 {apartments.length > 0 ? (
                   apartments.map((apt) => (
                     <Link
-                      key={apt._id}
-                      href={`/apartment/${apt._id}`}
+                      key={apt.id}
+                      href={`/apartment/${apt.id}`}
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setShowDropdown(false)}
                     >
@@ -180,8 +180,8 @@ const Navbar = () => {
                 {apartments.length > 0 ? (
                   apartments.map((apt) => (
                     <Link
-                      key={apt._id}
-                      href={`/apartment/${apt._id}`}
+                      key={apt.id}
+                      href={`/apartment/${apt.id}`}
                       className="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded"
                       onClick={() => {
                         setShowDropdown(false);

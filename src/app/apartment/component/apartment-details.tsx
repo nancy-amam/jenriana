@@ -52,7 +52,7 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
 
       const image = encodeURIComponent(apartment.imageUrl || '/placeholder.svg');
 
-     const apartmentId = apartment.id || apartment._id;
+     const apartmentId = apartment.id 
 
 if (!apartmentId) {
   console.error("Cannot navigate to checkout: apartment ID is missing", apartment);
@@ -243,7 +243,7 @@ if (!apartmentId) {
         <div className="max-w-[1400] mx-auto px-4 mb-10">
           <h2 className="text-2xl md:text-[36px] font-normal text-[#111827] text-left mb-6">What This Apartment Offers</h2>
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {apartment.features.map((feature) => {
+            {(apartment.features || []).map((feature) => {
               const featureData = featureMapping[feature as keyof typeof featureMapping];
               if (!featureData) {
                 console.warn(`Feature not mapped: ${feature}`);
@@ -309,8 +309,8 @@ if (!apartmentId) {
             </div>
             <div className="flex flex-col gap-4 md:mt-20 ">
               <h3 className="text-lg font-semibold mb-2">Things to know before booking</h3>
-              {apartment.rules.length > 0 ? (
-                apartment.rules.map((rule) => {
+              {(apartment.rules || []).length > 0 ? (
+                (apartment.rules || []).map((rule) => {
                   const ruleData = ruleMapping[rule as keyof typeof ruleMapping];
                   if (!ruleData) {
                     console.warn(`Rule not mapped: ${rule}`);

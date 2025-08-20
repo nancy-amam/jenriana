@@ -1,4 +1,3 @@
-
 // Base interface for entities with an ID
 export interface BaseEntity {
   id: string;
@@ -10,34 +9,43 @@ export interface Image {
   alt: string;
 }
 
+// Addon interface
+export interface Addon extends BaseEntity {
+  name: string;
+  price: number;
+  pricingType: 'perNight' | 'oneTime';
+  description?: string;
+  active?: boolean;
+}
+
 // Base apartment fields shared across Apartment, ApartmentData, and ApartmentResponse
 export interface BaseApartment {
   name: string;
   location: string;
   address: string;
   pricePerNight: number;
-  rooms: number;
-  bathrooms: number;
+  rooms?: number;
+  bathrooms?: number;
   maxGuests: number;
-  features: string[];
-  gallery: string[];
-  rules: string[];
+  features?: string[];
+  gallery?: string[];
+  rules?: string[];
   isTrending?: boolean;
+  addons?: Addon[];
 }
 
-// Full Apartment interface with additional metadata
+// Full Apartment interface with transformed fields
 export interface Apartment extends BaseApartment, BaseEntity {
-  averageRating: number;
-  ratings: any[]; // Consider typing this more strictly if possible
-  feedbackCount: number;
-  feedbacks: string; // Consider typing as an array if it represents multiple feedbacks
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-  imageUrl?: string;
+  _id?: string; // original backend ID
+  price: number; // for UI display convenience
   beds: number;
   baths: number;
-  addons?: Addon[];
+  guests: number;
+  rating: number;
+  averageRating?: number;
+  galleryImages?: { id: string; src: string; alt: string }[];
+  amenities?: { id: string; name: string; icon: string }[];
+  imageUrl?: string;
 }
 
 // Input data for creating/updating an apartment
@@ -53,18 +61,12 @@ export interface ApartmentResponse {
 export interface BaseService extends BaseEntity {
   name: string;
   price: number;
-  description: string;
-}
-
-// Addon interface
-export interface Addon extends BaseService {
-  pricingType: string;
-  active: boolean;
+  description?: string;
 }
 
 // Service interface
 export interface Service extends BaseService {
-  unit: string; // e.g., "/night", "/stay", "/person"
+  unit?: string; // e.g., "/night", "/stay", "/person"
 }
 
 // Location feature interface
@@ -72,8 +74,6 @@ export interface LocationFeature extends BaseEntity, Image {
   locationName: string;
   apartmentCount: number;
   colSpan: number;
-  imageUrl?: string; 
-   altText: string
 }
 
 // Testimonial interface
@@ -82,7 +82,6 @@ export interface Testimonial extends BaseEntity {
   text: string;
   authorName: string;
   authorImage: string;
-  
 }
 
 // Amenity interface

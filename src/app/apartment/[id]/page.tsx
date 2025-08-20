@@ -1,20 +1,24 @@
+// app/apartment/[id]/page.tsx
 import { notFound } from "next/navigation";
 import ApartmentDetails from "../component/apartment-details";
 import { getApartmentById } from "@/services/api-services";
 
+// In Next.js 14, params is now a Promise that needs to be awaited
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 
 export default async function ApartmentDetailPage({ params }: PageProps) {
-  const { id } = params;
+  // Await the params promise as required by Next.js 14
+  const { id } = await params;
 
   try {
     const response = await getApartmentById(id);
     const apartmentData = response.data;
+
     if (!apartmentData) return notFound();
 
     const transformedApartment = {

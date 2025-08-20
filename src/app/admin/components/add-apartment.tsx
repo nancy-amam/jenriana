@@ -145,16 +145,18 @@ export default function AddEditApartmentModal({
     'max-guests-enforced': 'maxGuests'
   };
 
-  const pricingTypeToApi = {
-    'per/day': 'perNight',
-    'per/night': 'perNight',
-    'one time fee': 'oneTime'
-  };
+const pricingTypeToApi: Record<"per/day" | "per/night" | "one time fee", "perNight" | "oneTime"> = {
+  "per/day": "perNight",
+  "per/night": "perNight",
+  "one time fee": "oneTime",
+};
 
-  const apiToPricingType = {
-    'perNight': 'per/night',
-    'oneTime': 'one time fee'
-  };
+
+const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time fee"> = {
+  perNight: "per/night",
+  oneTime: "one time fee",
+};
+
 
   useEffect(() => {
     console.log('useEffect triggered', { editMode, open, apartmentData });
@@ -200,18 +202,19 @@ export default function AddEditApartmentModal({
 
       console.log('Received addons:', apartmentData.addons);
       if (apartmentData.addons && apartmentData.addons.length > 0) {
-        setAddOns(apartmentData.addons.map((addon, index) => {
-          const pricingType = apiToPricingType[addon.pricingType as keyof typeof apiToPricingType] || 'per/night';
-          console.log(`Mapping addon ${index + 1}:`, { addon, mappedPricingType: pricingType });
-          return {
-            id: addon.id || `${Date.now()}-${index}`,
-            name: addon.name || '',
-            price: addon.price || 0,
-            pricingType: pricingType,
-            description: addon.description || '',
-            active: addon.active ?? true
-          };
-        }));
+          setAddOns(
+  apartmentData.addons.map((addon, index) => {
+    const pricingType = pricingTypeToApi[addon.pricingType as keyof typeof pricingTypeToApi] || 'perNight';
+    return {
+      id: addon.id || `${Date.now()}-${index}`,
+      name: addon.name || '',
+      price: addon.price || 0,
+      pricingType, // Type-safe: 'perNight' | 'oneTime'
+      description: (addon.description ?? '').trim(),
+      active: addon.active ?? true,
+    } as Addon;
+  })
+);
       } else {
         console.log('No addons received, setting empty array');
         setAddOns([]);
@@ -294,14 +297,17 @@ export default function AddEditApartmentModal({
   };
 
   const addNewAddOn = () => {
-    setAddOns(prev => [...prev, {
-      id: `${Date.now()}-${prev.length}`,
-      name: '',
-      price: 0,
-      pricingType: 'per/night',
-      description: '',
-      active: true
-    }]);
+    setAddOns((prev) => [
+  ...prev,
+  {
+    id: `${Date.now()}-${prev.length}`,
+    name: "",
+    price: 0,
+    pricingType: "perNight", // <- use union type
+    description: "",
+    active: true,
+  } as Addon,
+]);
   };
 
   const removeAddOn = (id: string) => {
@@ -405,7 +411,7 @@ export default function AddEditApartmentModal({
             name: addon.name.trim(),
             price: addon.price,
             pricingType: mappedPricingType,
-            description: addon.description.trim(),
+              description: (addon.description ?? "").trim(),
             active: addon.active
           };
         });
