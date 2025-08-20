@@ -14,11 +14,12 @@ const DateInput: FC<DateInputProps> = ({ id, label, value, onChange }) => {
 
   const handleIconClick = () => {
     if (!inputRef.current) return;
-    // ✅ Chrome/Edge supports showPicker()
+
+    // For Chrome/Edge
     if (typeof (inputRef.current as any).showPicker === "function") {
       (inputRef.current as any).showPicker();
     } else {
-      // ✅ Fallback for Safari/Firefox
+      // Fallback for Safari/Firefox
       inputRef.current.focus();
     }
   };
@@ -39,10 +40,23 @@ const DateInput: FC<DateInputProps> = ({ id, label, value, onChange }) => {
           type="date"
           value={value}
           onChange={onChange}
-          className="w-full md:px-3 md:py-3 md:pr-10 px-5 py-3 cursor-pointer  md:rounded-xl  border border-[#ffffff] rounded-xl  bg-white md:bg-white border-none md:border md:border-gray-300 focus:outline-none focus:ring-2 focus:ring-black text-left [appearance:none] [-moz-appearance:textfield]"
+          className="w-full md:px-3 md:py-3 md:pr-10 px-3 py-3 cursor-pointer md:rounded-xl border border-[#ffffff] rounded-xl bg-white md:bg-white border-none md:border md:border-gray-300 focus:outline-none focus:ring-2 focus:ring-black text-left text-transparent caret-black [appearance:none] [-moz-appearance:textfield]"
+          style={{
+            colorScheme: "light", // Prevent dark mode autofill
+          }}
         />
 
-        {/* Custom Calendar Icon */}
+        {/* Custom Placeholder-like Text */}
+        {!value && (
+          <span
+            className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 select-none text-sm"
+            style={{ userSelect: "none" }}
+          >
+            mm/dd/yyyy
+          </span>
+        )}
+
+        {/* Calendar Icon Button */}
         <button
           type="button"
           onClick={handleIconClick}
