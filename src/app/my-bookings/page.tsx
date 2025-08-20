@@ -459,13 +459,14 @@ export default function MyBookingsPage() {
                         
                         {postedReview && (
                           <div className="flex items-start gap-3 mt-4 p-4 bg-gray-50 rounded-lg">
-                            <Image
-                              src={postedReview.userImage}
-                              alt="User"
-                              width={40}
-                              height={40}
-                              className="rounded-full"
-                            />
+                            <div className="relative w-10 h-10">
+                              <Image
+                                src="/images/user.png"
+                                alt={postedReview.userImage}
+                                fill
+                                className="rounded-full object-cover"
+                              />
+                            </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="text-sm font-medium text-[#111827]">Your Review</span>

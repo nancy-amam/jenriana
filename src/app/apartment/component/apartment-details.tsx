@@ -23,6 +23,7 @@ import {
   Battery,
 } from 'lucide-react';
 import { Apartment } from '@/lib/interface';
+import DateInput from "@/components/date-inputs";
 
 export default function ApartmentDetails({ apartment }: { apartment: Apartment }) {
   const router = useRouter();
@@ -130,26 +131,22 @@ if (!apartmentId) {
     </div>
 
     {/* Dates */}
-    <div className="flex gap-2 mb-2 text-[#1e1e1e]">
+    <div className="flex gap-1 mb-2 text-[#1e1e1e]">
       <div className="w-1/2">
-        <label htmlFor="check-in" className="block text-base mb-2 md:mb-1 text-[#1e1e1e]">
-          Check In
-        </label>
-        <input
+        <DateInput
           id="check-in"
-          type="date"
-          className="border border-[#ffffff] w-full px-3 py-3 rounded-xl md:border-none bg-white text-sm"
+          label="Check In"
+          value={checkIn}
           onChange={(e) => setCheckIn(e.target.value)}
+         
         />
       </div>
-      <div className="w-1/2">
-        <label htmlFor="check-out" className="block text-base mb-2 md:mb-1 text-[#1e1e1e]">
-          Check Out
-        </label>
-        <input
+
+      <div className="w-1/2 ">
+        <DateInput
           id="check-out"
-          type="date"
-          className="border border-[#ffffff] md:border-none w-full px-3 py-3 rounded-xl  bg-white  text-sm"
+          label="Check Out"
+          value={checkOut}
           onChange={(e) => setCheckOut(e.target.value)}
         />
       </div>

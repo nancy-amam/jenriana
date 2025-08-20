@@ -1,0 +1,71 @@
+"use client";
+
+import { FC, useRef } from "react";
+
+interface DateInputProps {
+  id: string;
+  label: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+const DateInput: FC<DateInputProps> = ({ id, label, value, onChange }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleIconClick = () => {
+    if (!inputRef.current) return;
+    // ✅ Chrome/Edge supports showPicker()
+    if (typeof (inputRef.current as any).showPicker === "function") {
+      (inputRef.current as any).showPicker();
+    } else {
+      // ✅ Fallback for Safari/Firefox
+      inputRef.current.focus();
+    }
+  };
+
+  return (
+    <div className="w-full">
+      <label
+        htmlFor={id}
+        className="block text-base font-medium text-[#1e1e1e] mb-2 md:mb-1"
+      >
+        {label}
+      </label>
+
+      <div className="relative w-full">
+        <input
+          ref={inputRef}
+          id={id}
+          type="date"
+          value={value}
+          onChange={onChange}
+          className="w-full md:px-3 md:py-3 md:pr-10 px-5 py-3  md:rounded-xl  border border-[#ffffff] rounded-xl  bg-white md:bg-white border-none md:border md:border-gray-300 focus:outline-none focus:ring-2 focus:ring-black text-left [appearance:none] [-moz-appearance:textfield]"
+        />
+
+        {/* Custom Calendar Icon */}
+        <button
+          type="button"
+          onClick={handleIconClick}
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default DateInput;

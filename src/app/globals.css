@@ -49,3 +49,10 @@ input[type="date"]::-webkit-clear-button {
   border-radius: 4px;
   padding: 4px;
 }
+
+/* globals.css */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
