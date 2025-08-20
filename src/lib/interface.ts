@@ -125,3 +125,12 @@ export interface SignUpData extends BaseAuthData {
   phone: string;
   confirmPassword: string;
 }
+
+export interface AnalyticsResponse {
+  totalApartments: number;
+  totalBookings: number;
+  revenueThisMonth: number;
+  percentageChange: string;
+}
+
+

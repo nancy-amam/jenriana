@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { getApartments } from "@/services/api-services";
 import { Apartment } from "@/lib/interface";
 
 const Navbar = () => {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -15,10 +17,12 @@ const Navbar = () => {
 
   // Check login and admin status
   useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    const role = localStorage.getItem("userRole");
-    setIsLoggedIn(!!userId);
-    setIsAdmin(role === "admin");
+    if (typeof window !== "undefined") {
+      const userId = localStorage.getItem("userId");
+      const role = localStorage.getItem("userRole");
+      setIsLoggedIn(!!userId);
+      setIsAdmin(role === "admin");
+    }
   }, []);
 
   // Fetch apartments for dropdown
@@ -34,24 +38,22 @@ const Navbar = () => {
     fetchApartments();
   }, []);
 
-  // Handle logout
   const handleLogout = () => {
-    // Clear localStorage
-    localStorage.clear();
+    try {
+      // Clear localStorage items that were set during login
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userRole");
 
-    // Clear cookies
-    document.cookie.split(";").forEach((c) => {
-      document.cookie = c
-        .replace(/^ +/, "")
-        .replace(/=.*/, `=;expires=${new Date(0).toUTCString()};path=/`);
-    });
-
-    // Reset state
-    setIsLoggedIn(false);
-    setIsAdmin(false);
-
-    // Redirect to login
-    window.location.href = "/login";
+      // Reset state
+      setIsLoggedIn(false);
+      setIsAdmin(false);
+      
+      // Redirect to login
+      router.push("/login");
+      
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
 
   // Handle protected navigation
@@ -61,7 +63,7 @@ const Navbar = () => {
   ) => {
     if (!isLoggedIn) {
       e.preventDefault();
-      window.location.href = "/login";
+      router.push("/login");
     }
   };
 
@@ -147,6 +149,7 @@ const Navbar = () => {
           <button
             onClick={handleLogout}
             className="hidden md:inline-block bg-red-600 text-white px-5 py-2 rounded hover:bg-red-700 transition text-sm font-medium"
+            type="button"
           >
             Logout
           </button>
@@ -156,6 +159,7 @@ const Navbar = () => {
         <button
           className="md:hidden text-[#1e1e1e]"
           onClick={() => setIsOpen(!isOpen)}
+          type="button"
         >
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -172,6 +176,7 @@ const Navbar = () => {
             <button
               onClick={() => setShowDropdown((prev) => !prev)}
               className="flex items-center w-full text-left text-[#1e1e1e] font-medium"
+              type="button"
             >
               Apartments <ChevronDown size={16} className="ml-1" />
             </button>
@@ -245,6 +250,7 @@ const Navbar = () => {
                 setIsOpen(false);
               }}
               className="block w-full bg-red-600 text-white px-4 py-2 rounded-lg text-center"
+              type="button"
             >
               Logout
             </button>

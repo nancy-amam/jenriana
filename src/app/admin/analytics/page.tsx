@@ -1,56 +1,91 @@
 'use client';
 
-import { Home, CalendarCheck, DollarSign } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Home, CalendarCheck, DollarSign } from "lucide-react";
+import { getAdminAnalytics } from "@/services/api-services";
+import { AnalyticsResponse } from "@/lib/interface";
+import ApartmentLoadingPage from "@/components/loading";
 
 export default function AnalyticsPage() {
+  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAnalytics() {
+      try {
+        const data = await getAdminAnalytics();
+        setAnalytics(data);
+      } catch (err) {
+        console.error("Failed to load analytics:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAnalytics();
+  }, []);
+
+  // while fetching
+  if (loading) {
+    return <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
+            <div className="flex justify-center items-center h-64">
+              <ApartmentLoadingPage />
+            </div>
+          </div>;
+  }
+
+  // if API failed
+  if (!analytics) {
+    return <div className="p-6 text-red-500">Failed to load analytics.</div>;
+  }
+
   const stats = [
     {
-      title: 'Total Apartments',
-      value: '54',
-      change: '12% increase from last month',
+      title: "Total Apartments",
+      value: analytics.totalApartments.toString(),
+      change: `${analytics.percentageChange}% change`,
       icon: Home,
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
+      iconBg: "bg-blue-100",
+      iconColor: "text-blue-600",
     },
     {
-      title: 'Total Bookings',
-      value: '1,293',
-      change: '8% increase from last month',
+      title: "Total Bookings",
+      value: analytics.totalBookings.toString(),
+      change: `${analytics.percentageChange}% change`,
       icon: CalendarCheck,
-      iconBg: 'bg-green-100',
-      iconColor: 'text-green-600',
+      iconBg: "bg-green-100",
+      iconColor: "text-green-600",
     },
     {
-      title: 'Revenue This Month',
-      value: '₦4.2M',
-      change: '5% increase from last month',
+      title: "Revenue This Month",
+      value: `₦${analytics.revenueThisMonth.toLocaleString()}`,
+      change: `${analytics.percentageChange}% change`,
       icon: DollarSign,
-      iconBg: 'bg-yellow-100',
-      iconColor: 'text-yellow-600',
+      iconBg: "bg-yellow-100",
+      iconColor: "text-yellow-600",
     },
   ];
 
   const activities = [
     {
       id: 1,
-      text: 'New booking for Apartment #24',
+      text: "New booking for Apartment #24",
       icon: CalendarCheck,
-      iconBg: 'bg-green-100',
-      iconColor: 'text-green-600',
+      iconBg: "bg-green-100",
+      iconColor: "text-green-600",
     },
     {
       id: 2,
-      text: 'Apartment #12 updated by Admin',
+      text: "Apartment #12 updated by Admin",
       icon: Home,
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
+      iconBg: "bg-blue-100",
+      iconColor: "text-blue-600",
     },
     {
       id: 3,
-      text: 'Payment of ₦250,000 received',
+      text: "Payment of ₦250,000 received",
       icon: DollarSign,
-      iconBg: 'bg-yellow-100',
-      iconColor: 'text-yellow-600',
+      iconBg: "bg-yellow-100",
+      iconColor: "text-yellow-600",
     },
   ];
 

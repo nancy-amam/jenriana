@@ -1,5 +1,5 @@
 import { apiHandler } from "@/utils/api-handler";
-import { SignInData, SignUpData, ApartmentData } from "@/lib/interface";
+import { SignInData, SignUpData, ApartmentData, AnalyticsResponse } from "@/lib/interface";
 
 export async function signIn(data: SignInData) {
   return apiHandler("/api/auth/signin", {
@@ -603,3 +603,18 @@ export async function verifyPayment(reference: string, bookingId: string): Promi
     );
   }
 }
+
+export async function getAdminAnalytics(): Promise<AnalyticsResponse> {
+  try {
+    const response = await apiHandler("/api/admin/analytics", {
+      method: "GET",
+    });
+    return response as AnalyticsResponse;
+  } catch (error) {
+    console.error("Error fetching analytics:", error);
+    throw error;
+  }
+}
+
+
+
