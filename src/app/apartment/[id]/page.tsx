@@ -4,11 +4,14 @@ import { getApartmentById } from "@/services/api-services";
 import { Apartment } from "@/lib/interface";
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
+// Force runtime so Vercel doesn’t try to pre-render at build
+export const dynamic = "force-dynamic";
+
 export default async function ApartmentDetailPage({ params }: PageProps) {
-  const { id } = await params;
+  const { id } = params;
 
   try {
     const response = await getApartmentById(id);
@@ -18,9 +21,7 @@ export default async function ApartmentDetailPage({ params }: PageProps) {
       return notFound();
     }
 
-    // Transform API response to match ApartmentDetails component expectations
     const transformedApartment: Apartment = {
-      // Keep original fields for database operations
       _id: apartmentData._id,
       name: apartmentData.name,
       location: apartmentData.location,
@@ -40,29 +41,31 @@ export default async function ApartmentDetailPage({ params }: PageProps) {
       averageRating: apartmentData.averageRating || 0,
       feedbackCount: apartmentData.feedbackCount || 0,
       feedbacks: apartmentData.feedbacks || [],
-      
-      // Add fields expected by ApartmentDetails component
-      id: apartmentData._id, // Map _id to id
-      imageUrl: apartmentData.gallery?.[0] || '/placeholder.svg', // Main image
-      price: apartmentData.pricePerNight, // Map pricePerNight to price
-      guests: apartmentData.maxGuests || 1, // Map maxGuests to guests
-      beds: apartmentData.rooms || 1, // Map rooms to beds
-      baths: apartmentData.bathrooms || 1, // Map bathrooms to baths
+
+      // extra fields
+      id: apartmentData._id,
+      imageUrl: apartmentData.gallery?.[0] || "/placeholder.svg",
+      price: apartmentData.pricePerNight,
+      guests: apartmentData.maxGuests || 1,
+      beds: apartmentData.rooms || 1,
+      baths: apartmentData.bathrooms || 1,
       rating: apartmentData.ratings || apartmentData.averageRating || 4.8,
-      
-      // Transform gallery for component
-      galleryImages: (apartmentData.gallery || []).map((src: string, index: number) => ({
-        id: `${apartmentData._id}-${index}`,
-        src,
-        alt: `${apartmentData.name} image ${index + 1}`,
-      })),
-      
-      // Transform features to amenities format expected by component
-      amenities: (apartmentData.features || []).map((feature: string, index: number) => ({
-        id: `amenity-${index}`,
-        name: feature,
-        icon: getIconForFeature(feature), // Helper function to map features to icons
-      })),
+
+      galleryImages: (apartmentData.gallery || []).map(
+        (src: string, index: number) => ({
+          id: `${apartmentData._id}-${index}`,
+          src,
+          alt: `${apartmentData.name} image ${index + 1}`,
+        })
+      ),
+
+      amenities: (apartmentData.features || []).map(
+        (feature: string, index: number) => ({
+          id: `amenity-${index}`,
+          name: feature,
+          icon: getIconForFeature(feature),
+        })
+      ),
     };
 
     return <ApartmentDetails apartment={transformedApartment} />;
@@ -72,20 +75,18 @@ export default async function ApartmentDetailPage({ params }: PageProps) {
   }
 }
 
-// Helper function to map feature names to icon names
 function getIconForFeature(feature: string): string {
   const featureIconMap: { [key: string]: string } = {
-    'wifi': 'Wifi',
-    'air conditioning': 'AirVent',
-    'kitchen': 'Utensils',
-    'tv': 'Tv',
-    'laptop friendly': 'Laptop',
-    'gym': 'Dumbbell',
-    'parking': 'ParkingSquare',
-    'security': 'ShieldCheck',
-    // Add more mappings as needed
+    wifi: "Wifi",
+    "air conditioning": "AirVent",
+    kitchen: "Utensils",
+    tv: "Tv",
+    "laptop friendly": "Laptop",
+    gym: "Dumbbell",
+    parking: "ParkingSquare",
+    security: "ShieldCheck",
   };
-  
+
   const lowerFeature = feature.toLowerCase();
-  return featureIconMap[lowerFeature] || 'Info'; // Default to Info icon
+  return featureIconMap[lowerFeature] || "Info";
 }

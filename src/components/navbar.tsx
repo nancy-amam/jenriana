@@ -4,19 +4,22 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { getApartments } from "@/services/api-services";
-
-interface Apartment {
-  _id: string;
-  name: string;
-}
+import { Apartment } from "@/lib/interface";
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false); // mobile menu toggle
+  const [isOpen, setIsOpen] = useState(false); // Mobile menu toggle
   const [apartments, setApartments] = useState<Apartment[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false); // apartments dropdown toggle
+  const [showDropdown, setShowDropdown] = useState(false); // Apartments dropdown toggle
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const isLoggedIn =
-    typeof window !== "undefined" && !!localStorage.getItem("userId");
+  // Check login and admin status
+  useEffect(() => {
+    const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+    const role = typeof window !== "undefined" ? localStorage.getItem("role") : null;
+    setIsLoggedIn(!!userId);
+    setIsAdmin(role === "admin");
+  }, []);
 
   // Fetch apartments for dropdown
   useEffect(() => {
@@ -25,15 +28,23 @@ const Navbar = () => {
         const res = await getApartments();
         if (res.success) setApartments(res.data || []);
       } catch (error) {
-        console.error("Failed to fetch apartments:", error);
+        setApartments([]); // Fallback to empty array on error
       }
     }
     fetchApartments();
   }, []);
 
+  // Handle navigation for protected routes
+  const handleProtectedLinkClick = (e: React.MouseEvent, href: string) => {
+    if (!isLoggedIn) {
+      e.preventDefault();
+      window.location.href = "/login"; // Redirect to login if not logged in
+    }
+  };
+
   return (
-    <nav className="bg-[#f1f1f1] h-1 left-0 w-full z-50 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-5 flex items-center justify-between">
+    <nav className="bg-[#f1f1f1] h-2 w-full z-50 relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         {/* Left: Logo */}
         <Link href="/" className="text-2xl font-semibold text-[#1e1e1e]">
           Jenrianna
@@ -49,7 +60,7 @@ const Navbar = () => {
             Home
           </Link>
 
-          {/* Apartments Dropdown (click to toggle) */}
+          {/* Apartments Dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowDropdown((prev) => !prev)}
@@ -89,26 +100,30 @@ const Navbar = () => {
 
           {/* My Bookings */}
           <Link
-            href="/my-bookings"
+            href={isLoggedIn ? "/my-bookings" : "/login"}
             className="text-[#1e1e1e] hover:text-black transition font-medium"
+            onClick={(e) => handleProtectedLinkClick(e, "/my-bookings")}
           >
             My Bookings
           </Link>
 
-          {/* Admin */}
-          <Link
-            href="/admin"
-            className="text-[#1e1e1e] hover:text-black transition font-medium"
-          >
-            Admin
-          </Link>
+          {/* Admin (only for admin users) */}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="text-[#1e1e1e] hover:text-black transition font-medium"
+            >
+              Admin
+            </Link>
+          )}
         </div>
 
         {/* Right: Book Now button */}
         {!isLoggedIn && (
           <Link
-            href="/sign-up"
+            href="/login"
             className="hidden md:inline-block bg-black text-white px-5 py-2 rounded hover:bg-gray-900 transition text-sm font-medium"
+            onClick={(e) => handleProtectedLinkClick(e, "/sign-up")}
           >
             Book Now
           </Link>
@@ -125,7 +140,7 @@ const Navbar = () => {
 
       {/* Mobile Menu Dropdown */}
       {isOpen && (
-        <div className="md:hidden absolute top-8 left-0 w-full bg-white z-50 px-4 py-3 space-y-3">
+        <div className="md:hidden absolute top-16 left-0 w-full bg-white z-50 px-4 py-3 space-y-3">
           {/* Home */}
           <Link
             href="/"
@@ -135,7 +150,7 @@ const Navbar = () => {
             Home
           </Link>
 
-          {/* Apartments toggle inside mobile */}
+          {/* Apartments toggle */}
           <div>
             <button
               onClick={() => setShowDropdown((prev) => !prev)}
@@ -145,19 +160,25 @@ const Navbar = () => {
             </button>
             {showDropdown && (
               <div className="mt-2 space-y-1">
-                {apartments.map((apt) => (
-                  <Link
-                    key={apt._id}
-                    href={`/apartment/${apt._id}`}
-                    className="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded"
-                    onClick={() => {
-                      setShowDropdown(false);
-                      setIsOpen(false);
-                    }}
-                  >
-                    {apt.name}
-                  </Link>
-                ))}
+                {apartments.length > 0 ? (
+                  apartments.map((apt) => (
+                    <Link
+                      key={apt._id}
+                      href={`/apartment/${apt._id}`}
+                      className="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded"
+                      onClick={() => {
+                        setShowDropdown(false);
+                        setIsOpen(false);
+                      }}
+                    >
+                      {apt.name}
+                    </Link>
+                  ))
+                ) : (
+                  <p className="px-2 py-1 text-sm text-gray-500">
+                    No apartments available
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -173,27 +194,35 @@ const Navbar = () => {
 
           {/* My Bookings */}
           <Link
-            href="/my-bookings"
+            href={isLoggedIn ? "/my-bookings" : "/login"}
             className="block text-[#1e1e1e]"
-            onClick={() => setIsOpen(false)}
+            onClick={(e) => {
+              handleProtectedLinkClick(e, "/my-bookings");
+              setIsOpen(false);
+            }}
           >
             My Bookings
           </Link>
 
-          {/* Admin */}
-          <Link
-            href="/admin"
-            className="block text-[#1e1e1e]"
-            onClick={() => setIsOpen(false)}
-          >
-            Admin
-          </Link>
+          {/* Admin (only for admin users) */}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="block text-[#1e1e1e]"
+              onClick={() => setIsOpen(false)}
+            >
+              Admin
+            </Link>
+          )}
 
           {!isLoggedIn && (
             <Link
-              href="/sign-up"
+              href="/login"
               className="block bg-[#212121] text-white px-4 py-2 rounded-lg text-center"
-              onClick={() => setIsOpen(false)}
+              onClick={(e) => {
+                handleProtectedLinkClick(e, "/sign-up");
+                setIsOpen(false);
+              }}
             >
               Book Now
             </Link>
