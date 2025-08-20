@@ -1,12 +1,12 @@
 // pages/api/admin/analytics.ts
-import { NextApiRequest, NextApiResponse } from "next";
+// import { NextApiRequest, NextApiResponse } from "next";
 import Booking from "@/models/bookings";
 import Apartment from "@/models/apartment";
 import { NextResponse } from "next/server";
 import connectDB from "../../lib/mongodb";
 import { getUserFromRequest } from "../../lib/getUserFromRequest";
 
-export async function GET(req: NextApiRequest, res: NextApiResponse) {
+export async function GET() {
   try {
     await connectDB();
     const user = await getUserFromRequest();
