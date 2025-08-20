@@ -155,7 +155,7 @@ if (!apartmentId) {
     {/* Guests */}
     <label className="mb-2 text-base text-[#1e1e1e]">Guests</label>
     <select
-      className="border border-[#ffffff]  px-4 py-3 rounded-xl md:border-none bg-white w-full cursor-pointer"
+      className="border border-[#ffffff]  px-4 py-4 rounded-xl md:border-none bg-white w-full cursor-pointer"
       value={guests}
       onChange={(e) => setGuests(Number(e.target.value))}
     >
