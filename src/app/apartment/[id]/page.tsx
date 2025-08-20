@@ -1,22 +1,42 @@
-// app/apartment/[id]/page.tsx
-import { notFound } from "next/navigation";
+// src/app/apartment/[id]/page.tsx
 import ApartmentDetails from "../component/apartment-details";
 import { getApartmentById } from "@/services/api-services";
-import { ApartmentResponse, Apartment } from "@/lib/interface";
 import { transformApartment } from "@/lib/helpers";
+import { Apartment } from "@/lib/interface";
 
-export default async function ApartmentDetailPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: { id: string };
+}
+
+export default async function ApartmentDetailPage({ params }: PageProps) {
+  const { id } = params;
+
   try {
-    const response = await getApartmentById(params.id);
-    const raw: ApartmentResponse | null = response?.data || null;
+    console.log("🔎 Fetching apartment with ID:", id);
 
-    if (!raw) return notFound();
+    const response = await getApartmentById(id);
 
-    const apartment: Apartment = transformApartment(raw);
+    console.log("✅ Raw API response:", response);
+
+    if (!response || !response.data) {
+      console.error("❌ No apartment data found in response");
+      return <div>No apartment data found for ID: {id}</div>;
+    }
+
+    const apartment: Apartment = transformApartment(response.data);
+
+    console.log("✨ Transformed apartment object:", apartment);
 
     return <ApartmentDetails apartment={apartment} />;
-  } catch (error) {
-    console.error("Error fetching apartment:", error);
-    return notFound();
+  } catch (error: any) {
+    console.error("🔥 Error fetching apartment:", error);
+
+    return (
+      <div className="p-6 text-red-600">
+        <h1 className="text-xl font-bold">Error Loading Apartment</h1>
+        <p>{String(error?.message || error)}</p>
+        <p>Apartment ID: {id}</p>
+      </div>
+    );
   }
 }
