@@ -23,6 +23,8 @@ export interface Apartment {
   isTrending: boolean;
   ratings: any[];
   createdAt: string;
+  feedbackCount: number;
+  feedbacks: string;
   updatedAt: string;
   __v: number;
   imageUrl?: string;
