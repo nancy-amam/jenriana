@@ -123,6 +123,14 @@ export async function getApartments(): Promise<any> {
     });
 
     console.log("Apartments fetched successfully:", response);
+
+     if (response.success && Array.isArray(response.data)) {
+      response.data = response.data.map((apt: any) => ({
+        ...apt,
+        id: apt._id,
+      }));
+    }
+
     return response;
   } catch (error: any) {
     console.error("Failed to fetch apartments:", error);
@@ -154,6 +162,13 @@ export async function getApartmentById(apartmentId: string): Promise<any> {
     if (!response.success || !response.data) {
       throw new Error("Invalid response from server");
     }
+
+     // 🔥 normalize _id → id
+    response.data = {
+      ...response.data,
+      id: response.data._id,
+    };
+
     return response;
   } catch (error: any) {
     console.error(`Failed to fetch apartment with ID ${apartmentId}:`, error);
