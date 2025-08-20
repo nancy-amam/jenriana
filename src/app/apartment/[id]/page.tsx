@@ -3,21 +3,19 @@ import { notFound } from "next/navigation";
 import ApartmentDetails from "../component/apartment-details";
 import { getApartmentById } from "@/services/api-services";
 
-// In Next.js 14, params is now a Promise that needs to be awaited
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
-
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 
+type PageProps = {
+  params: { id: string }; // ✅ plain object, not a Promise
+};
+
 export default async function ApartmentDetailPage({ params }: PageProps) {
-  // Await the params promise as required by Next.js 14
-  const { id } = await params;
+  const { id } = params; // ✅ no await
 
   try {
-    const response = await getApartmentById(id);
-    const apartmentData = response.data;
+    const res = await getApartmentById(id);
+    const apartmentData = res?.data ?? res;
 
     if (!apartmentData) return notFound();
 
@@ -31,31 +29,33 @@ export default async function ApartmentDetailPage({ params }: PageProps) {
       rating:
         typeof apartmentData.averageRating === "number"
           ? apartmentData.averageRating
+          : typeof apartmentData.ratings === "number"
+          ? apartmentData.ratings
           : 4.8,
-      galleryImages: (apartmentData.gallery || []).map((src: string, i: number) => ({
+      galleryImages: (apartmentData.gallery ?? []).map((src: string, i: number) => ({
         id: `${apartmentData._id}-${i}`,
         src,
         alt: `${apartmentData.name} image ${i + 1}`,
       })),
-      amenities: (apartmentData.features || []).map((feature: string, i: number) => ({
+      amenities: (apartmentData.features ?? []).map((feature: string, i: number) => ({
         id: `amenity-${i}`,
         name: feature,
         icon: getIconForFeature(feature),
       })),
-      addons: (apartmentData.addons || []).map((addon: any, i: number) => ({
-        id: addon._id || `${apartmentData._id}-addon-${i}`,
+      addons: (apartmentData.addons ?? []).map((addon: any, i: number) => ({
+        id: addon._id ?? `${apartmentData._id}-addon-${i}`,
         name: addon.name,
         price: addon.price,
         pricingType: addon.pricingType,
-        description: addon.description || "",
+        description: addon.description ?? "",
         active: addon.active ?? true,
       })),
       imageUrl: apartmentData.gallery?.[0] || "/placeholder.svg",
     };
 
     return <ApartmentDetails apartment={transformedApartment} />;
-  } catch (error) {
-    console.error(error);
+  } catch (e) {
+    console.error("Failed to fetch apartment:", e);
     return notFound();
   }
 }
@@ -73,5 +73,6 @@ function getIconForFeature(feature: string): string {
     security: "ShieldCheck",
     "washing-machine": "WashingMachine",
   };
-  return map[feature.toLowerCase()] || "Info";
+  const key = feature?.toLowerCase?.() ?? "";
+  return map[key] || "Info";
 }
