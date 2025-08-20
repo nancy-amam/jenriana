@@ -23,6 +23,7 @@ import {
   Battery,
 } from 'lucide-react';
 import { Apartment } from '@/lib/interface';
+import DateInput from "@/components/date-inputs";
 
 export default function ApartmentDetails({ apartment }: { apartment: Apartment }) {
   const router = useRouter();
@@ -130,26 +131,22 @@ if (!apartmentId) {
     </div>
 
     {/* Dates */}
-    <div className="flex gap-2 mb-2 text-[#1e1e1e]">
-      <div className="w-1/2">
-        <label htmlFor="check-in" className="block text-base mb-2 md:mb-1 text-[#1e1e1e]">
-          Check In
-        </label>
-        <input
+    <div className="flex gap-1 mb-2 text-[#1e1e1e]">
+      <div className="w-1/2 ">
+        <DateInput
           id="check-in"
-          type="date"
-          className="border border-[#ffffff] w-full px-3 py-3 rounded-xl md:border-none bg-white text-sm"
+          label="Check In"
+          value={checkIn}
           onChange={(e) => setCheckIn(e.target.value)}
+         
         />
       </div>
-      <div className="w-1/2">
-        <label htmlFor="check-out" className="block text-base mb-2 md:mb-1 text-[#1e1e1e]">
-          Check Out
-        </label>
-        <input
+
+      <div className="w-1/2 ">
+        <DateInput
           id="check-out"
-          type="date"
-          className="border border-[#ffffff] md:border-none w-full px-3 py-3 rounded-xl  bg-white  text-sm"
+          label="Check Out"
+          value={checkOut}
           onChange={(e) => setCheckOut(e.target.value)}
         />
       </div>
@@ -158,7 +155,7 @@ if (!apartmentId) {
     {/* Guests */}
     <label className="mb-2 text-base text-[#1e1e1e]">Guests</label>
     <select
-      className="border border-[#ffffff]  px-4 py-3 rounded-xl md:border-none bg-white w-full"
+      className="border border-[#ffffff]  px-4 py-3 rounded-xl md:border-none bg-white w-full cursor-pointer"
       value={guests}
       onChange={(e) => setGuests(Number(e.target.value))}
     >
@@ -173,7 +170,7 @@ if (!apartmentId) {
     {/* Button */}
     <button
       onClick={handleBooking}
-      className="mt-4 bg-black text-white w-full rounded-md py-2 hover:bg-gray-800 transition"
+      className="mt-4 bg-black text-white w-full rounded-md py-2 hover:bg-gray-800 transition cursor-pointer "
     >
       Book Now
     </button>

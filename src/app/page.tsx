@@ -8,6 +8,8 @@ import { TestimonialCard } from '@/components/testimonial-card';
 import { TrendingApartmentCard } from '@/components/trending-card';
 import ApartmentLoadingPage from '@/components/loading';
 import { locationFeatures, testimonials } from '@/lib/dummy-data';
+import DateInput from "@/components/date-inputs";
+import Link from 'next/link';
 
 interface Apartment {
   _id: string;
@@ -86,48 +88,72 @@ const fetchApartments = async () => {
       </section>
 
       {/* Search Bar */}
-      <div className="mt-10 md:-mt-[170px] px-4 md:px-16 z-20 relative">
-        <div className="bg-[#f1f1f1] md:bg-white text-[#1e1e1e] md:rounded-xl md:shadow-lg p-4 md:p-6 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-          <div>
-            <label htmlFor="location" className="block text-base font-normal text-[#1e1e1e] mb-2 md:mb-1">Location</label>
-            <select id="location" className="w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent">
-              <option value="">Select City</option>
-              <option value="ikeja">Ikeja</option>
-              <option value="lekki">Lekki</option>
-              <option value="victoria-island">Victoria Island</option>
-              <option value="magodo">Magodo</option>
-              <option value="ikorodu">Ikorodu</option>
-              <option value="badagry">Badagry</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="check-in" className="block text-base font-medium text-[#1e1e1e] mb-2 md:mb-1">Check In</label>
-            <input id="check-in" type="date" className="w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent" />
-          </div>
-          <div>
-            <label htmlFor="check-out" className="block text-base font-medium text-[#1e1e1e] mb-2 md:mb-1">Check Out</label>
-            <input id="check-out" type="date" className="w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent" />
-          </div>
-          <div>
-            <label htmlFor="guests" className="block text-base font-medium text-[#1e1e1e] mb-2 md:mb-1">Guests</label>
-            <select id="guests" className="w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent">
-              <option>1 Guest</option>
-              <option>2 Guests</option>
-              <option>3 Guests</option>
-              <option>4+ Guests</option>
-            </select>
-          </div>
-          <div className="md:pt-5 mx-auto">
-            <button className="w-full bg-black mt-2 md:mt-0 text-white py-3 md:px-6 px-16 rounded-xl hover:bg-gray-800 transition">
-              Find Apartments
-            </button>
-          </div>
-        </div>
-      </div>
 
-      {/* Explore Features Section (layout untouched) */}
-      
-      {/* Explore Features Section */}
+      <div className="mt-10 md:-mt-[170px] px-4 md:px-16 z-20 relative">
+  <div className="bg-[#f1f1f1] md:bg-white text-[#1e1e1e] md:rounded-xl md:shadow-lg p-4 md:p-6 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+    
+    {/* Location */}
+    <div className=' '>
+      <label
+        htmlFor="location"
+        className="block text-base font-normal text-[#1e1e1e] mb-2 md:mb-1"
+      >
+        Location
+      </label>
+      <select
+        id="location"
+        className="w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent cursor-pointer"
+      >
+        <option value="">Select City</option>
+        <option value="ikeja">Ikeja</option>
+        <option value="lekki">Lekki</option>
+        <option value="victoria-island">Victoria Island</option>
+        <option value="magodo">Magodo</option>
+        <option value="ikorodu">Ikorodu</option>
+        <option value="badagry">Badagry</option>
+      </select>
+    </div>
+
+    {/* Check In */}
+    <div>
+      <DateInput id="check-in" label="Check In" />
+    </div>
+
+    {/* Check Out */}
+    <div>
+      <DateInput id="check-out" label="Check Out" />
+    </div>
+
+    {/* Guests */}
+    <div className=''>
+      <label
+        htmlFor="guests"
+        className="block text-base font-medium text-[#1e1e1e] mb-2 md:mb-1"
+      >
+        Guests
+      </label>
+      <select
+        id="guests"
+        className="w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent cursor-pointer"
+      >
+        <option>1 Guest</option>
+        <option>2 Guests</option>
+        <option>3 Guests</option>
+        <option>4+ Guests</option>
+      </select>
+    </div>
+
+    {/* Search Button */}
+    <div className="md:pt-5 mx-auto w-full">
+      <button className="w-full bg-black mt-2 md:mt-0 text-white py-3 md:px-6 px-16 rounded-xl hover:bg-gray-800 transition cursor-pointer ">
+        Find Apartments
+      </button>
+    </div>
+  </div>
+</div>
+
+
+   {/* Explore Features Section */}
 <section className="py-12 md:py-24 lg:py-32 px-4 md:px-16 mt-5">
   <h2 className="text-2xl md:text-[36px] font-medium mb-6 md:mb-8 text-[#1e1e1e] text-left">
     Explore by Location
@@ -341,9 +367,11 @@ const fetchApartments = async () => {
           <p className="text-sm md:text-base mb-8">
             Not sure where to start? Our team is ready to assist you in choosing an apartment that fits your needs — no stress, no pressure.
           </p>
-          <button className="bg-[#212121] mt-5 text-white text-sm py-4 px-10 rounded-lg font-normal hover:bg-gray-800 transition">
+          <Link href={'/contact-us'}>
+          <button className="bg-[#212121] mt-5 text-white text-sm py-4 px-10 rounded-lg font-normal hover:bg-gray-800 transition cursor-pointer ">
             Contact Us
           </button>
+          </Link>
         </div>
       </section>
     </main>

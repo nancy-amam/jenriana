@@ -118,7 +118,7 @@ function CheckoutContent() {
       const userId = localStorage.getItem('userId');
       if (!userId) {
         setError('Please sign in to continue booking.');
-        router.push('/auth/signin');
+        router.push('/login');
         return;
       }
       const bookingData = {
@@ -347,7 +347,7 @@ function CheckoutContent() {
               </div>
               <button
                 type="submit"
-                className="w-full bg-black text-white py-2 px-6 rounded-md hover:bg-gray-800 transition"
+                className="w-full bg-black text-white py-2 px-6 rounded-md hover:bg-gray-800 transition cursor-pointer"
               >
                 Confirm Booking
               </button>
