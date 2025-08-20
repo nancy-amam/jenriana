@@ -27,7 +27,7 @@ export function ApartmentCard({
 }: ApartmentCardProps) {
   return (
     <Link href={`/apartment/${id}`}>
-      <div className="md:w-[424px] w-[360px] flex-shrink-0 rounded-[20px] shadow-lg overflow-hidden bg-white hover:shadow-xl transition-shadow duration-200 cursor-pointer">
+      <div className="md:w-[424px] w-[360px] flex-shrink-0 rounded-[20px]  overflow-hidden bg-white  transition-shadow duration-200 cursor-pointer">
         <div className="w-full h-[384px] overflow-hidden">
           <Image
             src={imageUrl || "/placeholder.svg"}

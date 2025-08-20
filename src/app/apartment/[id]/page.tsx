@@ -4,10 +4,10 @@ import { getApartmentById } from "@/services/api-services";
 import { Apartment } from "@/lib/interface";
 
 interface PageProps {
-  params: { id: string };
+  params: { id: string }; // ✅ fixed: not a Promise anymore
 }
 
-// Force runtime so Vercel doesn’t try to pre-render at build
+// ✅ Force runtime so Vercel doesn’t try to pre-render at build
 export const dynamic = "force-dynamic";
 
 export default async function ApartmentDetailPage({ params }: PageProps) {
@@ -42,7 +42,7 @@ export default async function ApartmentDetailPage({ params }: PageProps) {
       feedbackCount: apartmentData.feedbackCount || 0,
       feedbacks: apartmentData.feedbacks || [],
 
-      // extra fields
+      // extra fields for UI
       id: apartmentData._id,
       imageUrl: apartmentData.gallery?.[0] || "/placeholder.svg",
       price: apartmentData.pricePerNight,

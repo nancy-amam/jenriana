@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -23,7 +24,7 @@ import {
   Shield
 } from 'lucide-react';
 import { addApartment, updateApartment } from '@/services/api-services';
-import { ApartmentData } from '@/lib/interface';
+import { Apartment, ApartmentData, Addon } from '@/lib/interface';
 
 interface Feature {
   id: string;
@@ -35,15 +36,6 @@ interface Rule {
   key: keyof RulesState;
   name: string;
   icon: React.ComponentType<any>;
-}
-
-interface AddOn {
-  id: number;
-  name: string;
-  pricingType: 'per/day' | 'per/night' | 'one time fee' | '';
-  description: string;
-  price: string;
-  active: boolean;
 }
 
 interface RulesState {
@@ -59,7 +51,7 @@ interface AddEditApartmentModalProps {
   onClose: () => void;
   onSuccess?: () => void;
   editMode?: boolean;
-  apartmentData?: ApartmentData & { id?: string };
+  apartmentData?: Apartment;
 }
 
 interface FormData {
@@ -87,9 +79,7 @@ export default function AddEditApartmentModal({
     childrenAllowed: true,
     maxGuests: true
   });
-  const [addOns, setAddOns] = useState<AddOn[]>([
-    { id: 1, name: '', pricingType: '', description: '', price: '', active: true }
-  ]);
+  const [addOns, setAddOns] = useState<Addon[]>([]);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [formData, setFormData] = useState<FormData>({
@@ -152,18 +142,15 @@ export default function AddEditApartmentModal({
     'pets-allowed': 'petsAllowed',
     'children-allowed': 'childrenAllowed',
     'do-not-exceed-guest-count': 'maxGuests',
-    'max-guests-enforced': 'maxGuests',
-    'check-in-3pm-11pm': 'maxGuests'
+    'max-guests-enforced': 'maxGuests'
   };
 
-  // Map modal pricingType to API pricingType
   const pricingTypeToApi = {
     'per/day': 'perNight',
     'per/night': 'perNight',
     'one time fee': 'oneTime'
   };
 
-  // Reverse mapping for edit mode
   const apiToPricingType = {
     'perNight': 'per/night',
     'oneTime': 'one time fee'
@@ -184,7 +171,7 @@ export default function AddEditApartmentModal({
       if (apartmentData.features) {
         const mappedFeatures = apartmentData.features
           .map(feature => featureMapping[feature as keyof typeof featureMapping])
-          .filter(Boolean);
+          .filter(Boolean) as string[];
         setSelectedFeatures(mappedFeatures);
       }
 
@@ -202,9 +189,6 @@ export default function AddEditApartmentModal({
           if (ruleKey) {
             newRules[ruleKey as keyof RulesState] = true;
           }
-          if (rule === 'do-not-exceed-guest-count' || rule === 'max-guests-enforced') {
-            newRules.maxGuests = true;
-          }
         });
       }
       setRules(newRules);
@@ -215,13 +199,15 @@ export default function AddEditApartmentModal({
 
       if (apartmentData.addons) {
         setAddOns(apartmentData.addons.map((addon, index) => ({
-          id: addon._id || Date.now() + index,
+          id: addon.id || `${Date.now()}-${index}`,
           name: addon.name || '',
+          price: addon.price || 0,
           pricingType: apiToPricingType[addon.pricingType as keyof typeof apiToPricingType] || 'per/night',
-          description: '',
-          price: addon.price.toString() || '',
-          active: addon.active || true
+          description: addon.description || '',
+          active: addon.active ?? true
         })));
+      } else {
+        setAddOns([]);
       }
 
       setUploadedImages([]);
@@ -250,7 +236,7 @@ export default function AddEditApartmentModal({
     });
     setUploadedImages([]);
     setExistingImages([]);
-    setAddOns([{ id: 1, name: '', pricingType: '', description: '', price: '', active: true }]);
+    setAddOns([]);
     setError(null);
     setSuccessMessage(null);
   };
@@ -302,26 +288,26 @@ export default function AddEditApartmentModal({
 
   const addNewAddOn = () => {
     setAddOns(prev => [...prev, {
-      id: Date.now(),
+      id: `${Date.now()}-${prev.length}`,
       name: '',
-      pricingType: '',
+      price: 0,
+      pricingType: 'per/night',
       description: '',
-      price: '',
       active: true
     }]);
   };
 
-  const removeAddOn = (id: number) => {
+  const removeAddOn = (id: string) => {
     setAddOns(prev => prev.filter(addon => addon.id !== id));
   };
 
-  const toggleAddOnActive = (id: number) => {
+  const toggleAddOnActive = (id: string) => {
     setAddOns(prev => prev.map(addon => 
       addon.id === id ? { ...addon, active: !addon.active } : addon
     ));
   };
 
-  const updateAddOn = (id: number, field: keyof AddOn, value: string) => {
+  const updateAddOn = (id: string, field: keyof Addon, value: string | number | boolean) => {
     setAddOns(prev => prev.map(addon => 
       addon.id === id ? { ...addon, [field]: value } : addon
     ));
@@ -362,22 +348,21 @@ export default function AddEditApartmentModal({
       setError('Max guests must be greater than 0');
       return false;
     }
-    for (const addon of addOns) {
-      if (addon.name.trim() && (!addon.pricingType || !['per/day', 'per/night', 'one time fee'].includes(addon.pricingType))) {
-        setError(`Pricing type for add-on "${addon.name}" must be "per/day", "per/night", or "one time fee"`);
-        return false;
-      }
-      if (addon.name.trim() && !addon.price) {
-        setError(`Price for add-on "${addon.name}" is required`);
-        return false;
-      }
-      if (addon.name.trim() && isNaN(parseFloat(addon.price))) {
-        setError(`Price for add-on "${addon.name}" must be a valid number`);
-        return false;
-      }
-      if (addon.name.trim() && parseFloat(addon.price) <= 0) {
-        setError(`Price for add-on "${addon.name}" must be greater than 0`);
-        return false;
+    for (const [index, addon] of addOns.entries()) {
+      if (addon.name.trim()) {
+        if (!addon.pricingType || !['per/day', 'per/night', 'one time fee'].includes(addon.pricingType)) {
+          setError(`Pricing type for add-on "${addon.name || `Add-on ${index + 1}`}" must be "per/day", "per/night", or "one time fee"`);
+          return false;
+        }
+        const mappedPricingType = pricingTypeToApi[addon.pricingType as keyof typeof pricingTypeToApi];
+        if (!mappedPricingType || !['perNight', 'oneTime'].includes(mappedPricingType)) {
+          setError(`Invalid pricing type for add-on "${addon.name || `Add-on ${index + 1}`}" after mapping`);
+          return false;
+        }
+        if (addon.price <= 0) {
+          setError(`Price for add-on "${addon.name || `Add-on ${index + 1}`}" must be greater than 0`);
+          return false;
+        }
       }
     }
     return true;
@@ -401,7 +386,23 @@ export default function AddEditApartmentModal({
       if (rules.childrenAllowed) rulesArray.push('children-allowed');
       if (rules.maxGuests) rulesArray.push('do-not-exceed-guest-count');
 
-      const apartmentPayload: ApartmentData = {
+      const addOnsPayload = addOns
+        .filter(addon => addon.name.trim() && addon.pricingType && addon.price > 0)
+        .map(addon => {
+          const mappedPricingType = pricingTypeToApi[addon.pricingType as keyof typeof pricingTypeToApi];
+          if (!mappedPricingType) {
+            throw new Error(`Invalid pricing type for add-on "${addon.name}": ${addon.pricingType}`);
+          }
+          return {
+            name: addon.name.trim(),
+            price: addon.price,
+            pricingType: mappedPricingType,
+            description: addon.description.trim(),
+            active: addon.active
+          };
+        });
+
+      const apartmentPayload: ApartmentData & { addons?: Addon[] } = {
         name: formData.name.trim(),
         location: formData.location.trim(),
         address: formData.address.trim(),
@@ -412,16 +413,11 @@ export default function AddEditApartmentModal({
         features: selectedFeatureNames,
         gallery: existingImages,
         rules: rulesArray,
-        addons: addOns
-          .filter(addon => addon.name.trim() && addon.pricingType && !isNaN(parseFloat(addon.price)))
-          .map(addon => ({
-            name: addon.name.trim(),
-            price: parseFloat(addon.price),
-            pricingType: pricingTypeToApi[addon.pricingType as keyof typeof pricingTypeToApi],
-            active: addon.active
-          })),
-        isTrending: apartmentData?.isTrending || false
+        isTrending: apartmentData?.isTrending || false,
+        addons: addOnsPayload
       };
+
+      console.log('Submitting payload:', apartmentPayload);
 
       let response;
       if (editMode && apartmentData?.id) {
@@ -766,11 +762,13 @@ export default function AddEditApartmentModal({
                     Price
                   </label>
                   <input
-                    type="text"
-                    value={addon.price}
-                    onChange={(e) => !isLoading && updateAddOn(addon.id, 'price', e.target.value)}
+                    type="number"
+                    value={addon.price || ''}
+                    onChange={(e) => !isLoading && updateAddOn(addon.id, 'price', parseFloat(e.target.value) || 0)}
                     className="w-[90%] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="$0"
+                    min="0"
+                    step="0.01"
                     disabled={isLoading}
                   />
                 </div>
