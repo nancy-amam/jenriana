@@ -102,7 +102,7 @@ const fetchApartments = async () => {
       </label>
       <select
         id="location"
-        className="w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent cursor-pointer"
+        className="w-full px-3 py-4 rounded-xl md:rounded-none bg-white md:bg-transparent cursor-pointer"
       >
         <option value="">Select City</option>
         <option value="ikeja">Ikeja</option>
@@ -128,13 +128,13 @@ const fetchApartments = async () => {
     <div className=''>
       <label
         htmlFor="guests"
-        className="block text-base font-medium text-[#1e1e1e] mb-2 md:mb-1"
+        className="block text-base font-normal text-[#1e1e1e] mb-2 md:mb-1"
       >
         Guests
       </label>
       <select
         id="guests"
-        className="w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent cursor-pointer"
+        className="w-full px-3 py-4 rounded-xl md:rounded-none bg-white md:bg-transparent cursor-pointer"
       >
         <option>1 Guest</option>
         <option>2 Guests</option>

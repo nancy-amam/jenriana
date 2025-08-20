@@ -28,7 +28,7 @@ const DateInput: FC<DateInputProps> = ({ id, label, value, onChange }) => {
     <div className="w-full">
       <label
         htmlFor={id}
-        className="block text-base font-medium text-[#1e1e1e] mb-2 md:mb-1"
+        className="block text-base font-normal text-[#1e1e1e] mb-2 md:mb-2"
       >
         {label}
       </label>
@@ -49,7 +49,7 @@ const DateInput: FC<DateInputProps> = ({ id, label, value, onChange }) => {
         {/* Custom Placeholder-like Text */}
         {!value && (
           <span
-            className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 select-none text-sm"
+            className="pointer-events-none absolute left-5  top-[45%] -translate-y-1/2 text-black select-none text-base md:text-base"
             style={{ userSelect: "none" }}
           >
             mm/dd/yyyy
