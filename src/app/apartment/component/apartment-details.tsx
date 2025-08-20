@@ -132,7 +132,7 @@ if (!apartmentId) {
 
     {/* Dates */}
     <div className="flex gap-1 mb-2 text-[#1e1e1e]">
-      <div className="w-1/2">
+      <div className="w-1/2 ">
         <DateInput
           id="check-in"
           label="Check In"
@@ -155,7 +155,7 @@ if (!apartmentId) {
     {/* Guests */}
     <label className="mb-2 text-base text-[#1e1e1e]">Guests</label>
     <select
-      className="border border-[#ffffff]  px-4 py-3 rounded-xl md:border-none bg-white w-full"
+      className="border border-[#ffffff]  px-4 py-3 rounded-xl md:border-none bg-white w-full cursor-pointer"
       value={guests}
       onChange={(e) => setGuests(Number(e.target.value))}
     >
@@ -170,7 +170,7 @@ if (!apartmentId) {
     {/* Button */}
     <button
       onClick={handleBooking}
-      className="mt-4 bg-black text-white w-full rounded-md py-2 hover:bg-gray-800 transition"
+      className="mt-4 bg-black text-white w-full rounded-md py-2 hover:bg-gray-800 transition cursor-pointer "
     >
       Book Now
     </button>

@@ -148,7 +148,7 @@ const Navbar = () => {
         ) : (
           <button
             onClick={handleLogout}
-            className="hidden md:inline-block bg-red-600 text-white px-5 py-2 rounded hover:bg-red-700 transition text-sm font-medium"
+            className="hidden md:inline-block cursor-pointer bg-red-600 text-white px-5 py-2 rounded hover:bg-red-700 transition text-sm font-medium"
             type="button"
           >
             Log-out
@@ -167,7 +167,7 @@ const Navbar = () => {
 
       {/* Mobile Dropdown */}
       {isOpen && (
-        <div className="md:hidden absolute top-16 left-0 w-full bg-white z-50 px-4 py-3 space-y-3">
+        <div className="md:hidden absolute top-16 left-0 w-full cursor-pointer bg-white z-50 px-4 py-3 space-y-3">
           <Link href="/" className="block text-[#1e1e1e]" onClick={() => setIsOpen(false)}>
             Home
           </Link>

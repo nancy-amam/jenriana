@@ -9,6 +9,7 @@ import { TrendingApartmentCard } from '@/components/trending-card';
 import ApartmentLoadingPage from '@/components/loading';
 import { locationFeatures, testimonials } from '@/lib/dummy-data';
 import DateInput from "@/components/date-inputs";
+import Link from 'next/link';
 
 interface Apartment {
   _id: string;
@@ -92,7 +93,7 @@ const fetchApartments = async () => {
   <div className="bg-[#f1f1f1] md:bg-white text-[#1e1e1e] md:rounded-xl md:shadow-lg p-4 md:p-6 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
     
     {/* Location */}
-    <div>
+    <div className=' '>
       <label
         htmlFor="location"
         className="block text-base font-normal text-[#1e1e1e] mb-2 md:mb-1"
@@ -101,7 +102,7 @@ const fetchApartments = async () => {
       </label>
       <select
         id="location"
-        className="w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent"
+        className="w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent cursor-pointer"
       >
         <option value="">Select City</option>
         <option value="ikeja">Ikeja</option>
@@ -124,7 +125,7 @@ const fetchApartments = async () => {
     </div>
 
     {/* Guests */}
-    <div>
+    <div className=''>
       <label
         htmlFor="guests"
         className="block text-base font-medium text-[#1e1e1e] mb-2 md:mb-1"
@@ -133,7 +134,7 @@ const fetchApartments = async () => {
       </label>
       <select
         id="guests"
-        className="w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent"
+        className="w-full px-3 py-3 rounded-xl md:rounded-none bg-white md:bg-transparent cursor-pointer"
       >
         <option>1 Guest</option>
         <option>2 Guests</option>
@@ -144,7 +145,7 @@ const fetchApartments = async () => {
 
     {/* Search Button */}
     <div className="md:pt-5 mx-auto w-full">
-      <button className="w-full bg-black mt-2 md:mt-0 text-white py-3 md:px-6 px-16 rounded-xl hover:bg-gray-800 transition">
+      <button className="w-full bg-black mt-2 md:mt-0 text-white py-3 md:px-6 px-16 rounded-xl hover:bg-gray-800 transition cursor-pointer ">
         Find Apartments
       </button>
     </div>
@@ -366,9 +367,11 @@ const fetchApartments = async () => {
           <p className="text-sm md:text-base mb-8">
             Not sure where to start? Our team is ready to assist you in choosing an apartment that fits your needs — no stress, no pressure.
           </p>
-          <button className="bg-[#212121] mt-5 text-white text-sm py-4 px-10 rounded-lg font-normal hover:bg-gray-800 transition">
+          <Link href={'/contact-us'}>
+          <button className="bg-[#212121] mt-5 text-white text-sm py-4 px-10 rounded-lg font-normal hover:bg-gray-800 transition cursor-pointer ">
             Contact Us
           </button>
+          </Link>
         </div>
       </section>
     </main>

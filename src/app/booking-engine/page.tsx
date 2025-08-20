@@ -137,7 +137,7 @@ function BookingEngineContent() {
           `Account Number: ${response.bankDetails.accountNumber}\n\n` +
           `${response.bankDetails.note}`
         );
-        router.push('/'); // Redirect to homepage after bank transfer
+        router.push('/payment-success'); 
       } else {
         window.location.href = response.payment.authorization_url;
       }
@@ -362,7 +362,7 @@ function BookingEngineContent() {
           )}
           <button
             onClick={handleConfirmAndPay}
-            className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors mt-8"
+            className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors mt-8 cursor-pointer"
           >
             Confirm and Pay ₦{booking.totalAmount.toLocaleString()}
           </button>

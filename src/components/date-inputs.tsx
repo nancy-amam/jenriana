@@ -32,26 +32,26 @@ const DateInput: FC<DateInputProps> = ({ id, label, value, onChange }) => {
         {label}
       </label>
 
-      <div className="relative w-full">
+      <div className="relative w-full cursor-pointer">
         <input
           ref={inputRef}
           id={id}
           type="date"
           value={value}
           onChange={onChange}
-          className="w-full md:px-3 md:py-3 md:pr-10 px-5 py-3  md:rounded-xl  border border-[#ffffff] rounded-xl  bg-white md:bg-white border-none md:border md:border-gray-300 focus:outline-none focus:ring-2 focus:ring-black text-left [appearance:none] [-moz-appearance:textfield]"
+          className="w-full md:px-3 md:py-3 md:pr-10 px-5 py-3 cursor-pointer  md:rounded-xl  border border-[#ffffff] rounded-xl  bg-white md:bg-white border-none md:border md:border-gray-300 focus:outline-none focus:ring-2 focus:ring-black text-left [appearance:none] [-moz-appearance:textfield]"
         />
 
         {/* Custom Calendar Icon */}
         <button
           type="button"
           onClick={handleIconClick}
-          className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black"
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#a6a6a6] cursor-pointer"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="w-5 h-5"
-            fill="none"
+            fill="#a6a6a6"
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
