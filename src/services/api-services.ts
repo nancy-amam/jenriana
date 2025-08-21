@@ -391,16 +391,21 @@ export async function initiateCheckout(bookingId: string, paymentMethod: 'card' 
     if (!bookingId?.trim()) {
       throw new Error("Booking ID is required");
     }
-
-  
+    
+    // Use your production URL instead of localhost
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://jenriana-frontend.vercel.app' 
+      : 'http://localhost:3000';
+        
     const response = await apiHandler(`/api/booking/${bookingId}/checkout`, {
       method: "POST",
-      data: { 
+      data: {
         paymentMethod,
-        callback_url: 'http://localhost:3000/booking?verify=true' // Paystack redirect URL
+        // Include bookingId in the callback URL so it's available after payment
+        callback_url: `${baseUrl}/payment-success?bookingId=${bookingId}`
       },
     });
-
+ 
     console.log("Checkout initialized successfully:", response);
     if (!response.success || !response.payment || !response.payment.authorization_url) {
       throw new Error("Invalid checkout response from server");
@@ -408,11 +413,11 @@ export async function initiateCheckout(bookingId: string, paymentMethod: 'card' 
     return response;
   } catch (error: any) {
     console.error(`Failed to initiate checkout for booking ID ${bookingId}:`, error);
-
+ 
     if (error.status && error.message) {
       throw error;
     }
-
+ 
     throw new Error(
       error.message ||
         "Failed to initiate checkout. Please try again later."
