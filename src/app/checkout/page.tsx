@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { BedIcon, BathIcon } from 'lucide-react';
+import { BedIcon, BathIcon, Loader2 } from 'lucide-react';
 import { getApartmentById, createBooking } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
 
@@ -55,6 +55,7 @@ function CheckoutContent() {
 
   const [apartment, setApartment] = useState<Apartment | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [guestInfo, setGuestInfo] = useState({
@@ -106,13 +107,16 @@ function CheckoutContent() {
       errors.phone = 'Invalid phone number';
     }
     if (!guestInfo.address.trim()) errors.address = 'Address is required';
-    // specialRequest is optional, no validation needed
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
+    if (isSubmitting) return; // Prevent double submission
+
+    setIsSubmitting(true);
+    setError(null);
 
     try {
       const userId = localStorage.getItem('userId');
@@ -126,7 +130,7 @@ function CheckoutContent() {
         checkInDate: checkIn!,
         checkOutDate: checkOut!,
         guests,
-        paymentMethod: 'card', // Default, will be set in BookingEnginePage
+        paymentMethod: 'card',
         addons: selectedServices,
         customerName: guestInfo.name,
         customerEmail: guestInfo.email,
@@ -135,16 +139,20 @@ function CheckoutContent() {
       };
       const response = await createBooking(apartmentId!, bookingData);
       console.log('CheckoutPage: Booking created:', response);
+      
       // Store booking data in localStorage
       localStorage.setItem(`booking_${response.bookingId}`, JSON.stringify({
         ...response.booking,
         apartmentName: apartment?.name || 'Unknown Apartment',
         apartmentLocation: apartment?.location || 'Unknown Location',
       }));
+      
       router.push(`/booking-engine?bookingId=${response.bookingId}&image=${encodeURIComponent(apartment?.imageUrl || '')}`);
     } catch (err: any) {
       console.error('CheckoutPage: Booking creation failed:', err);
       setError(err.message || 'Failed to create booking. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -237,6 +245,7 @@ function CheckoutContent() {
                     setGuestInfo({ ...guestInfo, name: e.target.value })
                   }
                   className={`w-full px-4 py-2 rounded border ${formErrors.name ? 'border-red-500' : 'border-gray-300'} text-black`}
+                  disabled={isSubmitting}
                 />
                 {formErrors.name && <p className="text-red-500 text-sm">{formErrors.name}</p>}
               </div>
@@ -250,6 +259,7 @@ function CheckoutContent() {
                     setGuestInfo({ ...guestInfo, email: e.target.value })
                   }
                   className={`w-full px-4 py-2 rounded border ${formErrors.email ? 'border-red-500' : 'border-gray-300'} text-black`}
+                  disabled={isSubmitting}
                 />
                 {formErrors.email && <p className="text-red-500 text-sm">{formErrors.email}</p>}
               </div>
@@ -263,6 +273,7 @@ function CheckoutContent() {
                     setGuestInfo({ ...guestInfo, phone: e.target.value })
                   }
                   className={`w-full px-4 py-2 rounded border ${formErrors.phone ? 'border-red-500' : 'border-gray-300'} text-black`}
+                  disabled={isSubmitting}
                 />
                 {formErrors.phone && <p className="text-red-500 text-sm">{formErrors.phone}</p>}
               </div>
@@ -276,6 +287,7 @@ function CheckoutContent() {
                     setGuestInfo({ ...guestInfo, address: e.target.value })
                   }
                   className={`w-full px-4 py-2 rounded border ${formErrors.address ? 'border-red-500' : 'border-gray-300'} text-black`}
+                  disabled={isSubmitting}
                 />
                 {formErrors.address && <p className="text-red-500 text-sm">{formErrors.address}</p>}
               </div>
@@ -294,6 +306,7 @@ function CheckoutContent() {
                     })
                   }
                   className="w-full px-4 py-2 rounded border border-gray-300 text-black"
+                  disabled={isSubmitting}
                 ></textarea>
               </div>
               <div className="px-4 mb-10">
@@ -319,6 +332,7 @@ function CheckoutContent() {
                               checked={selectedServices.includes(addon._id)}
                               onChange={() => handleCheckboxChange(addon._id)}
                               className="mt-1 w-5 h-5"
+                              disabled={isSubmitting}
                             />
                             <div className="flex flex-col">
                               <label
@@ -345,11 +359,28 @@ function CheckoutContent() {
                   )}
                 </div>
               </div>
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                  {error}
+                </div>
+              )}
               <button
                 type="submit"
-                className="w-full bg-black text-white py-2 px-6 rounded-md hover:bg-gray-800 transition cursor-pointer"
+                disabled={isSubmitting}
+                className={`w-full py-3 px-6 rounded-md transition cursor-pointer flex items-center justify-center gap-2 ${
+                  isSubmitting 
+                    ? 'bg-gray-600 text-white cursor-not-allowed' 
+                    : 'bg-black text-white hover:bg-gray-800'
+                }`}
               >
-                Confirm Booking
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Confirming...
+                  </>
+                ) : (
+                  'Confirm Booking'
+                )}
               </button>
             </form>
           </div>

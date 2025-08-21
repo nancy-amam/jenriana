@@ -33,8 +33,10 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ message: "Booking already processed" }, { status: 400 });
     }
 
-    // Get payment method from request body
-    const { paymentMethod } = await req.json();
+    // Get payment method and callback_url from request body
+    const { paymentMethod, callback_url } = await req.json();
+    
+    console.log('Received callback_url from frontend:', callback_url);
 
     if (paymentMethod === "bank-transfer") {
       return NextResponse.json(
@@ -53,13 +55,16 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       );
     }
 
-    // Initialize payment for card
+    // Initialize payment for card - Use the callback_url from frontend
     const paystack = new PaystackService();
     const transaction = await paystack.initializeTransaction({
       email: user.email,
       amount: booking.totalAmount,
-      callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/verify?bookingId=${booking._id}`,
+      // Use callback_url from frontend, fallback to default if not provided
+      callback_url: callback_url || `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?bookingId=${booking._id}`,
     });
+
+    console.log('Paystack transaction initialized with callback_url:', callback_url);
 
     return NextResponse.json(
       {

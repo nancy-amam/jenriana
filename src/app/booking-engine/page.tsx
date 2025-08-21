@@ -4,8 +4,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { format, differenceInDays } from 'date-fns';
-import { MapPin, Wallet, Banknote, Lock } from 'lucide-react';
-import { getApartmentById, initiateCheckout, verifyPayment } from '@/services/api-services';
+import { MapPin, Wallet, Banknote, Lock, Loader2 } from 'lucide-react';
+import { getApartmentById, initiateCheckout } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
 
 interface Addon {
@@ -47,44 +47,21 @@ function BookingEngineContent() {
   const router = useRouter();
   const bookingId = searchParams.get('bookingId');
   const passedImage = searchParams.get('image');
-  const verify = searchParams.get('verify'); // Check for verification flag
-  const reference = searchParams.get('reference'); // Paystack reference
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   useEffect(() => {
-    // Handle payment verification
-    if (verify === 'true' && reference && bookingId) {
-      const verifyPaymentAndRedirect = async () => {
-        try {
-          const response = await verifyPayment(reference, bookingId);
-          if (response.message === 'Payment successful, booking confirmed') {
-            alert('Payment successful! Your booking is confirmed.');
-            router.push('/'); // Redirect to homepage
-          } else {
-            setError('Payment verification failed. Please contact support.');
-            setLoading(false);
-          }
-        } catch (err: any) {
-          console.error('BookingEnginePage: Payment verification failed:', err);
-          setError('Failed to verify payment. Please try again or contact support.');
-          setLoading(false);
-        }
-      };
-      verifyPaymentAndRedirect();
-      return;
-    }
-
-    // Existing booking fetch logic
     if (!bookingId) {
       setError('No booking selected.');
       setLoading(false);
       return;
     }
+    
     try {
       const storedBooking = localStorage.getItem(`booking_${bookingId}`);
       if (!storedBooking) {
@@ -123,12 +100,25 @@ function BookingEngineContent() {
       setError('Failed to load booking details.');
       setLoading(false);
     }
-  }, [bookingId, passedImage, verify, reference]);
+  }, [bookingId, passedImage]);
+
+  const clearBookingFromLocalStorage = () => {
+    if (bookingId) {
+      localStorage.removeItem(`booking_${bookingId}`);
+    }
+  };
 
   const handleConfirmAndPay = async () => {
     if (!booking) return;
+    
+    setIsProcessingPayment(true);
+    
     try {
       const response = await initiateCheckout(booking._id, paymentMethod);
+      
+      // Clear booking from localStorage but preserve userId and userRole
+      clearBookingFromLocalStorage();
+      
       if (paymentMethod === 'bank-transfer') {
         alert(
           `Please transfer ₦${booking.totalAmount.toLocaleString()} to:\n` +
@@ -144,6 +134,8 @@ function BookingEngineContent() {
     } catch (err: any) {
       console.error('BookingEnginePage: Failed to initiate checkout:', err);
       alert(`Failed to initiate payment: ${err.message || 'Please try again later.'}`);
+    } finally {
+      setIsProcessingPayment(false);
     }
   };
 
@@ -292,6 +284,7 @@ function BookingEngineContent() {
                 checked={paymentMethod === 'card'}
                 onChange={() => setPaymentMethod('card')}
                 className="form-radio text-black h-4 w-4"
+                disabled={isProcessingPayment}
               />
               <Wallet className="w-5 h-5 text-gray-700" />
               <span className="text-base font-normal text-[#111827]">Credit/Debit Card</span>
@@ -304,6 +297,7 @@ function BookingEngineContent() {
                 checked={paymentMethod === 'bank-transfer'}
                 onChange={() => setPaymentMethod('bank-transfer')}
                 className="form-radio text-black h-4 w-4"
+                disabled={isProcessingPayment}
               />
               <Banknote className="w-5 h-5 text-gray-700" />
               <span className="text-base font-normal text-[#111827]">Bank Transfer</span>
@@ -362,11 +356,19 @@ function BookingEngineContent() {
           )}
           <button
             onClick={handleConfirmAndPay}
-            className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors mt-8 cursor-pointer"
+            disabled={isProcessingPayment}
+            className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors mt-8 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Confirm and Pay ₦{booking.totalAmount.toLocaleString()}
+            {isProcessingPayment ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              `Confirm and Pay ₦${booking.totalAmount.toLocaleString()}`
+            )}
           </button>
-          <p className="text-sm text-[#4b5566] text-center  mt-2">
+          <p className="text-sm text-[#4b5566] text-center mt-2">
             {paymentMethod === 'card'
               ? 'You will be redirected to Paystack to complete your payment.'
               : 'Please complete the bank transfer to confirm your booking.'}
