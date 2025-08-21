@@ -396,6 +396,8 @@ export async function initiateCheckout(bookingId: string, paymentMethod: 'card' 
     const baseUrl = process.env.NODE_ENV === 'production' 
       ? 'https://jenriana-frontend.vercel.app' 
       : 'http://localhost:3000';
+    
+    console.log('Initiating checkout with callback URL:', `${baseUrl}/payment-success?bookingId=${bookingId}`);
         
     const response = await apiHandler(`/api/booking/${bookingId}/checkout`, {
       method: "POST",
