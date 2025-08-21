@@ -35,16 +35,19 @@ const DateInput: FC<DateInputProps> = ({ id, label, value, onChange }) => {
 
       <div className="relative w-full cursor-pointer">
         <input
-          ref={inputRef}
-          id={id}
-          type="date"
-          value={value}
-          onChange={onChange}
-          className="w-full  md:pr-10 px-1 py-1 md:px-3 md:py-3 cursor-pointer md:rounded-xl border border-[#ffffff] rounded-xl bg-white md:bg-white border-none md:border md:border-gray-300 focus:outline-none focus:ring-2 focus:ring-black text-left text-transparent caret-black [appearance:none] [-moz-appearance:textfield]"
-          style={{
-            colorScheme: "light", // Prevent dark mode autofill
-          }}
-        />
+  ref={inputRef}
+  id={id}
+  type="date"
+  value={value}
+  onChange={onChange}
+  className={`w-full md:pr-10 px-1 py-1 md:px-3 md:py-3 cursor-pointer md:rounded-xl border border-[#ffffff] rounded-xl bg-white md:bg-white border-none md:border md:border-gray-300 focus:outline-none focus:ring-2 focus:ring-black text-left caret-black [appearance:none] [-moz-appearance:textfield] ${
+    !value ? 'text-transparent' : 'text-black'
+  }`}
+  style={{
+    colorScheme: "light",
+  }}
+/>
+
 
         {/* Custom Placeholder-like Text */}
         {!value && (
