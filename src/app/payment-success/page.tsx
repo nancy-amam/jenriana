@@ -13,32 +13,39 @@ function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference') || searchParams.get('trxref');
   const bookingId = searchParams.get('bookingId');
+  const isDebug = searchParams.get('debug') === 'true'; // Enable debug with ?debug=true
   const [status, setStatus] = useState<'success' | 'pending' | 'error' | 'loading'>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]); // Store logs for HTML display
 
   useEffect(() => {
     // Handle payment verification
     const verifyPaymentAndUpdate = async () => {
       if (reference && bookingId) {
+        setDebugLogs((prev) => [...prev, `Calling verifyPayment with reference: ${reference}, bookingId: ${bookingId}`]);
         try {
           const response = await verifyPayment(reference, bookingId);
+          setDebugLogs((prev) => [...prev, `verifyPayment response: ${JSON.stringify(response)}`]);
           if (response.message === 'Payment successful, booking confirmed') {
             setStatus('success');
-            console.log('verification works ')
+            setDebugLogs((prev) => [...prev, 'Verification successful']);
           } else {
             setStatus('error');
             setErrorMessage('Payment verification failed. Please contact support.');
+            setDebugLogs((prev) => [...prev, `Verification failed: ${JSON.stringify(response)}`]);
             console.error('PaymentSuccessPage: Verification failed:', response);
           }
         } catch (err: any) {
           console.error('PaymentSuccessPage: Failed to verify payment:', err);
           setStatus('error');
           setErrorMessage('Failed to verify payment. Please try again or contact support.');
+          setDebugLogs((prev) => [...prev, `Verification error: ${err.message || 'Unknown error'}`]);
         }
       } else {
         // Assume pending for bank transfers if no reference
         setStatus('pending');
         setErrorMessage('Your payment is being processed. We’ll confirm your booking soon.');
+        setDebugLogs((prev) => [...prev, `No reference or bookingId. Reference: ${reference || 'null'}, BookingId: ${bookingId || 'null'}`]);
       }
     };
 
@@ -110,6 +117,17 @@ function PaymentSuccessContent() {
       >
         Go to homepage now
       </button>
+      {/* Debug logs visible in HTML */}
+      {isDebug && debugLogs.length > 0 && (
+        <div className="mt-6 text-left text-sm text-gray-800 bg-white p-4 rounded-md max-w-md w-full">
+          <h3 className="font-semibold mb-2">Debug Logs</h3>
+          <ul className="list-disc pl-5">
+            {debugLogs.map((log, index) => (
+              <li key={index}>{log}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
