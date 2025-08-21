@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { getApartments } from '@/services/api-services';
 import { ApartmentCard } from '@/components/apartment-card';
@@ -30,39 +30,65 @@ export default function HomePage() {
   const [trendingApartments, setTrendingApartments] = useState<Apartment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState({ location: "", guests: 0 });
 
-const fetchApartments = async () => {
-    try {
-      setLoading(true);
-      const response = await getApartments();
-      const apartments: Apartment[] = response.data || [];
+const handleFilterChange = (field: string, value: string | number) => {
+  setFilters((prev) => ({ ...prev, [field]: value }));
+};
 
-      const normalized = apartments.map((apt) => ({
-        ...apt,
-        id: apt._id,
-        ratings: typeof apt.ratings === 'number' ? apt.ratings : 4.8,
-      }));
 
-      const shuffled = [...normalized].sort(() => Math.random() - 0.5);
-      setFeaturedApartments(shuffled.slice(0, 5));
+const fetchApartments = useCallback(async () => {
+  try {
+    setLoading(true);
+    const response = await getApartments();
+    const apartments: Apartment[] = response.data || [];
 
-      let trending = normalized.filter((apt) => apt.isTrending);
-      if (trending.length === 0) trending = shuffled.slice(0, 4);
-      else trending = trending.sort(() => Math.random() - 0.5).slice(0, 4);
+    const normalized = apartments.map((apt) => ({
+      ...apt,
+      id: apt._id,
+      ratings: typeof apt.ratings === "number" ? apt.ratings : 4.8,
+    }));
 
-      setTrendingApartments(trending);
-      setError(null);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Failed to fetch apartments');
-    } finally {
-      setLoading(false);
+    // Apply filters
+    let filtered = normalized;
+    if (filters.location) {
+      filtered = filtered.filter((apt) =>
+        apt.location.toLowerCase().includes(filters.location.toLowerCase())
+      );
     }
-  };
+    if (filters.guests && filters.guests > 0) {
+      filtered = filtered.filter(
+        (apt) => (apt.maxGuests || 1) >= filters.guests
+      );
+    }
 
-  useEffect(() => {
+    // Shuffle ALL
+    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
+    setFeaturedApartments(shuffled);
+
+    // Trending (fallback to shuffled if none marked trending)
+    let trending = normalized.filter((apt) => apt.isTrending);
+    if (trending.length === 0) trending = shuffled.slice(0, 4);
+    else trending = trending.sort(() => Math.random() - 0.5).slice(0, 4);
+
+    setTrendingApartments(trending);
+    setError(null);
+  } catch (err: any) {
+    console.error(err);
+    setError(err.message || "Failed to fetch apartments");
+  } finally {
+    setLoading(false);
+  }
+}, [filters]); 
+
+useEffect(() => {
+  const timeout = setTimeout(() => {
     fetchApartments();
-  }, []);
+  }, 500);
+
+  return () => clearTimeout(timeout);
+}, [fetchApartments]);
+
 
 
   return (
@@ -100,18 +126,21 @@ const fetchApartments = async () => {
       >
         Location
       </label>
-      <select
-        id="location"
-        className="w-full px-3 py-4 rounded-xl md:rounded-none bg-white md:bg-transparent cursor-pointer"
-      >
-        <option value="">Select City</option>
-        <option value="ikeja">Ikeja</option>
-        <option value="lekki">Lekki</option>
-        <option value="victoria-island">Victoria Island</option>
-        <option value="magodo">Magodo</option>
-        <option value="ikorodu">Ikorodu</option>
-        <option value="badagry">Badagry</option>
-      </select>
+          <select
+  id="location"
+  aria-label="Select Location"
+  value={filters.location}
+  onChange={(e) => handleFilterChange("location", e.target.value)}
+  className="w-full px-3 py-4 rounded-xl md:rounded-none bg-white md:bg-transparent cursor-pointer"
+>
+  <option value="">Select City</option>
+  <option value="ikeja">Ikeja</option>
+  <option value="lekki">Lekki</option>
+  <option value="victoria-island">Victoria Island</option>
+  <option value="magodo">Magodo</option>
+  <option value="ikorodu">Ikorodu</option>
+  <option value="badagry">Badagry</option>
+</select>
     </div>
 
     {/* Check In */}
@@ -132,15 +161,19 @@ const fetchApartments = async () => {
       >
         Guests
       </label>
-      <select
-        id="guests"
-        className="w-full px-3 py-4 rounded-xl md:rounded-none bg-white md:bg-transparent cursor-pointer"
-      >
-        <option>1 Guest</option>
-        <option>2 Guests</option>
-        <option>3 Guests</option>
-        <option>4+ Guests</option>
-      </select>
+        <select
+  id="guests"
+  aria-label="Select Guests"
+  value={filters.guests}
+  onChange={(e) => handleFilterChange("guests", Number(e.target.value))}
+  className="w-full px-3 py-4 rounded-xl md:rounded-none bg-white md:bg-transparent cursor-pointer"
+>
+  <option value={0}>Any</option>
+  <option value={1}>1 Guest</option>
+  <option value={2}>2 Guests</option>
+  <option value={3}>3 Guests</option>
+  <option value={4}>4+ Guests</option>
+</select>
     </div>
 
     {/* Search Button */}
@@ -169,6 +202,8 @@ const fetchApartments = async () => {
             alt={feature.alt}
             fill
             className="object-cover rounded-[20px]"
+             loading="lazy"
+           aria-label={`Image of ${feature.alt}`}
           />
         </div>
         <div className="p-4 text-left">
@@ -189,6 +224,8 @@ const fetchApartments = async () => {
           alt={locationFeatures[0].alt}
           fill
           className="object-cover rounded-[20px]"
+           loading="lazy"
+  aria-label={`Image of ${locationFeatures}`}
         />
       </div>
       <div className="p-2 text-left">
@@ -203,6 +240,8 @@ const fetchApartments = async () => {
           alt={locationFeatures[1].alt}
           fill
           className="object-cover rounded-[20px]"
+           loading="lazy"
+  aria-label={`Image of ${locationFeatures}`}
         />
       </div>
       <div className="p-2 text-left">
@@ -217,6 +256,8 @@ const fetchApartments = async () => {
           alt={locationFeatures[2].alt}
           fill
           className="object-cover rounded-[20px]"
+           loading="lazy"
+  aria-label={`Image of ${locationFeatures}`}
         />
       </div>
       <div className="p-2 text-left">
@@ -233,6 +274,8 @@ const fetchApartments = async () => {
           alt={locationFeatures[3].alt}
           fill
           className="object-cover rounded-[20px]"
+           loading="lazy"
+  aria-label={`Image of ${locationFeatures}`}
         />
       </div>
       <div className="p-2 text-left">
@@ -247,6 +290,8 @@ const fetchApartments = async () => {
           alt={locationFeatures[4].alt}
           fill
           className="object-cover rounded-[20px]"
+           loading="lazy"
+  aria-label={`Image of ${locationFeatures}`}
         />
       </div>
       <div className="p-2 text-left">
@@ -261,6 +306,8 @@ const fetchApartments = async () => {
           alt={locationFeatures[5].alt}
           fill
           className="object-cover rounded-[20px]"
+           loading="lazy"
+  aria-label={`Image of ${locationFeatures}`}
         />
       </div>
       <div className="p-2 text-left">
@@ -278,17 +325,27 @@ const fetchApartments = async () => {
           Featured Listings
         </h2>
         {loading ? (
-          <ApartmentLoadingPage />
+              <div className="p-4 sm:p-6  min-h-screen">
+                     <div className="flex justify-center items-center h-64">
+                       <ApartmentLoadingPage />
+                     </div>
+                   </div>
         ) : error ? (
           <div className="p-4 text-center text-red-500">
             <p>Error: {error}</p>
+             <button
+      onClick={fetchApartments}
+      className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg"
+    >
+      Retry
+    </button>
           </div>
         ) : featuredApartments.length === 0 ? (
           <div className="p-4 text-center">
             <p>No featured apartments available.</p>
           </div>
         ) : (
-          <div className="flex overflow-x-auto overflow-hidden pb-4 space-x-4 no-scrollbar">
+          <div className="flex overflow-x-auto overflow-hidden pb-4 space-x-4 no-scrollbar snap-x snap-mandatory">
             {featuredApartments.map((apartment) => (
               <ApartmentCard
                 key={apartment.id}
@@ -312,7 +369,7 @@ const fetchApartments = async () => {
         <h2 className="text-2xl md:text-[36px] font-medium mb-6 md:mb-8 text-[#1e1e1e] text-left">
           What our guests say
         </h2>
-        <div className="flex overflow-x-auto gap-6 no-scrollbar justify-between">
+        <div className="flex overflow-x-auto gap-6 no-scrollbar snap-x snap-mandatory justify-between">
           {testimonials.map((testimonial) => (
             <TestimonialCard key={testimonial.id} testimonial={testimonial} />
           ))}
@@ -325,17 +382,27 @@ const fetchApartments = async () => {
           Trending This Week
         </h2>
         {loading ? (
-          <ApartmentLoadingPage />
+               <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
+                      <div className="flex justify-center items-center h-64">
+                        <ApartmentLoadingPage />
+                      </div>
+                    </div>
         ) : error ? (
           <div className="p-4 text-center text-red-500">
             <p>Error: {error}</p>
+             <button
+      onClick={fetchApartments}
+      className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg"
+    >
+      Retry
+    </button>
           </div>
         ) : trendingApartments.length === 0 ? (
           <div className="p-4 text-center">
             <p>No trending apartments available.</p>
           </div>
         ) : (
-          <div className="flex overflow-x-auto gap-4 no-scrollbar justify-between">
+          <div className="flex overflow-x-auto gap-4 no-scrollbar snap-x snap-mandatory justify-between">
             {trendingApartments.map((apartment) => (
               <TrendingApartmentCard
                 key={apartment.id}
@@ -358,7 +425,7 @@ const fetchApartments = async () => {
 
       {/* Contact Us Section */}
       <section className="relative py-24 md:py-32 lg:py-40 flex items-center justify-center text-center text-white overflow-hidden">
-        <Image src="/images/contact-bg.png" alt="Modern apartment interior" fill className="object-cover z-0" />
+        <Image src="/images/contact-bg.png" alt="Modern apartment interior" fill className="object-cover z-0" loading='lazy' />
         <div className="absolute inset-0 bg-black/50 z-10"></div>
         <div className="relative z-20 max-w-3xl px-6">
           <h2 className="text-xl md:text-2xl md:text-[36px] font-normal mb-4">
