@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { verifyPayment } from '@/services/api-services';
 
-export default function PaymentSuccessPage() {
+// Force dynamic rendering to avoid static generation issues
+export const dynamic = 'force-dynamic';
+
+function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference') || searchParams.get('trxref');
@@ -21,7 +24,7 @@ export default function PaymentSuccessPage() {
           const response = await verifyPayment(reference, bookingId);
           if (response.message === 'Payment successful, booking confirmed') {
             setStatus('success');
-            console.log(' verification successful')
+            console.log('verification works ')
           } else {
             setStatus('error');
             setErrorMessage('Payment verification failed. Please contact support.');
@@ -33,7 +36,7 @@ export default function PaymentSuccessPage() {
           setErrorMessage('Failed to verify payment. Please try again or contact support.');
         }
       } else {
-        // Assume pending for bank transfers if no reference (or handle differently based on backend)
+        // Assume pending for bank transfers if no reference
         setStatus('pending');
         setErrorMessage('Your payment is being processed. We’ll confirm your booking soon.');
       }
@@ -108,5 +111,23 @@ export default function PaymentSuccessPage() {
         Go to homepage now
       </button>
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#f9fafb] px-4 text-center">
+          <Loader2 className="w-16 h-16 text-gray-600 animate-spin mb-4" />
+          <h1 className="text-2xl font-semibold text-gray-800 mb-2">Loading...</h1>
+          <p className="text-gray-600 max-w-md mb-6">
+            Please wait while we process your request.
+          </p>
+        </div>
+      }
+    >
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
