@@ -23,6 +23,7 @@ export interface IBooking extends Document {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  residentialAddress: string
   specialRequest?: string;
 
   createdAt: Date;
@@ -62,6 +63,7 @@ const BookingSchema = new Schema<IBooking>(
     customerName: { type: String, required: true },
     customerEmail: { type: String, required: true },
     customerPhone: { type: String, required: true },
+    residentialAddress:{type: String, required: true},
     specialRequest: { type: String },
   },
   { timestamps: true }
