@@ -40,9 +40,8 @@ const Navbar = () => {
 
   const handleLogout = () => {
     try {
-      // Clear localStorage items that were set during login
-      localStorage.removeItem("userId");
-      localStorage.removeItem("userRole");
+      // Clear all localStorage data
+      localStorage.clear();
 
       // Reset state
       setIsLoggedIn(false);
@@ -53,6 +52,20 @@ const Navbar = () => {
       
     } catch (error) {
       console.error("Error during logout:", error);
+      // Fallback: try to clear specific items if localStorage.clear() fails
+      try {
+        localStorage.removeItem("userId");
+        localStorage.removeItem("userRole");
+        // Clear any booking data as well
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('booking_')) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch (fallbackError) {
+        console.error("Fallback clear also failed:", fallbackError);
+      }
     }
   };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { format, differenceInDays } from 'date-fns';
@@ -55,7 +55,54 @@ function BookingEngineContent() {
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
+  // Cleanup old bookings function
+  const cleanupOldBookings = () => {
+    const ONE_HOUR = 60 * 60 * 1000; // 1 hour in milliseconds
+    const now = Date.now();
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('booking_')) {
+        try {
+          const bookingData = localStorage.getItem(key);
+          if (bookingData) {
+            const booking = JSON.parse(bookingData);
+            const bookingTime = new Date(booking.createdAt).getTime();
+            
+            // Delete bookings older than 1 hour
+            if (now - bookingTime > ONE_HOUR) {
+              localStorage.removeItem(key);
+              console.log(`Cleaned up old booking: ${key}`);
+            }
+          }
+        } catch (error) {
+          // If parsing fails, remove the corrupted data
+          localStorage.removeItem(key);
+        }
+      }
+    }
+  };
+
+  // Check if current booking is expired and handle accordingly
+  const checkCurrentBookingExpiry = useCallback(() => {
+    if (!booking || isProcessingPayment) return;
+    
+    const ONE_HOUR = 60 * 60 * 1000;
+    const now = Date.now();
+    const bookingTime = new Date(booking.createdAt).getTime();
+    
+    if (now - bookingTime > ONE_HOUR) {
+      // Current booking is expired
+      localStorage.removeItem(`booking_${bookingId}`);
+      setError('This booking session has expired. Please create a new booking.');
+      setBooking(null);
+    }
+  }, [booking, isProcessingPayment, bookingId]);
+
   useEffect(() => {
+    // Cleanup old bookings on component mount
+    cleanupOldBookings();
+
     if (!bookingId) {
       setError('No booking selected.');
       setLoading(false);
@@ -76,21 +123,51 @@ function BookingEngineContent() {
       const fetchApartment = async () => {
         try {
           const response = await getApartmentById(parsedBooking.apartmentId);
-          const gallery = response.data.apartment.gallery || [];
-          setGalleryImages(
-            gallery.length >= 3
-              ? gallery.slice(0, 3)
-              : passedImage
-                ? [decodeURIComponent(passedImage), decodeURIComponent(passedImage), decodeURIComponent(passedImage)]
-                : ['/images/image18.png', '/images/image19.png', '/images/image20.png']
-          );
+          console.log('Apartment response:', response); // Debug log
+          
+          const gallery = response.data.gallery || [];
+          console.log('Gallery from API:', gallery); // Debug log
+          
+          if (gallery.length >= 3) {
+            setGalleryImages(gallery.slice(0, 3));
+          } else if (gallery.length > 0) {
+            // Use available images and fill with placeholders if needed
+            const images = [...gallery];
+            while (images.length < 3) {
+              images.push(passedImage ? decodeURIComponent(passedImage) : '/images/placeholder.jpg');
+            }
+            setGalleryImages(images.slice(0, 3));
+          } else if (passedImage) {
+            // No gallery images, use passed image
+            setGalleryImages([
+              decodeURIComponent(passedImage),
+              decodeURIComponent(passedImage),
+              decodeURIComponent(passedImage)
+            ]);
+          } else {
+            // No images at all, use placeholders
+            setGalleryImages([
+              '/images/image18.png',
+              '/images/image19.png',
+              '/images/image20.png'
+            ]);
+          }
         } catch (err: any) {
           console.error('BookingEnginePage: Failed to fetch apartment gallery:', err);
-          setGalleryImages(
-            passedImage
-              ? [decodeURIComponent(passedImage), decodeURIComponent(passedImage), decodeURIComponent(passedImage)]
-              : ['/images/placeholder1.jpg', '/images/placeholder2.jpg', '/images/placeholder3.jpg']
-          );
+          // Fallback to passed image or placeholders
+          if (passedImage) {
+            setGalleryImages([
+              decodeURIComponent(passedImage),
+              decodeURIComponent(passedImage),
+              decodeURIComponent(passedImage)
+            ]);
+          } else {
+            setGalleryImages([
+              '/images/placeholder1.jpg',
+              '/images/placeholder2.jpg',
+              '/images/placeholder3.jpg'
+            ]);
+          }
         }
         setLoading(false);
       };
@@ -102,11 +179,58 @@ function BookingEngineContent() {
     }
   }, [bookingId, passedImage]);
 
+  // Periodic expiry check - runs every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkCurrentBookingExpiry();
+    }, 5 * 60 * 1000); // Check every 5 minutes
+
+    // Also check immediately when component mounts (after booking is loaded)
+    if (booking) {
+      checkCurrentBookingExpiry();
+    }
+
+    return () => clearInterval(interval);
+  }, [booking, checkCurrentBookingExpiry]);
+
   const clearBookingFromLocalStorage = () => {
     if (bookingId) {
       localStorage.removeItem(`booking_${bookingId}`);
     }
   };
+
+  // Cleanup on page unload (when user navigates away without paying)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Don't clear if payment is in progress
+      if (!isProcessingPayment && bookingId) {
+        const currentTime = Date.now();
+        const bookingData = localStorage.getItem(`booking_${bookingId}`);
+        
+        if (bookingData) {
+          try {
+            const booking = JSON.parse(bookingData);
+            const bookingTime = new Date(booking.createdAt).getTime();
+            const FIFTEEN_MINUTES = 15 * 60 * 1000;
+            
+            // If booking is older than 15 minutes, clear it
+            if (currentTime - bookingTime > FIFTEEN_MINUTES) {
+              localStorage.removeItem(`booking_${bookingId}`);
+            }
+          } catch (error) {
+            // If parsing fails, remove the corrupted data
+            localStorage.removeItem(`booking_${bookingId}`);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [bookingId, isProcessingPayment]);
 
   const handleConfirmAndPay = async () => {
     if (!booking) return;

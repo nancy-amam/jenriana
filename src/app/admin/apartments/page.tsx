@@ -274,15 +274,11 @@ export default function ApartmentsManagementPage() {
                     {apt.features?.join(', ') || 'N/A'}
                   </div>
                 </td>
-                <td className="py-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    apt.isTrending 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {apt.isTrending ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
+                    <td className="py-3">
+  <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+    Active
+  </span>
+</td>
                 <td className="py-3">
                   <div className="flex gap-2 items-center">
                     <button 
