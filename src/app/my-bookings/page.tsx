@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { MapPinIcon, UsersIcon, CalendarDays, CalendarCheck, ChevronDown, StarIcon } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import { getActiveBookings, getBookingHistory, postApartmentComment } from "@/services/api-services";
@@ -35,6 +36,7 @@ interface Review {
 }
 
 export default function MyBookingsPage() {
+  const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [activeFilter, setActiveFilter] = useState<"active" | "history">("active");
   const [loading, setLoading] = useState(true);
@@ -92,8 +94,9 @@ export default function MyBookingsPage() {
     }
   };
 
-  const handleRebook = (bookingId: string) => {
-    alert(`Rebooking for booking: ${bookingId}`);
+  const handleRebook = (apartmentId: string) => {
+    // Navigate to the apartment page
+    router.push(`/apartment/${apartmentId}`);
   };
 
   const handleRateStay = (bookingId: string) => {
@@ -209,8 +212,8 @@ export default function MyBookingsPage() {
                           </p>
                         </div>
                         <button
-                          onClick={() => handleRebook(booking.id)}
-                          className="w-[100px] h-[40px] rounded-lg bg-black text-white px-3 py-2 text-sm font-medium hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0"
+                          onClick={() => handleRebook(booking.apartmentId)}
+                          className="w-[100px] h-[40px] cursor-pointer rounded-lg bg-black text-white px-3 py-2 text-sm font-medium hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0"
                         >
                           Rebook
                         </button>
@@ -406,8 +409,8 @@ export default function MyBookingsPage() {
                       </div>
                          
                       <button
-                        onClick={() => handleRebook(booking.id)}
-                        className="w-[141px] h-[50px] rounded-lg bg-black text-white px-[18px] py-[12px] text-base font-medium hover:bg-gray-800 transition-colors flex items-center justify-center"
+                        onClick={() => handleRebook(booking.apartmentId)}
+                        className="w-[141px] h-[50px] cursor-pointer rounded-lg bg-black text-white px-[18px] py-[12px] text-base font-medium hover:bg-gray-800 transition-colors flex items-center justify-center"
                       >
                         Rebook
                       </button>

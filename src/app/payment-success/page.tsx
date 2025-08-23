@@ -128,7 +128,7 @@ function PaymentSuccessContent() {
         Go to homepage now
       </button>
       {/* Debug logs visible in HTML */}
-      {debugLogs.length > 0 && (
+      {/* {debugLogs.length > 0 && (
         <div className="mt-6 text-left text-sm text-gray-800 bg-white p-4 rounded-md max-w-md w-full">
           <h3 className="font-semibold mb-2">Debug Logs</h3>
           <ul className="list-disc pl-5">
@@ -139,7 +139,7 @@ function PaymentSuccessContent() {
             ))}
           </ul>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

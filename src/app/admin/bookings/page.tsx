@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
-import Link from 'next/link';
 import { getAllBookings } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
+import GuestInfoModal from '../components/guest-information';
 
 interface Booking {
   _id: string;
@@ -16,6 +15,7 @@ interface Booking {
   status: string;
   totalAmount: number;
   paymentMethod: string;
+  residentialAddress: string;
   addons: Array<{
     name: string;
     price: number;
@@ -49,6 +49,8 @@ export default function AdminBookingPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalBookings, setTotalBookings] = useState(0);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const limit = 10;
 
@@ -72,7 +74,7 @@ export default function AdminBookingPage() {
   };
 
   useEffect(() => {
-    fetchBookings(1, search);
+    fetchBookings(1);
   }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,6 +93,16 @@ export default function AdminBookingPage() {
     if (page >= 1 && page <= totalPages) {
       fetchBookings(page, search);
     }
+  };
+
+  const handleViewBooking = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedBooking(null);
   };
 
   const calculateNights = (checkIn: string, checkOut: string) => {
@@ -187,12 +199,12 @@ export default function AdminBookingPage() {
                   </span>
                 </td>
                 <td>
-                  <Link
-                    href={`/admin/bookings/${booking._id}`}
-                    className="text-black hover:underline"
+                  <button
+                    onClick={() => handleViewBooking(booking)}
+                    className="text-black hover:underline cursor-pointer"
                   >
                     View
-                  </Link>
+                  </button>
                 </td>
               </tr>
             ))}
@@ -221,12 +233,12 @@ export default function AdminBookingPage() {
             
             {/* Action Buttons Row */}
             <div className="mt-4 flex gap-2">
-              <Link
-                href={`/admin/bookings/${booking._id}`}
+              <button
+                onClick={() => handleViewBooking(booking)}
                 className="w-full text-center bg-[#212121] hover:bg-gray-800 text-white py-2 rounded-lg text-sm font-medium"
               >
                 View
-              </Link>
+              </button>
             </div>
           </div>
         ))}
@@ -281,6 +293,13 @@ export default function AdminBookingPage() {
           </div>
         </div>
       )}
+
+      {/* Guest Info Modal */}
+      <GuestInfoModal
+        booking={selectedBooking}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </div>
   );
 }

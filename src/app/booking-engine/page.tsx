@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { format, differenceInDays } from 'date-fns';
@@ -34,6 +34,7 @@ interface Booking {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  residentialAddress: string;
   specialRequest?: string;
   createdAt: string;
   updatedAt: string;
@@ -55,7 +56,67 @@ function BookingEngineContent() {
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
+  // Cleanup old bookings function - Updated to respect payment in progress
+  const cleanupOldBookings = () => {
+    const ONE_HOUR = 60 * 60 * 1000; // 1 hour in milliseconds
+    const now = Date.now();
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('booking_') && !key.includes('_payment_')) {
+        try {
+          const bookingData = localStorage.getItem(key);
+          if (bookingData) {
+            const booking = JSON.parse(bookingData);
+            const bookingTime = new Date(booking.createdAt).getTime();
+            const bookingId = booking._id;
+            
+            // Check if payment is in progress
+            const paymentInProgress = localStorage.getItem(`booking_${bookingId}_payment_in_progress`);
+            
+            // Delete bookings older than 1 hour, but only if payment is not in progress
+            if (now - bookingTime > ONE_HOUR && !paymentInProgress) {
+              localStorage.removeItem(key);
+              // Also cleanup related payment flags
+              localStorage.removeItem(`booking_${bookingId}_payment_method`);
+              localStorage.removeItem(`booking_${bookingId}_payment_in_progress`);
+              console.log(`Cleaned up old booking: ${key}`);
+            }
+          }
+        } catch (error) {
+          // If parsing fails, remove the corrupted data
+          localStorage.removeItem(key);
+        }
+      }
+    }
+  };
+
+  // Check if current booking is expired and handle accordingly - Updated to respect payment in progress
+  const checkCurrentBookingExpiry = useCallback(() => {
+    if (!booking || isProcessingPayment) return;
+    
+    const ONE_HOUR = 60 * 60 * 1000;
+    const now = Date.now();
+    const bookingTime = new Date(booking.createdAt).getTime();
+    
+    // Check if payment is in progress
+    const paymentInProgress = localStorage.getItem(`booking_${booking._id}_payment_in_progress`);
+    
+    // Only expire if not in payment process
+    if (now - bookingTime > ONE_HOUR && !paymentInProgress) {
+      // Current booking is expired
+      localStorage.removeItem(`booking_${bookingId}`);
+      localStorage.removeItem(`booking_${booking._id}_payment_method`);
+      localStorage.removeItem(`booking_${booking._id}_payment_in_progress`);
+      setError('This booking session has expired. Please create a new booking.');
+      setBooking(null);
+    }
+  }, [booking, isProcessingPayment, bookingId]);
+
   useEffect(() => {
+    // Cleanup old bookings on component mount
+    cleanupOldBookings();
+
     if (!bookingId) {
       setError('No booking selected.');
       setLoading(false);
@@ -76,21 +137,51 @@ function BookingEngineContent() {
       const fetchApartment = async () => {
         try {
           const response = await getApartmentById(parsedBooking.apartmentId);
-          const gallery = response.data.apartment.gallery || [];
-          setGalleryImages(
-            gallery.length >= 3
-              ? gallery.slice(0, 3)
-              : passedImage
-                ? [decodeURIComponent(passedImage), decodeURIComponent(passedImage), decodeURIComponent(passedImage)]
-                : ['/images/image18.png', '/images/image19.png', '/images/image20.png']
-          );
+          console.log('Apartment response:', response); // Debug log
+          
+          const gallery = response.data.gallery || [];
+          console.log('Gallery from API:', gallery); // Debug log
+          
+          if (gallery.length >= 3) {
+            setGalleryImages(gallery.slice(0, 3));
+          } else if (gallery.length > 0) {
+            // Use available images and fill with placeholders if needed
+            const images = [...gallery];
+            while (images.length < 3) {
+              images.push(passedImage ? decodeURIComponent(passedImage) : '/images/placeholder.jpg');
+            }
+            setGalleryImages(images.slice(0, 3));
+          } else if (passedImage) {
+            // No gallery images, use passed image
+            setGalleryImages([
+              decodeURIComponent(passedImage),
+              decodeURIComponent(passedImage),
+              decodeURIComponent(passedImage)
+            ]);
+          } else {
+            // No images at all, use placeholders
+            setGalleryImages([
+              '/images/image18.png',
+              '/images/image19.png',
+              '/images/image20.png'
+            ]);
+          }
         } catch (err: any) {
           console.error('BookingEnginePage: Failed to fetch apartment gallery:', err);
-          setGalleryImages(
-            passedImage
-              ? [decodeURIComponent(passedImage), decodeURIComponent(passedImage), decodeURIComponent(passedImage)]
-              : ['/images/placeholder1.jpg', '/images/placeholder2.jpg', '/images/placeholder3.jpg']
-          );
+          // Fallback to passed image or placeholders
+          if (passedImage) {
+            setGalleryImages([
+              decodeURIComponent(passedImage),
+              decodeURIComponent(passedImage),
+              decodeURIComponent(passedImage)
+            ]);
+          } else {
+            setGalleryImages([
+              '/images/placeholder1.jpg',
+              '/images/placeholder2.jpg',
+              '/images/placeholder3.jpg'
+            ]);
+          }
         }
         setLoading(false);
       };
@@ -102,11 +193,65 @@ function BookingEngineContent() {
     }
   }, [bookingId, passedImage]);
 
+  // Periodic expiry check - runs every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkCurrentBookingExpiry();
+    }, 5 * 60 * 1000); // Check every 5 minutes
+
+    // Also check immediately when component mounts (after booking is loaded)
+    if (booking) {
+      checkCurrentBookingExpiry();
+    }
+
+    return () => clearInterval(interval);
+  }, [booking, checkCurrentBookingExpiry]);
+
   const clearBookingFromLocalStorage = () => {
     if (bookingId) {
       localStorage.removeItem(`booking_${bookingId}`);
+      localStorage.removeItem(`booking_${bookingId}_payment_method`);
+      localStorage.removeItem(`booking_${bookingId}_payment_in_progress`);
     }
   };
+
+  // Cleanup on page unload - Updated to respect payment in progress
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Don't clear if payment is in progress
+      if (!isProcessingPayment && bookingId) {
+        const currentTime = Date.now();
+        const bookingData = localStorage.getItem(`booking_${bookingId}`);
+        const paymentInProgress = localStorage.getItem(`booking_${bookingId}_payment_in_progress`);
+        
+        if (bookingData && !paymentInProgress) {
+          try {
+            const booking = JSON.parse(bookingData);
+            const bookingTime = new Date(booking.createdAt).getTime();
+            const FIFTEEN_MINUTES = 15 * 60 * 1000;
+            
+            // If booking is older than 15 minutes, clear it
+            if (currentTime - bookingTime > FIFTEEN_MINUTES) {
+              localStorage.removeItem(`booking_${bookingId}`);
+              localStorage.removeItem(`booking_${bookingId}_payment_method`);
+              localStorage.removeItem(`booking_${bookingId}_payment_in_progress`);
+            }
+          } catch (error) {
+            // If parsing fails, remove the corrupted data
+            localStorage.removeItem(`booking_${bookingId}`);
+            localStorage.removeItem(`booking_${bookingId}_payment_method`);
+            localStorage.removeItem(`booking_${bookingId}_payment_in_progress`);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [bookingId, isProcessingPayment]);
 
   const handleConfirmAndPay = async () => {
     if (!booking) return;
@@ -116,8 +261,9 @@ function BookingEngineContent() {
     try {
       const response = await initiateCheckout(booking._id, paymentMethod);
       
-      // Clear booking from localStorage but preserve userId and userRole
-      clearBookingFromLocalStorage();
+      // Mark booking as "payment in progress" to prevent cleanup
+      localStorage.setItem(`booking_${booking._id}_payment_in_progress`, 'true');
+      localStorage.setItem(`booking_${booking._id}_payment_method`, paymentMethod);
       
       if (paymentMethod === 'bank-transfer') {
         alert(
@@ -127,13 +273,21 @@ function BookingEngineContent() {
           `Account Number: ${response.bankDetails.accountNumber}\n\n` +
           `${response.bankDetails.note}`
         );
+        
+        // Only clear localStorage for bank transfer since it's completed
+        clearBookingFromLocalStorage();
         router.push('/payment-success'); 
       } else {
+        // For card payments, redirect to Paystack but keep booking data
         window.location.href = response.payment.authorization_url;
       }
     } catch (err: any) {
       console.error('BookingEnginePage: Failed to initiate checkout:', err);
       alert(`Failed to initiate payment: ${err.message || 'Please try again later.'}`);
+      // Remove payment in progress flag on error
+      if (booking) {
+        localStorage.removeItem(`booking_${booking._id}_payment_in_progress`);
+      }
     } finally {
       setIsProcessingPayment(false);
     }
@@ -149,8 +303,34 @@ function BookingEngineContent() {
 
   if (error || !booking) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-600 text-lg font-semibold">
-        {error || 'Invalid booking information. Please go back and try again.'}
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
+        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
+          <div className="text-6xl mb-4">😔</div>
+          <h1 className="text-2xl font-bold mb-4 text-gray-800">Booking Not Found</h1>
+          <p className="text-gray-600 mb-6">
+            {error || 'Your booking session may have expired or been cancelled.'}
+          </p>
+          
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push('/')}
+              className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              Start New Booking
+            </button>
+            
+            <button
+              onClick={() => router.back()}
+              className="w-full bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
+          
+          <p className="text-sm text-gray-500 mt-4">
+            If you were making a payment and it was cancelled, please start a new booking.
+          </p>
+        </div>
       </div>
     );
   }
@@ -234,6 +414,10 @@ function BookingEngineContent() {
               <div>
                 <p className="text-sm font-normal text-[#374151]">Phone</p>
                 <p>{booking.customerPhone}</p>
+              </div>
+               <div>
+                <p className="text-sm font-normal text-[#374151]">Residential Address</p>
+                <p>{booking.residentialAddress}</p>
               </div>
               {booking.specialRequest && (
                 <div>
