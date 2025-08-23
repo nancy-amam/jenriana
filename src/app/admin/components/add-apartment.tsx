@@ -475,7 +475,7 @@ const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time f
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 flex justify-center items-center p-5 z-50">
+    <div className="fixed inset-0 flex backdrop-blur-sm justify-center items-center p-5 z-50">
       <div 
         className="bg-white w-[686px] max-h-[90vh] overflow-y-auto rounded-xl p-6 shadow-2xl relative"
         style={{

@@ -396,7 +396,7 @@ export default function ApartmentsManagementPage() {
       </div>
 
       {deleteModalState.open && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
             <div className="flex justify-between items-center p-6 border-b">
               <h3 className="text-lg font-semibold text-gray-900 cursor-pointer">Delete Apartment</h3>

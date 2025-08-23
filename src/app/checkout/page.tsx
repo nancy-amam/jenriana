@@ -30,7 +30,7 @@ interface Apartment {
   gallery: string[];
   rules: string[];
   addons?: Addon[];
-  address: string;
+  residentialAddress: string;
   averageRating: number | null;
   isTrending: boolean;
   ratings: any[];
@@ -62,7 +62,7 @@ function CheckoutContent() {
     name: '',
     email: '',
     phone: '',
-    address: '',
+    residentialAddress: '',
     specialRequest: '',
   });
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
@@ -106,7 +106,7 @@ function CheckoutContent() {
     } else if (!/^\+?\d{10,14}$/.test(guestInfo.phone.replace(/\s/g, ''))) {
       errors.phone = 'Invalid phone number';
     }
-    if (!guestInfo.address.trim()) errors.address = 'Address is required';
+    if (!guestInfo.residentialAddress.trim()) errors.address = 'Address is required';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -135,6 +135,7 @@ function CheckoutContent() {
         customerName: guestInfo.name,
         customerEmail: guestInfo.email,
         customerPhone: guestInfo.phone,
+        residentialAddress: guestInfo.residentialAddress,
         specialRequest: guestInfo.specialRequest || undefined,
       };
       const response = await createBooking(apartmentId!, bookingData);
@@ -282,33 +283,42 @@ function CheckoutContent() {
                 <input
                   type="text"
                   placeholder="Enter your complete address"
-                  value={guestInfo.address}
+                  value={guestInfo.residentialAddress}
                   onChange={(e) =>
-                    setGuestInfo({ ...guestInfo, address: e.target.value })
+                    setGuestInfo({ ...guestInfo, residentialAddress: e.target.value })
                   }
-                  className={`w-full px-4 py-2 rounded border ${formErrors.address ? 'border-red-500' : 'border-gray-300'} text-black`}
+                  className={`w-full px-4 py-2 rounded border ${formErrors.residentialAddress ? 'border-red-500' : 'border-gray-300'} text-black`}
                   disabled={isSubmitting}
                 />
-                {formErrors.address && <p className="text-red-500 text-sm">{formErrors.address}</p>}
+                {formErrors.residentialAddress && <p className="text-red-500 text-sm">{formErrors.residentialAddress}</p>}
               </div>
-              <div className="space-y-1">
-                <label className="block text-base font-medium">
-                  Special Request (Optional)
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Any special requirements or requests for your stay"
-                  value={guestInfo.specialRequest}
-                  onChange={(e) =>
-                    setGuestInfo({
-                      ...guestInfo,
-                      specialRequest: e.target.value,
-                    })
-                  }
-                  className="w-full px-4 py-2 rounded border border-gray-300 text-black"
-                  disabled={isSubmitting}
-                ></textarea>
-              </div>
+                    <div className="space-y-1">
+  <label className="block text-base font-medium">
+    Special Request (Optional)
+  </label>
+  <textarea
+    rows={3}
+    placeholder="Any special requirements or requests for your stay"
+    value={guestInfo.specialRequest}
+    onChange={(e) => {
+      if (e.target.value.length <= 200) {
+        setGuestInfo({
+          ...guestInfo,
+          specialRequest: e.target.value,
+        });
+      }
+    }}
+    className="w-full px-4 py-2 rounded border border-gray-300 text-black"
+    disabled={isSubmitting}
+    maxLength={200}
+  ></textarea>
+  <div className="flex justify-between items-center text-sm text-gray-500">
+    <span>Maximum 200 characters</span>
+    <span className={`${guestInfo.specialRequest.length >= 200 ? 'text-red-500' : ''}`}>
+      {guestInfo.specialRequest.length}/200
+    </span>
+  </div>
+</div>
               <div className="px-4 mb-10">
                 <h2 className="text-[20px] font-normal text-[#111827] text-left mb-2">
                   Enhance Your Stay
