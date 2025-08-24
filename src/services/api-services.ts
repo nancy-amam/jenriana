@@ -638,5 +638,76 @@ export async function getAdminAnalytics(): Promise<AnalyticsResponse> {
   }
 }
 
+export async function getApartmentBookedDates(apartmentId: string): Promise<string[]> {
+  try {
+    if (!apartmentId?.trim()) {
+      throw new Error("Apartment ID is required");
+    }
 
+    console.log(`Fetching booked dates for apartment ID: ${apartmentId}`);
+
+    const response = await apiHandler(`/api/apartment/${apartmentId}/booked-dates`, {
+      method: "GET",
+    });
+
+    console.log("Booked dates fetched successfully:", response);
+
+    // Validate response structure
+    if (!response.bookedDates || !Array.isArray(response.bookedDates)) {
+      throw new Error("Invalid response format from server");
+    }
+
+    // Return the array of booked date strings
+    return response.bookedDates;
+  } catch (error: any) {
+    console.error(`Failed to fetch booked dates for apartment ID ${apartmentId}:`, error);
+
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    throw new Error(
+      error.message ||
+        "Failed to fetch booked dates. Please try again later."
+    );
+  }
+}
+
+// Helper function to check if a specific date is booked
+export function isDateBooked(date: string, bookedDates: string[]): boolean {
+  return bookedDates.includes(date);
+}
+
+// Helper function to check if a date range overlaps with any booked dates
+export function isDateRangeAvailable(
+  checkIn: string, 
+  checkOut: string, 
+  bookedDates: string[]
+): boolean {
+  const startDate = new Date(checkIn);
+  const endDate = new Date(checkOut);
+  
+  // Generate all dates in the range (excluding checkout date)
+  const dates = [];
+  const currentDate = new Date(startDate);
+  
+  while (currentDate < endDate) {
+    dates.push(currentDate.toISOString().split('T')[0]);
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  // Check if any date in the range is booked
+  return !dates.some(date => bookedDates.includes(date));
+}
+
+// Helper function to get the next available date after a booked period
+export function getNextAvailableDate(fromDate: string, bookedDates: string[]): string {
+  const currentDate = new Date(fromDate);
+  
+  while (bookedDates.includes(currentDate.toISOString().split('T')[0])) {
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  return currentDate.toISOString().split('T')[0];
+}
 

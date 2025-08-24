@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     const verification = await paystack.verifyTransaction(reference);
 
     if (verification.status === "success") {
-      await Booking.findByIdAndUpdate(bookingId, { status: "confirmed" });
+      await Booking.findByIdAndUpdate(bookingId, { status: "confirmed", expireAt: null });
       return NextResponse.json({ message: "Payment successful, booking confirmed" }, { status: 200 });
     } else {
       return NextResponse.json({ message: "Payment not successful" }, { status: 400 });
