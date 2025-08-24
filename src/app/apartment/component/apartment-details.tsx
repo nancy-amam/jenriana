@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   BathIcon,
   BedIcon,
@@ -23,6 +23,7 @@ import {
   Battery,
 } from 'lucide-react';
 import { Apartment } from '@/lib/interface';
+import { getApartmentBookedDates, isDateRangeAvailable } from '@/services/api-services';
 import DateInput from "@/components/date-inputs";
 
 export default function ApartmentDetails({ apartment }: { apartment: Apartment }) {
@@ -30,40 +31,126 @@ export default function ApartmentDetails({ apartment }: { apartment: Apartment }
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(1);
+  const [bookedDates, setBookedDates] = useState<string[]>([]);
+  const [loadingBookedDates, setLoadingBookedDates] = useState(true);
+  const [dateError, setDateError] = useState('');
+
+  // Fetch booked dates when component mounts
+  useEffect(() => {
+    const fetchBookedDates = async () => {
+      if (!apartment.id) return;
+      
+      try {
+        setLoadingBookedDates(true);
+        const dates = await getApartmentBookedDates(apartment.id);
+        setBookedDates(dates);
+        console.log('Fetched booked dates:', dates);
+      } catch (error) {
+        console.error('Failed to fetch booked dates:', error);
+        // Continue without booked dates - user can still attempt booking
+        setBookedDates([]);
+      } finally {
+        setLoadingBookedDates(false);
+      }
+    };
+
+    fetchBookedDates();
+  }, [apartment.id]);
+
+  // Helper function to get conflicting dates in selected range
+  const getConflictingDates = (checkIn: string, checkOut: string, bookedDates: string[]): string[] => {
+    if (!checkIn || !checkOut) return [];
+    
+    const startDate = new Date(checkIn);
+    const endDate = new Date(checkOut);
+    const dates = [];
+    const currentDate = new Date(startDate);
+    
+    while (currentDate < endDate) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      if (bookedDates.includes(dateStr)) {
+        dates.push(dateStr);
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return dates;
+  };
+
+  // Format date for display
+  const formatDate = (dateStr: string): string => {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  // Validate date selection
+  useEffect(() => {
+    if (checkIn && checkOut && bookedDates.length > 0) {
+      if (new Date(checkOut) <= new Date(checkIn)) {
+        setDateError('Check-out date must be after check-in date.');
+        return;
+      }
+
+      const conflictingDates = getConflictingDates(checkIn, checkOut, bookedDates);
+      if (conflictingDates.length > 0) {
+        const formattedDates = conflictingDates.map(formatDate).join(', ');
+        setDateError(`These dates in your range are already booked: ${formattedDates}`);
+      } else {
+        setDateError('');
+      }
+    } else {
+      setDateError('');
+    }
+  }, [checkIn, checkOut, bookedDates]);
 
   const handleBooking = () => {
     if (!checkIn || !checkOut) {
       alert('Please select both check-in and check-out dates.');
       return;
     }
+
     const nights = (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24);
     if (nights <= 0) {
       alert('Check-out date must be after check-in date.');
       return;
     }
+
     if (!guests || guests <= 0 || guests > apartment.maxGuests) {
       alert(`Please select a valid number of guests (max ${apartment.maxGuests}).`);
       return;
     }
+
+    // Check if dates are available
+    if (bookedDates.length > 0 && !isDateRangeAvailable(checkIn, checkOut, bookedDates)) {
+      alert('Some dates in your selected range are already booked. Please choose different dates.');
+      return;
+    }
+
     const price = apartment.pricePerNight;
     if (isNaN(price)) {
       alert('Invalid apartment price.');
       return;
     }
 
-      const image = encodeURIComponent(apartment.imageUrl || '/placeholder.svg');
+    const image = encodeURIComponent(apartment.imageUrl || '/placeholder.svg');
+    const apartmentId = apartment.id;
 
-     const apartmentId = apartment.id 
-
-if (!apartmentId) {
-  console.error("Cannot navigate to checkout: apartment ID is missing", apartment);
-} else {
-  router.push(
-    `/checkout?apartmentId=${apartmentId}&nights=${nights}&guests=${guests}&price=${price}&checkIn=${checkIn}&checkOut=${checkOut}&image=${encodeURIComponent(image)}`
-  );
-}
-
+    if (!apartmentId) {
+      console.error("Cannot navigate to checkout: apartment ID is missing", apartment);
+    } else {
+      router.push(
+        `/checkout?apartmentId=${apartmentId}&nights=${nights}&guests=${guests}&price=${price}&checkIn=${checkIn}&checkOut=${checkOut}&image=${encodeURIComponent(image)}`
+      );
+    }
   };
+
+  // Set minimum date for check-out based on check-in
+  const minCheckOutDate = checkIn ? 
+    new Date(new Date(checkIn).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+    undefined;
 
   // Map API features to icons and names, aligned with AddEditApartmentModal
   const featureMapping = {
@@ -104,7 +191,7 @@ if (!apartmentId) {
           className="object-cover"
         />
         <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute bottom-10 left-0 right-0 text-white px-4 md:px-10">
+        <div className="absolute bottom-10 md:bottom-14 left-0 right-0 text-white px-4 md:px-10">
           <div className="w-full md:max-w-[60%] mb-5">
             <h1 className="text-4xl md:text-[48px] mt-5 font-normal">{apartment.name}</h1>
             <p className="text-lg md:text-[20px] mt-2">{apartment.location}</p>
@@ -120,66 +207,89 @@ if (!apartmentId) {
       </div>
 
       {/* Booking Card */}
-     <div className="relative z-10 mx-auto px-4 md:px-0 w-full md:absolute md:top-[460px] md:right-10 md:max-w-[460px]">
-  <div className="bg-[#f1f1f1] text-[#1e1e1e] md:rounded-xl p-6 w-full md:border md:border-gray-200 md:shadow-md">
-    {/* Price */}
-    <div className="flex mb-2 justify-center items-center mx-auto">
-      <p className="text-[28px] md:text-[36px] text-[#111827] font-bold">
-        ₦{apartment.pricePerNight.toLocaleString()}{" "}
-        <span className="text-sm mb-5 text-gray-500">/ night</span>
-      </p>
-    </div>
+      <div className="relative z-10 mx-auto px-4 md:px-0 w-full md:absolute md:top-[390px] md:right-10 md:max-w-[460px]">
+        <div className="bg-[#f1f1f1] text-[#1e1e1e] md:rounded-xl p-6 w-full md:border md:border-gray-200 md:shadow-md max-h-[600px] overflow-visible">
+          {/* Loading indicator for booked dates */}
+          {loadingBookedDates && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-600 text-sm">Loading availability...</p>
+            </div>
+          )}
 
-    {/* Dates */}
-    <div className="flex gap-1 mb-2 text-[#1e1e1e]">
-      <div className="w-1/2 ">
-        <DateInput
-          id="check-in"
-          label="Check In"
-          value={checkIn}
-          onChange={(e) => setCheckIn(e.target.value)}
-         
-        />
+          {/* Price */}
+          <div className="flex mb-2 justify-center items-center mx-auto">
+            <p className="text-[28px] md:text-[36px] text-[#111827] font-bold">
+              ₦{apartment.pricePerNight.toLocaleString()}{" "}
+              <span className="text-sm mb-5 text-gray-500">/ night</span>
+            </p>
+          </div>
+
+          {/* Dates */}
+          <div className="flex gap-1 mb-2 text-[#1e1e1e]">
+            <div className="w-1/2">
+              <DateInput
+                id="check-in"
+                label="Check In"
+                value={checkIn}
+                onChange={(e) => setCheckIn(e.target.value)}
+                bookedDates={bookedDates}
+                disabled={loadingBookedDates}
+              />
+            </div>
+
+            <div className="w-1/2">
+              <DateInput
+                id="check-out"
+                label="Check Out"
+                value={checkOut}
+                onChange={(e) => setCheckOut(e.target.value)}
+                bookedDates={bookedDates}
+                minDate={minCheckOutDate}
+                disabled={loadingBookedDates}
+              />
+            </div>
+          </div>
+
+          {/* Date validation error - with better styling */}
+          {dateError && (
+            <div className="mb-1 p-2 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-xs break-words">{dateError}</p>
+            </div>
+          )}
+
+          {/* Guests */}
+          <label className="mb-2 text-base text-[#1e1e1e]">Guests</label>
+          <select
+            className="border border-[#ffffff] px-4 py-4 rounded-xl md:border-none bg-white w-full cursor-pointer mb-4"
+            value={guests}
+            onChange={(e) => setGuests(Number(e.target.value))}
+          >
+            <option value="">Select guests</option>
+            {[...Array(apartment.maxGuests)].map((_, i) => (
+              <option key={i + 1} value={i + 1}>
+                {i + 1} Guest{i > 0 ? "s" : ""}
+              </option>
+            ))}
+          </select>
+
+          {/* Button */}
+          <button
+            onClick={handleBooking}
+            disabled={loadingBookedDates || !!dateError}
+            className={`w-full rounded-md py-2 transition ${
+              loadingBookedDates || dateError
+                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                : 'bg-black text-white hover:bg-gray-800 cursor-pointer'
+            }`}
+          >
+            {loadingBookedDates ? 'Loading...' : 'Book Now'}
+          </button>
+          
+          <p className="text-xs text-[#6b7280] mt-2 text-center">
+            No stress. No pressure. Cancel anytime.
+          </p>
+        </div>
       </div>
-
-      <div className="w-1/2 ">
-        <DateInput
-          id="check-out"
-          label="Check Out"
-          value={checkOut}
-          onChange={(e) => setCheckOut(e.target.value)}
-        />
-      </div>
-    </div>
-
-    {/* Guests */}
-    <label className="mb-2 text-base text-[#1e1e1e]">Guests</label>
-    <select
-      className="border border-[#ffffff]  px-4 py-4 rounded-xl md:border-none bg-white w-full cursor-pointer"
-      value={guests}
-      onChange={(e) => setGuests(Number(e.target.value))}
-    >
-      <option value="">Select guests</option>
-      {[...Array(apartment.maxGuests)].map((_, i) => (
-        <option key={i + 1} value={i + 1}>
-          {i + 1} Guest{i > 0 ? "s" : ""}
-        </option>
-      ))}
-    </select>
-
-    {/* Button */}
-    <button
-      onClick={handleBooking}
-      className="mt-4 bg-black text-white w-full rounded-md py-2 hover:bg-gray-800 transition cursor-pointer "
-    >
-      Book Now
-    </button>
-    <p className="text-xs text-[#6b7280] mt-2 text-center">
-      No stress. No pressure. Cancel anytime.
-    </p>
-  </div>
-</div>
-
 
       <div className="relative z-0">
         {/* Small Stat Cards */}
@@ -214,7 +324,7 @@ if (!apartmentId) {
                     alt={`${apartment.name} main image`}
                     width={700}
                     height={500}
-                    className="w-full h-full object-cover rounded-xl  "
+                    className="w-full h-full object-cover rounded-xl"
                   />
                 </div>
                 <div className="flex flex-col gap-4">
@@ -304,7 +414,7 @@ if (!apartmentId) {
                 className="rounded-lg"
               ></iframe>
             </div>
-            <div className="flex flex-col gap-4 md:mt-20 ">
+            <div className="flex flex-col gap-4 md:mt-20">
               <h3 className="text-lg font-semibold mb-2">Things to know before booking</h3>
               {(apartment.rules || []).length > 0 ? (
                 (apartment.rules || []).map((rule) => {
