@@ -18,14 +18,12 @@ export interface IBooking extends Document {
   }[];
   serviceCharge: number;
   tax: number;
-
-  // 👇 New customer details
   customerName: string;
   customerEmail: string;
   customerPhone: string;
   residentialAddress: string
   specialRequest?: string;
-
+  expireAt: Date
   createdAt: Date;
   updatedAt: Date;
 }
@@ -58,16 +56,17 @@ const BookingSchema = new Schema<IBooking>(
     ],
     serviceCharge: { type: Number, required: true },
     tax: { type: Number, required: true },
-
-    // 👇 New fields
     customerName: { type: String, required: true },
     customerEmail: { type: String, required: true },
     customerPhone: { type: String, required: true },
     residentialAddress:{type: String, required: true},
     specialRequest: { type: String },
+    expireAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
 
+BookingSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
+BookingSchema.index({ apartmentId: 1, status: 1 });
 export default mongoose.models.Booking ||
   mongoose.model<IBooking>("Booking", BookingSchema);

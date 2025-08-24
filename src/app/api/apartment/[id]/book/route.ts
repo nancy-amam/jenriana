@@ -173,12 +173,13 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       serviceCharge,
       tax,
       totalAmount,
-      status: "pending", // stays pending until confirmed
+      status: "pending", 
       customerName,
       customerEmail,
       customerPhone,
       residentialAddress,
       specialRequest,
+      expireAt: new Date(Date.now() + 60 * 60 * 1000),
     });
 
     return NextResponse.json(

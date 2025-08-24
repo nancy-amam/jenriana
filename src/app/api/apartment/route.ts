@@ -5,6 +5,7 @@ import connectDB from "../lib/mongodb";
 import Apartment, { IAddon } from "@/models/apartment";
 import { uploadToPinata } from "../lib/pinata";
 import { getUserFromRequest } from "../lib/getUserFromRequest";
+import eventBus from "../lib/eventBus";
 
 // ================= GET all apartments =================
 export async function GET() {
@@ -97,7 +98,14 @@ export async function POST(request: Request) {
       gallery: galleryUrls,
       addons
     });
-
+      eventBus.emit("analytics", {
+    type: "APARTMENT_ADDED",
+    data: {
+      name: apartment.name,
+      location: apartment.location,
+      time: new Date()
+    }
+  });
     return NextResponse.json(
       { success: true, data: apartment },
       { status: 201 }
