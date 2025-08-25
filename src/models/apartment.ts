@@ -26,6 +26,7 @@ export interface IApartment extends Document {
     createdAt: Date;
   }[];
   rules: string[];
+  status: 'active' | 'inactive'
   isTrending: boolean;
   addons: IAddon[];
   createdAt: Date;
@@ -66,6 +67,7 @@ const ApartmentSchema: Schema = new Schema(
     rules: [String],
     isTrending: { type: Boolean, default: false },
     addons: { type: [AddonSchema], default: [] },
+    status: { type: String, enum: ["active", "inactive"], default : 'active'}
   },
   { timestamps: true }
 );

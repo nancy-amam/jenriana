@@ -96,16 +96,22 @@ export async function POST(request: Request) {
       features,
       rules,
       gallery: galleryUrls,
-      addons
+      addons,
+      status: 'active'
     });
-      eventBus.emit("analytics", {
-    type: "APARTMENT_ADDED",
-    data: {
-      name: apartment.name,
-      location: apartment.location,
-      time: new Date()
-    }
-  });
+    //   eventBus.emit("analytics", {
+    // type: "APARTMENT_ADDED",
+    // data: {
+    //   name: apartment.name,
+    //   location: apartment.location,
+    //   time: new Date()
+    // }
+
+        eventBus.emit("activity", {
+          type: "APARTMENT_ADDED",
+          message: `Apartment created by: ${user} `,
+          timestamp: new Date().toISOString(),
+        });
     return NextResponse.json(
       { success: true, data: apartment },
       { status: 201 }
