@@ -1,15 +1,17 @@
-import { NextResponse } from 'next/server';
-import connectDB from '../../lib/mongodb';
-import User from '@/models/user';
-import bcrypt from 'bcrypt';
+import { NextResponse } from "next/server";
+import connectDB from "../../lib/mongodb";
+import User from "@/models/user";
+import bcrypt from "bcrypt";
+import eventBus from "../../lib/eventBus";
 
 export async function POST(request: Request) {
   try {
-    const { fullname, email, phone, password, confirmPassword } = await request.json();
+    const { fullname, email, phone, password, confirmPassword } =
+      await request.json();
 
     if (!fullname || !email || !phone || !password || !confirmPassword) {
       return NextResponse.json(
-        { message: 'All fields are required' },
+        { message: "All fields are required" },
         { status: 400 }
       );
     }
@@ -17,7 +19,7 @@ export async function POST(request: Request) {
     // Password confirmation check
     if (password !== confirmPassword) {
       return NextResponse.json(
-        { message: 'Passwords do not match' },
+        { message: "Passwords do not match" },
         { status: 400 }
       );
     }
@@ -28,7 +30,7 @@ export async function POST(request: Request) {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(
-        { message: 'User already exists' },
+        { message: "User already exists" },
         { status: 409 }
       );
     }
@@ -46,9 +48,15 @@ export async function POST(request: Request) {
 
     await newUser.save();
 
+    eventBus.emit("activity", {
+      type: "USER_SIGNUP",
+      message: `User signed up: ${email} `,
+      timestamp: new Date().toISOString(),
+    });
+
     return NextResponse.json(
       {
-        message: 'User registered successfully',
+        message: "User registered successfully",
         user: {
           id: newUser._id,
           email: newUser.email,
@@ -58,9 +66,9 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Signup error:', error);
+    console.error("Signup error:", error);
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: "Internal server error" },
       { status: 500 }
     );
   }
