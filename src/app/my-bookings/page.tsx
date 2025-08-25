@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MapPinIcon, UsersIcon, CalendarDays, CalendarCheck, ChevronDown, StarIcon } from "lucide-react";
 import { differenceInDays } from "date-fns";
-import { getActiveBookings, getBookingHistory, postApartmentComment } from "@/services/api-services";
+import { getActiveBookings, getBookingHistory, postApartmentComment, cancelBooking } from "@/services/api-services";
 import ApartmentLoadingPage from "@/components/loading";
 
 interface ApartmentData {
@@ -45,6 +45,7 @@ export default function MyBookingsPage() {
   const [rating, setRating] = useState(4);
   const [comment, setComment] = useState("");
   const [postedReview, setPostedReview] = useState<Review | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -87,16 +88,35 @@ export default function MyBookingsPage() {
   };
 
   const handleCancelBooking = (bookingId: string) => {
-    if (confirm(`Are you sure you want to cancel booking ${bookingId}?`)) {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (booking && booking.status.toLowerCase() === 'confirmed') {
+      setShowCancelModal(bookingId);
+    } else {
+      if (confirm(`Are you sure you want to cancel this booking?`)) {
+        performCancelBooking(bookingId);
+      }
+    }
+  };
+
+  const performCancelBooking = async (bookingId: string) => {
+    try {
+      await cancelBooking(bookingId);
       const updatedBookings = bookings.filter((b) => b.id !== bookingId);
       setBookings(updatedBookings);
-      alert(`Booking ${bookingId} cancelled.`);
+    } catch (error: any) {
+      console.error("Failed to cancel booking:", error);
+      alert(`Failed to cancel booking: ${error.message || "Please try again."}`);
     }
+  };
+
+  const handleConfirmCancel = (bookingId: string) => {
+    setShowCancelModal(null);
+    performCancelBooking(bookingId);
   };
 
   const handleRebook = (apartmentId: string) => {
     // Navigate to the apartment page
-    router.push(`/apartment/${apartmentId}`);
+    router.push(`/apartments/${apartmentId}`);
   };
 
   const handleRateStay = (bookingId: string) => {
@@ -213,7 +233,7 @@ export default function MyBookingsPage() {
                         </div>
                         <button
                           onClick={() => handleRebook(booking.apartmentId)}
-                          className="w-[100px] h-[40px] cursor-pointer rounded-lg bg-black text-white px-3 py-2 text-sm font-medium hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0"
+                          className="w-[100px] h-[40px] rounded-lg bg-black text-white px-3 py-2 text-sm font-medium hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0"
                         >
                           Rebook
                         </button>
@@ -410,7 +430,7 @@ export default function MyBookingsPage() {
                          
                       <button
                         onClick={() => handleRebook(booking.apartmentId)}
-                        className="w-[141px] h-[50px] cursor-pointer rounded-lg bg-black text-white px-[18px] py-[12px] text-base font-medium hover:bg-gray-800 transition-colors flex items-center justify-center"
+                        className="w-[141px] h-[50px] rounded-lg bg-black text-white px-[18px] py-[12px] text-base font-medium hover:bg-gray-800 transition-colors flex items-center justify-center"
                       >
                         Rebook
                       </button>
@@ -489,6 +509,55 @@ export default function MyBookingsPage() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cancellation Modal for Confirmed Bookings */}
+                  {showCancelModal === booking.id && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                      <div className="bg-white rounded-[20px] p-6 w-[480px] max-w-full flex flex-col gap-4">
+                        <div className="flex justify-between items-center">
+                          <h2 className="text-xl font-semibold text-[#111827]">Cancel Booking</h2>
+                          <button
+                            onClick={() => setShowCancelModal(null)}
+                            className="text-[#4b5566] hover:text-black text-xl"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        
+                        <div className="text-base text-[#374151] leading-relaxed">
+                          <p className="mb-4">
+                            Are you sure you want to cancel this booking?
+                          </p>
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                            <p className="text-sm text-[#8B5A00] mb-2 font-medium">
+                              Important Notice:
+                            </p>
+                            <p className="text-sm text-[#8B5A00] mb-2">
+                              • Please contact support to discuss refund options before canceling
+                            </p>
+                            <p className="text-sm text-[#8B5A00]">
+                              • A cancellation fee applies
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => setShowCancelModal(null)}
+                            className="flex-1 h-[50px] rounded-lg border border-gray-300 px-4 py-3 text-base font-normal text-[#374151] bg-white hover:bg-gray-50 transition-colors"
+                          >
+                            Keep Booking
+                          </button>
+                          <button
+                            onClick={() => handleConfirmCancel(booking.id)}
+                            className="flex-1 h-[50px] rounded-lg bg-red-600 text-white px-4 py-3 text-base font-medium hover:bg-red-700 transition-colors"
+                          >
+                            Cancel Anyway
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}

@@ -1,5 +1,5 @@
 import { apiHandler } from "@/utils/api-handler";
-import { SignInData, SignUpData, ApartmentData, AnalyticsResponse } from "@/lib/interface";
+import { SignInData, SignUpData, ApartmentData, AnalyticsResponse, CancelBookingResponse } from "@/lib/interface";
 
 export async function signIn(data: SignInData) {
   return apiHandler("/api/auth/signin", {
@@ -711,3 +711,15 @@ export function getNextAvailableDate(fromDate: string, bookedDates: string[]): s
   return currentDate.toISOString().split('T')[0];
 }
 
+
+export async function cancelBooking(bookingId: string): Promise<CancelBookingResponse> {
+  try {
+    const response = await apiHandler(`/api/booking/${bookingId}`, {
+      method: "PATCH",
+    });
+    return response as CancelBookingResponse;
+  } catch (error) {
+    console.error("Error canceling booking:", error);
+    throw error;
+  }
+}

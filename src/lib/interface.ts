@@ -133,4 +133,20 @@ export interface AnalyticsResponse {
   percentageChange: string;
 }
 
-
+export interface CancelBookingResponse {
+  message: string;
+  booking: {
+    _id: string;
+    userId: string;
+    apartmentId: string;
+    checkInDate: string;
+    checkOutDate: string;
+    guests: number;
+    status: string;
+    totalAmount: number;
+    paymentMethod: string;
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+  };
+}

@@ -1,9 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import { getAllUsers } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
+
+// Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    console.log('Debouncing value:', value); // Debug: Log the value being debounced
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 interface User {
   _id: string;
@@ -29,21 +47,24 @@ interface UsersResponse {
 export default function AdminGuestsPage() {
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start with false to avoid initial loading flicker
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
 
   const limit = 10;
+  const debouncedSearch = useDebounce(search, 500);
 
   const fetchUsers = async (page: number = 1, searchQuery?: string) => {
     try {
+      console.log('Fetching users with page:', page, 'searchQuery:', searchQuery); // Debug: Log API params
       setLoading(true);
       setError(null);
-      
-      const response: UsersResponse = await getAllUsers(page, limit, searchQuery);
-      
+
+      const response: UsersResponse = await getAllUsers(page, limit, searchQuery?.trim() || undefined);
+      console.log('API response:', response); // Debug: Log API response
+
       setUsers(response.users || []);
       setTotalPages(response.pagination?.pages || 1);
       setTotalUsers(response.pagination?.total || 0);
@@ -56,37 +77,25 @@ export default function AdminGuestsPage() {
     }
   };
 
+  // Fetch users when debounced search or current page changes
   useEffect(() => {
-    fetchUsers(1, search);
-  }, []);
+    fetchUsers(currentPage, debouncedSearch);
+  }, [debouncedSearch, currentPage]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearch(value);
-    
-    // Debounce search
-    const timeoutId = setTimeout(() => {
-      fetchUsers(1, value);
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
+    setCurrentPage(1); // Reset to first page on search
   };
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
-      fetchUsers(page, search);
+      setCurrentPage(page);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
-        <div className="flex justify-center items-center h-64">
-          <ApartmentLoadingPage />
-        </div>
-      </div>
-    );
-  }
+  // Memoize the user list to prevent unnecessary re-renders
+  const memoizedUsers = useMemo(() => users, [users]);
 
   if (error) {
     return (
@@ -109,6 +118,7 @@ export default function AdminGuestsPage() {
           value={search}
           onChange={handleSearch}
         />
+        {loading && <div className="text-gray-500 text-sm">Searching...</div>}
       </div>
 
       {/* Desktop Table */}
@@ -124,7 +134,7 @@ export default function AdminGuestsPage() {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
+            {memoizedUsers.map((user) => (
               <tr key={user._id} className="text-[#111827] text-sm font-normal">
                 <td className="py-3 font-medium">{user.fullname}</td>
                 <td>{user.email}</td>
@@ -146,7 +156,7 @@ export default function AdminGuestsPage() {
 
       {/* Mobile Cards */}
       <div className="lg:hidden space-y-4 mt-6">
-        {users.map((user) => (
+        {memoizedUsers.map((user) => (
           <div
             key={user._id}
             className="bg-white rounded-lg shadow-md p-4 relative"
@@ -170,7 +180,7 @@ export default function AdminGuestsPage() {
       </div>
 
       {/* Empty State */}
-      {users.length === 0 && !loading && (
+      {memoizedUsers.length === 0 && !loading && (
         <div className="w-full max-w-[1200px] bg-white rounded-lg shadow-md p-8 text-center">
           <p className="text-gray-500">No users found.</p>
         </div>
