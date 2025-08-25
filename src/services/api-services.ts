@@ -723,3 +723,30 @@ export async function cancelBooking(bookingId: string): Promise<CancelBookingRes
     throw error;
   }
 }
+
+export async function deleteUser(userId: string): Promise<any> {
+  try {
+    if (!userId?.trim()) {
+      throw new Error("User ID is required for deletion");
+    }
+
+    console.log(`Deleting user with ID: ${userId}`);
+
+    const response = await apiHandler(`/api/admin/users/${userId}`, {
+      method: "DELETE",
+    });
+
+    console.log("User deleted successfully:", response);
+    return response;
+  } catch (error: any) {
+    console.error(`Failed to delete user with ID ${userId}:`, error);
+
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    throw new Error(
+      error.message || "Failed to delete user. Please try again."
+    );
+  }
+}
