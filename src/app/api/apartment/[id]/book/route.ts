@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import eventBus from "@/app/api/lib/eventBus";
 import { getUserFromRequest } from "@/app/api/lib/getUserFromRequest";
 import connectDB from "@/app/api/lib/mongodb";
 import Apartment from "@/models/apartment";
@@ -141,9 +142,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
           );
         }
         const total =
-          addon.pricingType === "perNight"
-            ? addon.price * days
-            : addon.price;
+          addon.pricingType === "perNight" ? addon.price * days : addon.price;
         addonsTotal += total;
         addonsDetails.push({
           _id: addon._id,
@@ -173,7 +172,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       serviceCharge,
       tax,
       totalAmount,
-      status: "pending", 
+      status: "pending",
       customerName,
       customerEmail,
       customerPhone,
@@ -181,7 +180,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       specialRequest,
       expireAt: new Date(Date.now() + 60 * 60 * 1000),
     });
-
+    eventBus.emit("activity", {
+      type: "BOOKING_CONFIRMED",
+      message: `Booking initiated by: ${customerEmail} `,
+      timestamp: new Date().toISOString(),
+    });
     return NextResponse.json(
       {
         message: "Booking created. Proceed to checkout.",

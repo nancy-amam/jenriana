@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import eventBus from "@/app/api/lib/eventBus";
 import { getUserFromRequest } from "@/app/api/lib/getUserFromRequest";
 import connectDB from "@/app/api/lib/mongodb";
 import Apartment from "@/models/apartment";
@@ -38,6 +39,12 @@ export async function POST(req: Request, { params }: RouteContext) {
       apartmentId: id,
       comment,
       rating,
+    });
+
+        eventBus.emit("activity", {
+      type: "NEW_REVIEW",
+      message: `Review added on :${rating}-star on ${apartment.name} `,
+      timestamp: new Date().toISOString(),
     });
 
     return NextResponse.json(
