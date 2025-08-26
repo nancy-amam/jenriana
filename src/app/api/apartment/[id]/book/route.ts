@@ -2,6 +2,8 @@
 import eventBus from "@/app/api/lib/eventBus";
 import { getUserFromRequest } from "@/app/api/lib/getUserFromRequest";
 import connectDB from "@/app/api/lib/mongodb";
+import { activityService } from "@/app/api/services/activity.service";
+import { generateBookingCode } from "@/app/api/services/generate-booking-code";
 import Apartment from "@/models/apartment";
 import Booking from "@/models/bookings";
 import { NextRequest, NextResponse } from "next/server";
@@ -160,6 +162,8 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const tax = subtotal * 0.1;
     const totalAmount = subtotal + serviceCharge + tax;
 
+    const bookingCode = await generateBookingCode();
+
     // Create booking (still pending until payment confirmation)
     const booking = await Booking.create({
       userId: user._id,
@@ -179,12 +183,12 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       residentialAddress,
       specialRequest,
       expireAt: new Date(Date.now() + 60 * 60 * 1000),
+      bookingCode,
     });
-    eventBus.emit("activity", {
-      type: "BOOKING_CONFIRMED",
-      message: `Booking initiated by: ${customerEmail} `,
-      timestamp: new Date().toISOString(),
-    });
+    await activityService.saveActivity(
+      "APPPARTEMNT_ADDED",
+      `Booking confrimed : ${customerName}(${totalAmount}) `
+    );
     return NextResponse.json(
       {
         message: "Booking created. Proceed to checkout.",

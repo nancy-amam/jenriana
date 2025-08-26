@@ -21,9 +21,10 @@ export interface IBooking extends Document {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
-  residentialAddress: string
+  residentialAddress: string;
   specialRequest?: string;
-  expireAt: Date
+  bookingCode: string;
+  expireAt: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,9 +60,10 @@ const BookingSchema = new Schema<IBooking>(
     customerName: { type: String, required: true },
     customerEmail: { type: String, required: true },
     customerPhone: { type: String, required: true },
-    residentialAddress:{type: String, required: true},
+    residentialAddress: { type: String, required: true },
     specialRequest: { type: String },
     expireAt: { type: Date, default: null },
+    bookingCode: { type: String, unique: true },
   },
   { timestamps: true }
 );
