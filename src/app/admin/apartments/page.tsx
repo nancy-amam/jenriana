@@ -1,15 +1,27 @@
 'use client';
 
-import { Pencil, Trash2, MapPin, BedDouble, DollarSign, Users, Bath, X, Home, Plus } from 'lucide-react';
+import { Pencil, Trash2, MapPin, BedDouble, Bath, X, Users } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import AddEditApartmentModal from '../components/add-apartment';
 import { getApartments, deleteApartment, getApartmentById } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
-import { useApartmentModal } from '@/context/apartment-context'
+import { useApartmentModal } from '@/context/apartment-context';
+
+// Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    console.log('Debouncing value:', value);
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 type Apartment = {
   _id: string;
+  id: string;
   name: string;
   location: string;
   address?: string;
@@ -21,11 +33,22 @@ type Apartment = {
   rules?: string[];
   isTrending?: boolean;
   gallery?: string[];
-  ratings?: number;
+  ratings?: number[];
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
-  addons?: any[]; // Add this field
+  addons?: any[];
+  status?: string;
+};
+
+type ApartmentsResponse = {
+  data: Apartment[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 };
 
 type DeleteModalState = {
@@ -40,55 +63,123 @@ export default function ApartmentsManagementPage() {
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | string>(null);
-  const [editLoading, setEditLoading] = useState<string | null>(null); // Track which apartment is loading
+  const [editLoading, setEditLoading] = useState<string | null>(null);
   const [deleteModalState, setDeleteModalState] = useState<DeleteModalState>({
     open: false,
     apartmentId: null,
     apartmentName: '',
     isDeleting: false,
   });
+  const [location, setLocation] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalApartments, setTotalApartments] = useState(0);
+  const limit = 10;
+  const debouncedLocation = useDebounce(location, 500);
+
+  const fetchApartments = async (page: number = 1, locationQuery?: string) => {
+    try {
+      console.log('Fetching apartments with params:', { page, limit, locationQuery });
+      setLoading(true);
+      setError(null);
+
+      const response: ApartmentsResponse = await getApartments(page, limit, locationQuery?.trim());
+      if (!Array.isArray(response.data)) {
+        throw new Error('Invalid response: data array is missing or not an array');
+      }
+      if (!response.pagination || typeof response.pagination.total !== 'number' || typeof response.pagination.totalPages !== 'number') {
+        throw new Error('Invalid pagination data in response');
+      }
+
+      // Parse malformed features and rules arrays
+      const parsedData = response.data.map(apartment => ({
+        ...apartment,
+        features: typeof apartment.features?.[0] === 'string' && apartment.features?.[0].startsWith('[')
+          ? JSON.parse(apartment.features[0])
+          : apartment.features || [],
+        rules: typeof apartment.rules?.[0] === 'string' && apartment.rules?.[0].startsWith('[')
+          ? JSON.parse(apartment.rules[0])
+          : apartment.rules || [],
+      }));
+
+      // Sort by createdAt descending (newest first)
+      const sortedData = parsedData.sort((a, b) => 
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      );
+
+      console.log(`Received ${sortedData.length} apartments for location: "${locationQuery || ''}"`);
+      setApartments(sortedData);
+      setTotalPages(response.pagination.totalPages);
+      setTotalApartments(response.pagination.total);
+      setCurrentPage(Math.min(page, response.pagination.totalPages) || 1);
+    } catch (err: any) {
+      const errorMessage =
+        err.status === 404
+          ? 'Apartments API endpoint not found (/api/admin/apartment). Please verify the backend configuration.'
+          : err.status === 500
+          ? 'Server error while fetching apartments. Please try again later.'
+          : err.message || 'Failed to fetch apartments. Please try again later.';
+      setError(errorMessage);
+      console.error('Error fetching apartments:', {
+        message: err.message,
+        status: err.status,
+        details: err.details || err,
+      });
+      setApartments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchApartments = async () => {
-      try {
-        setLoading(true);
-        const response = await getApartments();
-        setApartments(response.data || []);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message);
-        console.error('Error fetching apartments:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchApartments();
-  }, []);
+    console.log('Effect triggered with debouncedLocation:', debouncedLocation, 'currentPage:', currentPage);
+    fetchApartments(currentPage, debouncedLocation);
+  }, [debouncedLocation, currentPage]);
 
   const handleSuccess = async () => {
     try {
-      const response = await getApartments();
-      setApartments(response.data || []);
+      const response = await getApartments(currentPage, debouncedLocation);
+      // Parse and sort as in fetchApartments
+      const parsedData = response.data.map(apartment => ({
+        ...apartment,
+        features: typeof apartment.features?.[0] === 'string' && apartment.features?.[0].startsWith('[')
+          ? JSON.parse(apartment.features[0])
+          : apartment.features || [],
+        rules: typeof apartment.rules?.[0] === 'string' && apartment.rules?.[0].startsWith('[')
+          ? JSON.parse(apartment.rules[0])
+          : apartment.rules || [],
+      }));
+      const sortedData = parsedData.sort((a, b) => 
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      );
+      setApartments(sortedData || []);
+      setTotalPages(response.pagination.totalPages);
+      setTotalApartments(response.pagination.total);
+      setCurrentPage(Math.min(currentPage, response.pagination.totalPages) || 1);
     } catch (err: any) {
       console.error('Error refreshing apartments:', err);
+      setError(err.message || 'Failed to refresh apartments after adding/editing');
+    } finally {
+      closeModal();
     }
-    closeModal();
   };
 
-  // Fixed function to handle edit with complete apartment data
   const handleEditClick = async (apartmentId: string) => {
     try {
       setEditLoading(apartmentId);
       console.log('Fetching complete apartment data for:', apartmentId);
-      
-      // Fetch complete apartment data including addons
       const response = await getApartmentById(apartmentId);
       const fullApartmentData = response.data;
-      
+
+      // Parse features and rules for edit modal
+      const parsedFeatures = typeof fullApartmentData.features?.[0] === 'string' && fullApartmentData.features?.[0].startsWith('[')
+        ? JSON.parse(fullApartmentData.features[0])
+        : fullApartmentData.features || [];
+      const parsedRules = typeof fullApartmentData.rules?.[0] === 'string' && fullApartmentData.rules?.[0].startsWith('[')
+        ? JSON.parse(fullApartmentData.rules[0])
+        : fullApartmentData.rules || [];
+
       console.log('Complete apartment data:', fullApartmentData);
-      
-      // Transform the data to match what the modal expects
       const modalData = {
         id: fullApartmentData._id,
         _id: fullApartmentData._id,
@@ -99,8 +190,8 @@ export default function ApartmentsManagementPage() {
         rooms: fullApartmentData.rooms,
         bathrooms: fullApartmentData.bathrooms || 0,
         maxGuests: fullApartmentData.maxGuests || 1,
-        features: fullApartmentData.features || [],
-        rules: fullApartmentData.rules || [],
+        features: parsedFeatures,
+        rules: parsedRules,
         gallery: fullApartmentData.gallery || [],
         isTrending: fullApartmentData.isTrending || false,
         ratings: fullApartmentData.ratings || fullApartmentData.averageRating || 0,
@@ -110,10 +201,7 @@ export default function ApartmentsManagementPage() {
         averageRating: fullApartmentData.averageRating || 0,
         feedbackCount: fullApartmentData.feedbackCount || 0,
         feedbacks: fullApartmentData.feedbacks || [],
-        // THIS IS THE KEY - include addons from the API response
         addons: fullApartmentData.addons || [],
-        
-        // Extra fields that the modal might use
         imageUrl: fullApartmentData.gallery?.[0] || "/placeholder.svg",
         price: fullApartmentData.pricePerNight,
         guests: fullApartmentData.maxGuests || 1,
@@ -127,7 +215,7 @@ export default function ApartmentsManagementPage() {
             alt: `${fullApartmentData.name} image ${index + 1}`,
           })
         ),
-        amenities: (fullApartmentData.features || []).map(
+        amenities: (parsedFeatures).map(
           (feature: string, index: number) => ({
             id: `amenity-${index}`,
             name: feature,
@@ -135,7 +223,6 @@ export default function ApartmentsManagementPage() {
           })
         ),
       };
-      
       console.log('Opening edit modal with data:', modalData);
       openEditModal(modalData);
     } catch (err: any) {
@@ -146,19 +233,19 @@ export default function ApartmentsManagementPage() {
     }
   };
 
-  // Helper function for feature icons (you might need to adjust this based on your needs)
   const getIconForFeature = (feature: string): string => {
     const featureIconMap: { [key: string]: string } = {
       wifi: "Wifi",
-      "air conditioning": "AirVent",
+      "air-conditioning": "AirVent",
       kitchen: "Utensils",
-      tv: "Tv",
+      "smart-tv": "Tv",
       "laptop friendly": "Laptop",
       gym: "Dumbbell",
       parking: "ParkingSquare",
-      security: "ShieldCheck",
+      "24-7-security": "ShieldCheck",
+      "washing-machine": "WashingMachine",
+      generator: "Zap",
     };
-
     const lowerFeature = feature.toLowerCase();
     return featureIconMap[lowerFeature] || "Info";
   };
@@ -185,11 +272,10 @@ export default function ApartmentsManagementPage() {
 
   const handleConfirmDelete = async () => {
     if (!deleteModalState.apartmentId) return;
-
     try {
       setDeleteModalState(prev => ({ ...prev, isDeleting: true }));
       await deleteApartment(deleteModalState.apartmentId);
-      setApartments(prev => prev.filter(apt => apt._id !== deleteModalState.apartmentId));
+      await fetchApartments(currentPage, debouncedLocation);
       handleCloseDeleteModal();
       console.log('Apartment deleted successfully');
     } catch (err: any) {
@@ -200,7 +286,21 @@ export default function ApartmentsManagementPage() {
     }
   };
 
-  if (loading) {
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log('Location input changed:', value);
+    setLocation(value);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      console.log('Changing to page:', page);
+      setCurrentPage(page);
+    }
+  };
+
+  if (loading && apartments.length === 0) {
     return (
       <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
         <ApartmentLoadingPage />
@@ -223,8 +323,10 @@ export default function ApartmentsManagementPage() {
       <div className="w-full max-w-[1200px] mb-10 h-[82px] bg-white shadow-md rounded-lg flex items-center px-4 gap-4 mt-[-20px]">
         <input
           type="text"
-          placeholder="Search by apartment name or location"
+          placeholder="Search by location (e.g., Lekki)"
           className="w-[90%] p-3 rounded-[8px] border border-[#d1d5db]/30 text-sm outline-none"
+          value={location}
+          onChange={handleSearch}
         />
       </div>
 
@@ -274,14 +376,14 @@ export default function ApartmentsManagementPage() {
                     {apt.features?.join(', ') || 'N/A'}
                   </div>
                 </td>
-                    <td className="py-3">
-  <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-    Active
-  </span>
-</td>
+                <td className="py-3">
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </td>
                 <td className="py-3">
                   <div className="flex gap-2 items-center">
-                    <button 
+                    <button
                       onClick={() => handleEditClick(apt._id)}
                       disabled={editLoading === apt._id}
                       className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1 text-xs disabled:opacity-50"
@@ -297,7 +399,7 @@ export default function ApartmentsManagementPage() {
                         </>
                       )}
                     </button>
-                    <button 
+                    <button
                       className="text-red-600 hover:underline cursor-pointer flex items-center gap-1 text-xs"
                       onClick={() => handleDeleteClick(apt)}
                     >
@@ -315,7 +417,7 @@ export default function ApartmentsManagementPage() {
         {apartments.map((apt) => (
           <div key={apt._id} className="bg-white rounded-lg shadow-md p-4 space-y-3">
             <div className="flex gap-3">
-              <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
+              <div className="relative w-20 h-12 rounded-md overflow-hidden flex-shrink-0">
                 <Image
                   src={apt.gallery?.[0] || '/images/default-apartment.png'}
                   alt={apt.name}
@@ -349,7 +451,7 @@ export default function ApartmentsManagementPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="font-medium">Status:</span>
-                  <span>{apt.isTrending ? 'Active' : 'Inactive'}</span>
+                  <span>Active</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="font-medium">Features:</span>
@@ -374,7 +476,7 @@ export default function ApartmentsManagementPage() {
                   </>
                 )}
               </button>
-              <button 
+              <button
                 className="flex-1 bg-[#fef2f2] text-[#dc2626] cursor-pointer text-sm py-2 rounded-md flex items-center justify-center gap-1"
                 onClick={() => handleDeleteClick(apt)}
               >
@@ -385,15 +487,42 @@ export default function ApartmentsManagementPage() {
         ))}
       </div>
 
-      <div className="w-full bottom-0 flex flex-col sm:flex-row items-center justify-between mt-6 text-sm text-gray-500">
-        <span className="mb-2 sm:mb-0">Showing 1 to {apartments.length} of {apartments.length} apartments</span>
-        <div className="flex gap-2">
-          <button className="px-3 py-1 border rounded">Prev</button>
-          <button className="px-3 py-1 border rounded bg-black text-white">1</button>
-          <button className="px-3 py-1 border rounded">2</button>
-          <button className="px-3 py-1 border rounded">Next</button>
+      {totalApartments > 0 && (
+        <div className="w-full max-w-[1200px] bottom-0 flex flex-col sm:flex-row items-center justify-between mt-6 text-sm text-gray-500">
+          <span className="mb-2 sm:mb-0">
+            Showing {((currentPage - 1) * limit + 1)} to {Math.min(currentPage * limit, totalApartments)} of {totalApartments} apartments
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Prev
+            </button>
+            {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+              const pageNumber = Math.max(1, currentPage - 1) + i;
+              if (pageNumber > totalPages) return null;
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => handlePageChange(pageNumber)}
+                  className={`px-3 py-1 border rounded ${pageNumber === currentPage ? 'bg-black text-white' : ''}`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {deleteModalState.open && (
         <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">

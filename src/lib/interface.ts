@@ -150,3 +150,16 @@ export interface CancelBookingResponse {
     __v: number;
   };
 }
+
+interface Activity {
+ _id: string;
+ type: string;
+ message: string;
+ createdAt: string;
+ __v: number;
+}
+
+export interface ActivityResponse {
+ message: string;
+ activities: Activity[];
+}

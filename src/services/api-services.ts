@@ -1,5 +1,5 @@
 import { apiHandler } from "@/utils/api-handler";
-import { SignInData, SignUpData, ApartmentData, AnalyticsResponse, CancelBookingResponse } from "@/lib/interface";
+import { SignInData, SignUpData, ApartmentData, AnalyticsResponse, CancelBookingResponse, ActivityResponse } from "@/lib/interface";
 
 export async function signIn(data: SignInData) {
   return apiHandler("/api/auth/signin", {
@@ -114,17 +114,27 @@ export async function addApartment(
   }
 }
 
-export async function getApartments(): Promise<any> {
+export async function getApartments(page: number = 1, limit: number = 10, location?: string): Promise<any> {
   try {
-    console.log("Fetching all apartments...");
+    console.log(`Fetching all apartments - Page: ${page}, Limit: ${limit}`, location ? `Location: ${location}` : '');
 
-    const response = await apiHandler("/api/apartment", {
-      method: "GET",
+    // Build query parameters
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
     });
 
-    console.log("Apartments fetched successfully:", response);
+    if (location?.trim()) {
+      params.append('location', location.trim());
+    }
 
-     if (response.success && Array.isArray(response.data)) {
+    const response = await apiHandler(`/api/admin/apartment?${params.toString()}`, {
+      method: 'GET',
+    });
+
+    console.log('Apartments fetched successfully:', response);
+
+    if (response.success && Array.isArray(response.data)) {
       response.data = response.data.map((apt: any) => ({
         ...apt,
         id: apt._id,
@@ -133,15 +143,18 @@ export async function getApartments(): Promise<any> {
 
     return response;
   } catch (error: any) {
-    console.error("Failed to fetch apartments:", error);
+    console.error('Failed to fetch apartments:', {
+      message: error.message,
+      status: error.status,
+      details: error,
+    });
 
     if (error.status && error.message) {
       throw error;
     }
 
     throw new Error(
-      error.message ||
-        "Failed to fetch apartments. Please try again later."
+      error.message || 'Failed to fetch apartments. Please try again later.'
     );
   }
 }
@@ -560,7 +573,6 @@ export async function getAllBookings(page: number = 1, limit: number = 10, searc
   }
 }
 
-
 export async function getAllUsers(page: number = 1, limit: number = 10, search?: string): Promise<any> {
   try {
     console.log(`Fetching all users - Page: ${page}, Limit: ${limit}`, search ? `Search: ${search}` : '');
@@ -575,7 +587,7 @@ export async function getAllUsers(page: number = 1, limit: number = 10, search?:
       params.append('search', search.trim());
     }
 
-    const response = await apiHandler(`/api/users/admin?${params.toString()}`, {
+    const response = await apiHandler(`/api/admin/users?${params.toString()}`, {
       method: "GET",
     });
 
@@ -749,4 +761,17 @@ export async function deleteUser(userId: string): Promise<any> {
       error.message || "Failed to delete user. Please try again."
     );
   }
+}
+
+
+export async function getActivity(): Promise<ActivityResponse> {
+ try {
+   const response = await apiHandler("/api/activity", {
+     method: "GET",
+   });
+   return response as ActivityResponse;
+ } catch (error) {
+   console.error("Error fetching activity:", error);
+   throw error;
+ }
 }

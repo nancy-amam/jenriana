@@ -188,12 +188,12 @@ export default function AdminGuestsPage() {
                 <td>{user.phone}</td>
                 <td>{user.totalBookings}</td>
                 <td className="flex gap-3 items-center py-2">
-                  <button className="text-blue-600 hover:underline flex items-center gap-1">
+                  <button className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1">
                     <Pencil className="w-4 h-4" /> Edit
                   </button>
                   <button
                     onClick={() => handleDeleteClick(user._id)}
-                    className="text-red-600 hover:underline flex items-center gap-1"
+                    className="text-red-600 hover:underline flex cursor-pointer items-center gap-1"
                   >
                     <Trash2 className="w-4 h-4" /> Delete
                   </button>
@@ -218,12 +218,12 @@ export default function AdminGuestsPage() {
               Total Bookings: {user.totalBookings}
             </p>
             <div className="flex gap-4 mt-4">
-              <button className="flex-1 bg-[#f3f4f6] text-[#374151] py-2 rounded-md text-sm font-medium flex items-center justify-center gap-1">
+              <button className="flex-1 bg-[#f3f4f6] text-[#374151] py-2 cursor-pointer rounded-md text-sm font-medium flex items-center justify-center gap-1">
                 <Pencil className="w-4 h-4" /> Edit
               </button>
               <button
                 onClick={() => handleDeleteClick(user._id)}
-                className="flex-1 bg-[#fef2f2] text-[#dc2626] py-2 rounded-md text-sm font-medium flex items-center justify-center gap-1"
+                className="flex-1 bg-[#fef2f2] text-[#dc2626] py-2 cursor-pointer rounded-md text-sm font-medium flex items-center justify-center gap-1"
               >
                 <Trash2 className="w-4 h-4" /> Delete
               </button>
@@ -245,13 +245,13 @@ export default function AdminGuestsPage() {
             <div className="flex gap-4">
               <button
                 onClick={handleCancelDelete}
-                className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-md text-sm font-medium"
+                className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-md text-sm font-medium cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDelete}
-                className="flex-1 bg-red-600 text-white py-2 rounded-md text-sm font-medium"
+                className="flex-1 bg-red-600 text-white py-2 rounded-md text-sm font-medium cursor-pointer"
                 disabled={loading}
               >
                 {loading ? 'Deleting...' : 'Delete'}

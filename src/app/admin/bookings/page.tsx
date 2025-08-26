@@ -1,9 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { getAllBookings } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
 import GuestInfoModal from '../components/guest-information';
+
+// Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    console.log('Debouncing value:', value);
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 interface Booking {
   _id: string;
@@ -44,7 +63,7 @@ interface BookingsResponse {
 export default function AdminBookingPage() {
   const [search, setSearch] = useState('');
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -53,45 +72,53 @@ export default function AdminBookingPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const limit = 10;
+  const debouncedSearch = useDebounce(search, 500);
 
   const fetchBookings = async (page: number = 1, searchQuery?: string) => {
     try {
+      console.log('Fetching bookings with params:', { page, limit, searchQuery });
       setLoading(true);
       setError(null);
-      
-      const response: BookingsResponse = await getAllBookings(page, limit, searchQuery);
-      
-      setBookings(response.bookings || []);
+
+      const response: BookingsResponse = await getAllBookings(page, limit, searchQuery?.trim());
+      console.log('API response:', response);
+
+      // Validate response
+      if (!response.bookings || !Array.isArray(response.bookings)) {
+        throw new Error('Invalid response: bookings array is missing or not an array');
+      }
+      if (typeof response.total !== 'number' || typeof response.page !== 'number' || typeof response.pages !== 'number') {
+        console.warn('Invalid pagination data, using defaults');
+      }
+
+      // Log the number of bookings returned to verify filtering
+      console.log(`Received ${response.bookings.length} bookings for search: "${searchQuery || ''}"`);
+
+      setBookings(response.bookings);
       setTotalPages(response.pages || 1);
       setTotalBookings(response.total || 0);
-      setCurrentPage(response.page || 1);
+      setCurrentPage(response.page || page);
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch bookings');
+      const errorMessage = err.message || 'Failed to fetch bookings';
+      setError(errorMessage);
       console.error('Error fetching bookings:', err);
+      setBookings([]); // Clear bookings on error to avoid showing stale data
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchBookings(1);
-  }, []);
-
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    console.log('Search input changed:', value);
     setSearch(value);
-    
-    // Debounce search
-    const timeoutId = setTimeout(() => {
-      fetchBookings(1, value);
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
+    setCurrentPage(1); // Reset to first page on search
   };
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
-      fetchBookings(page, search);
+      console.log('Changing to page:', page);
+      setCurrentPage(page);
     }
   };
 
@@ -134,14 +161,15 @@ export default function AdminBookingPage() {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
-  if (loading) {
-    return (
-      <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
-        <div className="flex justify-center items-center h-64">
-          <ApartmentLoadingPage />
-        </div>
-      </div>
-    );
+  useEffect(() => {
+    console.log('Effect triggered with debouncedSearch:', debouncedSearch, 'currentPage:', currentPage);
+    fetchBookings(currentPage, debouncedSearch);
+  }, [debouncedSearch, currentPage]);
+
+  const memoizedBookings = useMemo(() => bookings, [bookings]);
+
+  if (loading && bookings.length === 0) {
+    return <ApartmentLoadingPage />;
   }
 
   if (error) {
@@ -165,6 +193,7 @@ export default function AdminBookingPage() {
           value={search}
           onChange={handleSearch}
         />
+        {loading && <div className="text-gray-500 text-sm">Searching...</div>}
       </div>
 
       {/* Desktop Table */}
@@ -183,7 +212,7 @@ export default function AdminBookingPage() {
             </tr>
           </thead>
           <tbody className="mt-4">
-            {bookings.map((booking) => (
+            {memoizedBookings.map((booking) => (
               <tr key={booking._id} className="text-[#111827] text-sm font-normal mt-4">
                 <td className="py-3">{booking._id.slice(-8)}</td>
                 <td>{booking.customerName}</td>
@@ -214,7 +243,7 @@ export default function AdminBookingPage() {
 
       {/* Mobile Cards */}
       <div className="lg:hidden space-y-4">
-        {bookings.map((booking) => (
+        {memoizedBookings.map((booking) => (
           <div key={booking._id} className="bg-white rounded-lg shadow-md p-4 relative">
             <div className="flex justify-between text-xs font-medium mb-2">
               <span className="text-gray-600">{booking._id.slice(-8)}</span>
@@ -245,7 +274,7 @@ export default function AdminBookingPage() {
       </div>
 
       {/* Empty State */}
-      {bookings.length === 0 && !loading && (
+      {memoizedBookings.length === 0 && !loading && (
         <div className="w-full max-w-[1200px] bg-white rounded-lg shadow-md p-8 text-center">
           <p className="text-gray-500">No bookings found.</p>
         </div>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -145,18 +144,16 @@ export default function AddEditApartmentModal({
     'max-guests-enforced': 'maxGuests'
   };
 
-const pricingTypeToApi: Record<"per/day" | "per/night" | "one time fee", "perNight" | "oneTime"> = {
-  "per/day": "perNight",
-  "per/night": "perNight",
-  "one time fee": "oneTime",
-};
+  const pricingTypeToApi: Record<"per/day" | "per/night" | "one time fee", "perNight" | "oneTime"> = {
+    "per/day": "perNight",
+    "per/night": "perNight",
+    "one time fee": "oneTime",
+  };
 
-
-const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time fee"> = {
-  perNight: "per/night",
-  oneTime: "one time fee",
-};
-
+  const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time fee"> = {
+    perNight: "per/night",
+    oneTime: "one time fee",
+  };
 
   useEffect(() => {
     console.log('useEffect triggered', { editMode, open, apartmentData });
@@ -202,19 +199,19 @@ const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time f
 
       console.log('Received addons:', apartmentData.addons);
       if (apartmentData.addons && apartmentData.addons.length > 0) {
-          setAddOns(
-  apartmentData.addons.map((addon, index) => {
-    const pricingType = pricingTypeToApi[addon.pricingType as keyof typeof pricingTypeToApi] || 'perNight';
-    return {
-      id: addon.id || `${Date.now()}-${index}`,
-      name: addon.name || '',
-      price: addon.price || 0,
-      pricingType, // Type-safe: 'perNight' | 'oneTime'
-      description: (addon.description ?? '').trim(),
-      active: addon.active ?? true,
-    } as Addon;
-  })
-);
+        setAddOns(
+          apartmentData.addons.map((addon, index) => {
+            const pricingType = apiToPricingType[addon.pricingType as keyof typeof apiToPricingType] || 'per/night';
+            return {
+              id: addon.id || `${Date.now()}-${index}`,
+              name: addon.name || '',
+              price: addon.price || 0,
+              pricingType,
+              description: (addon.description ?? '').trim(),
+              active: addon.active ?? true,
+            } as Addon;
+          })
+        );
       } else {
         console.log('No addons received, setting empty array');
         setAddOns([]);
@@ -298,16 +295,16 @@ const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time f
 
   const addNewAddOn = () => {
     setAddOns((prev) => [
-  ...prev,
-  {
-    id: `${Date.now()}-${prev.length}`,
-    name: "",
-    price: 0,
-    pricingType: "perNight", // <- use union type
-    description: "",
-    active: true,
-  } as Addon,
-]);
+      ...prev,
+      {
+        id: `${Date.now()}-${prev.length}`,
+        name: "",
+        price: 0,
+        pricingType: "per/night",
+        description: "",
+        active: true,
+      } as Addon,
+    ]);
   };
 
   const removeAddOn = (id: string) => {
@@ -367,11 +364,6 @@ const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time f
           setError(`Pricing type for add-on "${addon.name || `Add-on ${index + 1}`}" must be "per/day", "per/night", or "one time fee"`);
           return false;
         }
-        const mappedPricingType = pricingTypeToApi[addon.pricingType as keyof typeof pricingTypeToApi];
-        if (!mappedPricingType || !['perNight', 'oneTime'].includes(mappedPricingType)) {
-          setError(`Invalid pricing type for add-on "${addon.name || `Add-on ${index + 1}`}" after mapping`);
-          return false;
-        }
         if (addon.price <= 0) {
           setError(`Price for add-on "${addon.name || `Add-on ${index + 1}`}" must be greater than 0`);
           return false;
@@ -411,7 +403,7 @@ const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time f
             name: addon.name.trim(),
             price: addon.price,
             pricingType: mappedPricingType,
-              description: (addon.description ?? "").trim(),
+            description: (addon.description ?? "").trim(),
             active: addon.active
           };
         });
@@ -501,7 +493,7 @@ const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time f
           </h2>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
             disabled={isLoading}
           >
             <X className="w-5 h-5" />
@@ -520,7 +512,7 @@ const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time f
                 <p className="mt-1 text-sm text-red-700">{error}</p>
                 <button
                   onClick={() => setError(null)}
-                  className="mt-2 text-xs text-red-600 underline hover:text-red-800"
+                  className="mt-2 text-xs cursor-pointer text-red-600 underline hover:text-red-800"
                 >
                   Dismiss
                 </button>
@@ -720,7 +712,7 @@ const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time f
                 <h4 className="text-sm font-medium text-gray-700">Add-on #{index + 1}</h4>
                 <button
                   onClick={() => !isLoading && removeAddOn(addon.id)}
-                  className={`p-1 text-sm text-red-500 hover:bg-red-50 rounded ${
+                  className={`p-1 text-sm text-red-500 hover:bg-red-50 cursor-pointer rounded ${
                     isLoading ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
@@ -810,7 +802,7 @@ const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time f
           
           <button
             onClick={() => !isLoading && addNewAddOn()}
-            className={`flex items-center gap-2 p-3 bg-[#d1d5db]/30 text-[#374151] rounded-lg text-sm font-medium ${
+            className={`flex items-center gap-2 p-3 bg-[#d1d5db]/30 text-[#374151] rounded-lg cursor-pointer text-sm font-medium ${
               isLoading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -863,7 +855,7 @@ const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time f
                     />
                     <button
                       onClick={() => !isLoading && removeImage(index)}
-                      className={`absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors ${
+                      className={`absolute top-1 right-1 w-5 h-5 bg-red-500 cursor-pointer text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors ${
                         isLoading ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                     >
@@ -905,14 +897,14 @@ const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time f
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-gray-700 border cursor-pointer border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button 
             onClick={handleSubmit}
             disabled={isLoading}
-            className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 bg-black text-white rounded-lg cursor-pointer hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
             {isLoading ? 
