@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import connectDB from "../../lib/mongodb";
 import User from "@/models/user";
 import bcrypt from "bcrypt";
-import eventBus from "../../lib/eventBus";
+import { activityService } from "../../services/activity.service";
 
 export async function POST(request: Request) {
   try {
@@ -47,12 +47,10 @@ export async function POST(request: Request) {
     });
 
     await newUser.save();
-
-    eventBus.emit("activity", {
-      type: "USER_SIGNUP",
-      message: `User signed up: ${email} `,
-      timestamp: new Date().toISOString(),
-    });
+    await activityService.saveActivity(
+      "USER_SIGNEDUP",
+      `User ${fullname} signed up `
+    );
 
     return NextResponse.json(
       {

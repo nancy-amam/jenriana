@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getUserFromRequest } from "../../lib/getUserFromRequest";
 import Booking from "../../../../models/bookings";
-import Apartment from "../../../../models/apartment";
+import   "../../../../models/apartment";
 export async function GET(req: Request) {
   const user = await getUserFromRequest();
   if (!user || user.role !== "admin") {
@@ -26,8 +26,8 @@ export async function GET(req: Request) {
   if (search) {
     filter.$or = [
       { bookingCode: { $regex: search, $options: "i" } },
-      { status: { $regex: search, $options: "i" } },
-      { guestName: { $regex: search, $options: "i" } }
+      { name: { $regex: search, $options: "i" } },
+      { customerName: { $regex: search, $options: "i" } },
     ];
   }
 

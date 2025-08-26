@@ -3,8 +3,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../lib/mongodb";
 import Booking from "@/models/bookings";
-import { PaystackService } from "@/app/api/lib/paystack.service"; // adjust import if needed
-import eventBus from "../../lib/eventBus";
+import { PaystackService } from "@/app/api/lib/paystack.service";
+import { activityService } from "../../services/activity.service";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,13 +17,10 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    // 🔹 Verify the transaction with Paystack
     const paystack = new PaystackService();
     const tx = await paystack.verifyTransaction(reference);
 
     if (tx.status === "success") {
-      // ✅ Confirm booking
       const booking = await Booking.findByIdAndUpdate(
         bookingId,
         { status: "confirmed", transactionId: tx._id },
@@ -43,11 +40,10 @@ export async function POST(req: NextRequest) {
         booking,
       });
     }
-    eventBus.emit("activity", {
-      type: "Booking",
-      message: `Booking confirmed: ${bookingId.name} (₦${bookingId.totalAmount})`,
-      timestamp: new Date().toISOString(),
-    });
+    await activityService.saveActivity(
+      "BOOKING_CONFIRMED",
+      `Booking confirmed: ${bookingId.name} (₦${bookingId.totalAmount}) `
+    );
     return NextResponse.json(
       { success: false, message: "Payment verification failed." },
       { status: 400 }
