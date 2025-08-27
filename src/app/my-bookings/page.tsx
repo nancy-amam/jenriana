@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MapPinIcon, UsersIcon, CalendarDays, CalendarCheck, ChevronDown, StarIcon } from "lucide-react";
 import { differenceInDays } from "date-fns";
-import { getActiveBookings, getBookingHistory, postApartmentComment } from "@/services/api-services";
+import { getActiveBookings, getBookingHistory, postApartmentComment, cancelBooking } from "@/services/api-services";
 import ApartmentLoadingPage from "@/components/loading";
 
 interface ApartmentData {
@@ -45,6 +45,8 @@ export default function MyBookingsPage() {
   const [rating, setRating] = useState(4);
   const [comment, setComment] = useState("");
   const [postedReview, setPostedReview] = useState<Review | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState<string | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -83,20 +85,39 @@ export default function MyBookingsPage() {
   }, [activeFilter]);
 
   const handleViewDetails = (bookingId: string) => {
-    alert(`Viewing details for booking: ${bookingId}`);
+    setShowDetailsModal(bookingId);
   };
 
   const handleCancelBooking = (bookingId: string) => {
-    if (confirm(`Are you sure you want to cancel booking ${bookingId}?`)) {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (booking && booking.status.toLowerCase() === 'confirmed') {
+      setShowCancelModal(bookingId);
+    } else {
+      if (confirm(`Are you sure you want to cancel this booking?`)) {
+        performCancelBooking(bookingId);
+      }
+    }
+  };
+
+  const performCancelBooking = async (bookingId: string) => {
+    try {
+      await cancelBooking(bookingId);
       const updatedBookings = bookings.filter((b) => b.id !== bookingId);
       setBookings(updatedBookings);
-      alert(`Booking ${bookingId} cancelled.`);
+    } catch (error: any) {
+      console.error("Failed to cancel booking:", error);
+      alert(`Failed to cancel booking: ${error.message || "Please try again."}`);
     }
+  };
+
+  const handleConfirmCancel = (bookingId: string) => {
+    setShowCancelModal(null);
+    performCancelBooking(bookingId);
   };
 
   const handleRebook = (apartmentId: string) => {
     // Navigate to the apartment page
-    router.push(`/apartment/${apartmentId}`);
+    router.push(`/apartments/${apartmentId}`);
   };
 
   const handleRateStay = (bookingId: string) => {
@@ -213,7 +234,7 @@ export default function MyBookingsPage() {
                         </div>
                         <button
                           onClick={() => handleRebook(booking.apartmentId)}
-                          className="w-[100px] h-[40px] cursor-pointer rounded-lg bg-black text-white px-3 py-2 text-sm font-medium hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0"
+                          className="w-[100px] h-[40px] rounded-lg bg-black text-white px-3 py-2 text-sm font-medium hover:bg-gray-800 transition-colors flex items-center justify-center flex-shrink-0"
                         >
                           Rebook
                         </button>
@@ -410,7 +431,7 @@ export default function MyBookingsPage() {
                          
                       <button
                         onClick={() => handleRebook(booking.apartmentId)}
-                        className="w-[141px] h-[50px] cursor-pointer rounded-lg bg-black text-white px-[18px] py-[12px] text-base font-medium hover:bg-gray-800 transition-colors flex items-center justify-center"
+                        className="w-[141px] h-[50px] rounded-lg bg-black text-white px-[18px] py-[12px] text-base font-medium hover:bg-gray-800 transition-colors flex items-center justify-center"
                       >
                         Rebook
                       </button>
@@ -489,6 +510,172 @@ export default function MyBookingsPage() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cancellation Modal for Confirmed Bookings */}
+                  {showCancelModal === booking.id && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                      <div className="bg-white rounded-[20px] p-6 w-[480px] max-w-full flex flex-col gap-4">
+                        <div className="flex justify-between items-center">
+                          <h2 className="text-xl font-semibold text-[#111827]">Cancel Booking</h2>
+                          <button
+                            onClick={() => setShowCancelModal(null)}
+                            className="text-[#4b5566] hover:text-black text-xl"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        
+                        <div className="text-base text-[#374151] leading-relaxed">
+                          <p className="mb-4">
+                            Are you sure you want to cancel this booking?
+                          </p>
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                            <p className="text-sm text-[#8B5A00] mb-2 font-medium">
+                              Important Notice:
+                            </p>
+                            <p className="text-sm text-[#8B5A00] mb-2">
+                              • Please contact support to discuss refund options before canceling
+                            </p>
+                            <p className="text-sm text-[#8B5A00]">
+                              • A cancellation fee applies
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => setShowCancelModal(null)}
+                            className="flex-1 h-[50px] rounded-lg border border-gray-300 px-4 py-3 text-base font-normal text-[#374151] bg-white hover:bg-gray-50 transition-colors"
+                          >
+                            Keep Booking
+                          </button>
+                          <button
+                            onClick={() => handleConfirmCancel(booking.id)}
+                            className="flex-1 h-[50px] rounded-lg bg-red-600 text-white px-4 py-3 text-base font-medium hover:bg-red-700 transition-colors"
+                          >
+                            Cancel Anyway
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Booking Details Modal */}
+                  {showDetailsModal === booking.id && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                      <div className="bg-white rounded-[20px] p-6 w-[520px] max-w-full flex flex-col gap-4">
+                        <div className="flex justify-between items-center">
+                          <h2 className="text-xl font-semibold text-[#111827]">Booking Details</h2>
+                          <button
+                            onClick={() => setShowDetailsModal(null)}
+                            className="text-[#4b5566] hover:text-black text-xl"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 text-sm">
+                              <div>
+                                <span className="text-[#4b5566] font-medium">Booking ID:</span>
+                                <p className="text-[#111827] mt-1 font-mono text-xs break-all">{booking.id}</p>
+                              </div>
+                              <div>
+                                <span className="text-[#4b5566] font-medium">Status:</span>
+                                <p className="text-[#111827] mt-1 capitalize">{booking.status}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div>
+                              <h3 className="text-lg font-medium text-[#111827] mb-3">Apartment Information</h3>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-[#4b5566]">Name:</span>
+                                  <span className="text-[#111827] font-medium">{booking.apartmentData.name}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-[#4b5566]">Location:</span>
+                                  <span className="text-[#111827]">{booking.apartmentData.location}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-[#4b5566]">Price per night:</span>
+                                  <span className="text-[#111827]">₦{booking.apartmentData.pricePerNight.toLocaleString()}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <h3 className="text-lg font-medium text-[#111827] mb-3">Booking Information</h3>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-[#4b5566]">Check-in:</span>
+                                  <span className="text-[#111827]">
+                                    {new Date(booking.checkInDate).toLocaleDateString("en-US", {
+                                      weekday: "long",
+                                      month: "long",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-[#4b5566]">Check-out:</span>
+                                  <span className="text-[#111827]">
+                                    {new Date(booking.checkOutDate).toLocaleDateString("en-US", {
+                                      weekday: "long",
+                                      month: "long",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-[#4b5566]">Number of nights:</span>
+                                  <span className="text-[#111827] font-medium">{booking.nights} {booking.nights === 1 ? "night" : "nights"}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-[#4b5566]">Guests:</span>
+                                  <span className="text-[#111827]">{booking.guests} {booking.guests === 1 ? "guest" : "guests"}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-[#4b5566]">Booked on:</span>
+                                  <span className="text-[#111827]">
+                                    {new Date(booking.bookingDate).toLocaleDateString("en-US", {
+                                      month: "long",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[#065f46] font-semibold text-lg">Total Amount Paid:</span>
+                                <span className="text-[#065f46] font-bold text-xl">₦{booking.totalPrice.toLocaleString()}</span>
+                              </div>
+                              <p className="text-[#047857] text-sm mt-1">
+                                ₦{booking.apartmentData.pricePerNight.toLocaleString()} × {booking.nights} {booking.nights === 1 ? "night" : "nights"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-end">
+                          <button
+                            onClick={() => setShowDetailsModal(null)}
+                            className="w-[120px] h-[50px] rounded-lg bg-black text-white px-4 py-3 text-base font-medium hover:bg-gray-800 transition-colors"
+                          >
+                            Close
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}

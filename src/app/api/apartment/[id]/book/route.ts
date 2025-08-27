@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import eventBus from "@/app/api/lib/eventBus";
 import { getUserFromRequest } from "@/app/api/lib/getUserFromRequest";
 import connectDB from "@/app/api/lib/mongodb";
+import { activityService } from "@/app/api/services/activity.service";
+import { generateBookingCode } from "@/app/api/services/generate-booking-code";
 import Apartment from "@/models/apartment";
 import Booking from "@/models/bookings";
 import { NextRequest, NextResponse } from "next/server";
@@ -141,9 +144,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
           );
         }
         const total =
-          addon.pricingType === "perNight"
-            ? addon.price * days
-            : addon.price;
+          addon.pricingType === "perNight" ? addon.price * days : addon.price;
         addonsTotal += total;
         addonsDetails.push({
           _id: addon._id,
@@ -161,6 +162,8 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     const tax = subtotal * 0.1;
     const totalAmount = subtotal + serviceCharge + tax;
 
+    const bookingCode = await generateBookingCode();
+
     // Create booking (still pending until payment confirmation)
     const booking = await Booking.create({
       userId: user._id,
@@ -173,15 +176,19 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       serviceCharge,
       tax,
       totalAmount,
-      status: "pending", 
+      status: "pending",
       customerName,
       customerEmail,
       customerPhone,
       residentialAddress,
       specialRequest,
       expireAt: new Date(Date.now() + 60 * 60 * 1000),
+      bookingCode,
     });
-
+    await activityService.saveActivity(
+      "APPPARTEMNT_ADDED",
+      `Booking confrimed : ${customerName}(${totalAmount}) `
+    );
     return NextResponse.json(
       {
         message: "Booking created. Proceed to checkout.",

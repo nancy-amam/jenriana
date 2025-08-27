@@ -1,14 +1,29 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { Home, CalendarCheck, DollarSign } from "lucide-react";
-import { getAdminAnalytics } from "@/services/api-services";
+import { Home, CalendarCheck, DollarSign, User, Star } from "lucide-react";
+import { getAdminAnalytics, getActivity } from "@/services/api-services";
 import { AnalyticsResponse } from "@/lib/interface";
 import ApartmentLoadingPage from "@/components/loading";
 
+interface Activity {
+  _id: string;
+  type: string;
+  message: string;
+  createdAt: string;
+  __v: number;
+}
+
+interface ActivityResponse {
+  message: string;
+  activities: Activity[];
+}
+
 export default function AnalyticsPage() {
   const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
 
   useEffect(() => {
     async function fetchAnalytics() {
@@ -24,7 +39,69 @@ export default function AnalyticsPage() {
     fetchAnalytics();
   }, []);
 
-  // while fetching
+  useEffect(() => {
+    async function fetchActivities() {
+      try {
+        const data = await getActivity();
+        setActivities(data.activities);
+      } catch (err) {
+        console.error("Failed to load activities:", err);
+      } finally {
+        setActivitiesLoading(false);
+      }
+    }
+    fetchActivities();
+  }, []);
+
+  // Helper function to get icon and colors based on activity type
+  const getActivityDisplay = (type: string) => {
+    switch (type) {
+      case 'REVIEW_ADDED':
+        return {
+          icon: Star,
+          iconBg: "bg-yellow-100",
+          iconColor: "text-yellow-600",
+        };
+      case 'USER_SIGNEDUP':
+        return {
+          icon: User,
+          iconBg: "bg-purple-100",
+          iconColor: "text-purple-600",
+        };
+      case 'BOOKING_CREATED':
+        return {
+          icon: CalendarCheck,
+          iconBg: "bg-green-100",
+          iconColor: "text-green-600",
+        };
+      case 'PAYMENT_RECEIVED':
+        return {
+          icon: DollarSign,
+          iconBg: "bg-blue-100",
+          iconColor: "text-blue-600",
+        };
+      default:
+        return {
+          icon: Home,
+          iconBg: "bg-gray-100",
+          iconColor: "text-gray-600",
+        };
+    }
+  };
+
+  // Helper function to format activity date
+  const formatActivityDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return "Just now";
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+  };
+
+  // while fetching analytics
   if (loading) {
     return <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
             <div className="flex justify-center items-center h-64">
@@ -65,30 +142,6 @@ export default function AnalyticsPage() {
     },
   ];
 
-  const activities = [
-    {
-      id: 1,
-      text: "New booking for Apartment #24",
-      icon: CalendarCheck,
-      iconBg: "bg-green-100",
-      iconColor: "text-green-600",
-    },
-    {
-      id: 2,
-      text: "Apartment #12 updated by Admin",
-      icon: Home,
-      iconBg: "bg-blue-100",
-      iconColor: "text-blue-600",
-    },
-    {
-      id: 3,
-      text: "Payment of ₦250,000 received",
-      icon: DollarSign,
-      iconBg: "bg-yellow-100",
-      iconColor: "text-yellow-600",
-    },
-  ];
-
   return (
     <div className="p-4 md:p-6 space-y-8 min-h-screen">
       {/* Top Stats */}
@@ -120,24 +173,38 @@ export default function AnalyticsPage() {
       {/* Recent Activities */}
       <div className="bg-white rounded-lg shadow p-4 md:p-6">
         <h2 className="text-lg font-semibold text-gray-700 mb-4">Recent Activities</h2>
-        <div className="space-y-3">
-          {activities.map((activity) => {
-            const Icon = activity.icon;
-            return (
-              <div
-                key={activity.id}
-                className="flex items-center gap-3 rounded-lg border border-gray-200 bg-[#F5F5F5] px-4 py-3"
-              >
-                <span
-                  className={`p-2 rounded-full ${activity.iconBg} flex items-center justify-center`}
+        
+        {activitiesLoading ? (
+          <div className="flex justify-center py-8">
+            <ApartmentLoadingPage />
+          </div>
+        ) : activities.length > 0 ? (
+          <div className="space-y-3">
+            {activities.slice(0, 10).map((activity) => {
+              const { icon: Icon, iconBg, iconColor } = getActivityDisplay(activity.type);
+              return (
+                <div
+                  key={activity._id}
+                  className="flex items-center gap-3 rounded-lg border border-gray-200 bg-[#F5F5F5] px-4 py-3"
                 >
-                  <Icon className={`w-5 h-5 ${activity.iconColor}`} />
-                </span>
-                <span className="text-gray-700 text-sm">{activity.text}</span>
-              </div>
-            );
-          })}
-        </div>
+                  <span
+                    className={`p-2 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0`}
+                  >
+                    <Icon className={`w-5 h-5 ${iconColor}`} />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-gray-700 text-sm">{activity.message}</span>
+                    <p className="text-xs text-gray-500 mt-1">{formatActivityDate(activity.createdAt)}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            No recent activities found.
+          </div>
+        )}
       </div>
     </div>
   );

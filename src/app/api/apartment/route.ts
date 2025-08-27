@@ -5,9 +5,8 @@ import connectDB from "../lib/mongodb";
 import Apartment, { IAddon } from "@/models/apartment";
 import { uploadToPinata } from "../lib/pinata";
 import { getUserFromRequest } from "../lib/getUserFromRequest";
-import eventBus from "../lib/eventBus";
+import { activityService } from "../services/activity.service";
 
-// ================= GET all apartments =================
 export async function GET() {
   await connectDB();
 
@@ -15,7 +14,7 @@ export async function GET() {
     const apartments = await Apartment.aggregate([
       {
         $lookup: {
-          from: "feedbacks", 
+          from: "feedbacks",
           localField: "_id",
           foreignField: "apartmentId",
           as: "feedbacks",
@@ -36,7 +35,7 @@ export async function GET() {
       { $sort: { createdAt: -1 } },
       {
         $project: {
-          feedbacks: 0, // hide actual feedbacks if you don’t need them in the list
+          feedbacks: 0,
         },
       },
     ]);
@@ -50,15 +49,13 @@ export async function GET() {
   }
 }
 
-
-// ================= CREATE new apartment =================
 export async function POST(request: Request) {
   try {
     await connectDB();
     const user = await getUserFromRequest();
     if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-      }
+    }
     const formData = await request.formData();
 
     // Map frontend fields to variables
@@ -71,11 +68,9 @@ export async function POST(request: Request) {
     const maxGuests = Number(formData.get("maxGuests"));
     const isTrending = formData.get("isTrending") === "true";
 
-    // Arrays
     const features = formData.getAll("features") as string[];
     const rules = formData.getAll("rules") as string[];
 
-    // Upload gallery images to Pinata
     const galleryFiles = formData.getAll("gallery") as File[];
     const galleryUrls: string[] = [];
     for (const file of galleryFiles) {
@@ -83,7 +78,6 @@ export async function POST(request: Request) {
       galleryUrls.push(url);
     }
     const addons = JSON.parse(formData.get("addons") as string) as IAddon[];
-    // Create apartment in DB
     const apartment = await Apartment.create({
       name,
       location,
@@ -96,16 +90,15 @@ export async function POST(request: Request) {
       features,
       rules,
       gallery: galleryUrls,
-      addons
+      addons,
+      status: "active",
     });
-      eventBus.emit("analytics", {
-    type: "APARTMENT_ADDED",
-    data: {
-      name: apartment.name,
-      location: apartment.location,
-      time: new Date()
-    }
-  });
+
+    await activityService.saveActivity(
+      "APPPARTEMNT_ADDED",
+      `Apartment created by: ${user} `
+    );
+
     return NextResponse.json(
       { success: true, data: apartment },
       { status: 201 }

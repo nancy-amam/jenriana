@@ -32,8 +32,7 @@ export default function LoginPage() {
       const res = await signIn(formData)
       console.log('Sign in success:', res)
 
-      // ✅ No need to store token manually — cookie is set automatically
-      // But you can keep minimal info for client-side logic
+      
       if (res.user) {
         localStorage.setItem('userId', res.user.id)
         localStorage.setItem('userRole', res.user.role)

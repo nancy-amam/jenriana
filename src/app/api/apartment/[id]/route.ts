@@ -7,19 +7,18 @@ import connectDB from "../../lib/mongodb";
 import { getUserFromRequest } from "../../lib/getUserFromRequest";
 import mongoose from "mongoose";
 import { uploadToPinata } from "../../lib/pinata";
+import { activityService } from "../../services/activity.service";
 
-// Updated interface for Next.js 15
 interface RouteContext {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
 export async function PUT(req: Request, { params }: RouteContext) {
   try {
     await connectDB();
-    
-    // Await params to get the actual values
+
     const { id } = await params;
-    
+
     const user = await getUserFromRequest();
     if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -27,40 +26,45 @@ export async function PUT(req: Request, { params }: RouteContext) {
 
     const formData = await req.formData();
 
-    // Find existing apartment
     const existingApartment = await Apartment.findById(id);
     if (!existingApartment) {
-      return NextResponse.json({ message: "Apartment not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Apartment not found" },
+        { status: 404 }
+      );
     }
 
-    // Prepare update object (only set values if provided)
     const updateData: any = {};
 
     if (formData.has("name")) updateData.name = formData.get("name") as string;
-    if (formData.has("location")) updateData.location = formData.get("location") as string;
-    if (formData.has("address")) updateData.address = formData.get("address") as string;
-    if (formData.has("pricePerNight")) updateData.pricePerNight = Number(formData.get("pricePerNight"));
+    if (formData.has("location"))
+      updateData.location = formData.get("location") as string;
+    if (formData.has("address"))
+      updateData.address = formData.get("address") as string;
+    if (formData.has("pricePerNight"))
+      updateData.pricePerNight = Number(formData.get("pricePerNight"));
     if (formData.has("rooms")) updateData.rooms = Number(formData.get("rooms"));
-    if (formData.has("bathrooms")) updateData.bathrooms = Number(formData.get("bathrooms"));
-    if (formData.has("maxGuests")) updateData.maxGuests = Number(formData.get("maxGuests"));
-    if (formData.has("isTrending")) updateData.isTrending = formData.get("isTrending") === "true";
+    if (formData.has("bathrooms"))
+      updateData.bathrooms = Number(formData.get("bathrooms"));
+    if (formData.has("maxGuests"))
+      updateData.maxGuests = Number(formData.get("maxGuests"));
+    if (formData.has("isTrending"))
+      updateData.isTrending = formData.get("isTrending") === "true";
 
-    if (formData.has("features")) updateData.features = formData.getAll("features") as string[];
-    if (formData.has("rules")) updateData.rules = formData.getAll("rules") as string[];
+    if (formData.has("features"))
+      updateData.features = formData.getAll("features") as string[];
+    if (formData.has("rules"))
+      updateData.rules = formData.getAll("rules") as string[];
     if (formData.get("addons")) {
-  const newAddons = JSON.parse(formData.get("addons") as string);
-  const merged = [
-    ...(existingApartment.addons || []),
-    ...newAddons
-  ];
+      const newAddons = JSON.parse(formData.get("addons") as string);
+      const merged = [...(existingApartment.addons || []), ...newAddons];
 
-  // Remove duplicates by addon.name
-  updateData.addons = merged.filter(
-    (addon, index, self) =>
-      index === self.findIndex(a => a.name === addon.name)
-  );
+      updateData.addons = merged.filter(
+        (addon, index, self) =>
+          index === self.findIndex((a) => a.name === addon.name)
+      );
     }
-    // Handle gallery uploads (merge with existing)
+
     const galleryFiles = formData.getAll("gallery") as File[];
     if (galleryFiles.length > 0) {
       const newGalleryUrls: string[] = [];
@@ -69,50 +73,60 @@ export async function PUT(req: Request, { params }: RouteContext) {
         newGalleryUrls.push(url);
       }
       updateData.gallery = [
-        ...(existingApartment.gallery || []), // keep old images
-        ...newGalleryUrls // add new images
+        ...(existingApartment.gallery || []),
+        ...newGalleryUrls,
       ];
     }
 
-    // Update apartment
-    const updated = await Apartment.findByIdAndUpdate(id, updateData, { new: true });
+    const updated = await Apartment.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
+
+    await activityService.saveActivity(
+      "APARTMENT_UPDATED",
+      `Apartment updated: ${Apartment.name} was updated by (₦${user}) `
+    );
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
     console.error("Error updating apartment:", error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE(req: Request, { params }: RouteContext) {
   await connectDB();
 
-  // Await params to get the actual values
   const { id } = await params;
 
   const user = await getUserFromRequest();
   if (!user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
   try {
     await Apartment.findByIdAndDelete(id);
+
+    await activityService.saveActivity(
+      "APARTMENT_DELETED",
+      `Apartment deleted: ${Apartment.name} was deleted by (₦${user}) `
+    );
     return NextResponse.json({ success: true, message: "Apartment deleted" });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }
 
 export async function GET(req: Request, { params }: RouteContext) {
   await connectDB();
 
-  // Await params to get the actual values
   const { id } = await params;
 
-  // const user = await getUserFromRequest();
-  // if (!user) {
-  //   return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  // }
-  
   try {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
@@ -126,8 +140,8 @@ export async function GET(req: Request, { params }: RouteContext) {
           from: "feedbacks",
           localField: "_id",
           foreignField: "apartmentId",
-          as: "feedbacks"
-        }
+          as: "feedbacks",
+        },
       },
       {
         $addFields: {
@@ -135,17 +149,20 @@ export async function GET(req: Request, { params }: RouteContext) {
             $cond: [
               { $gt: [{ $size: "$feedbacks" }, 0] },
               { $avg: "$feedbacks.rating" },
-              null
-            ]
+              null,
+            ],
           },
           feedbackCount: { $size: "$feedbacks" },
-          feedbacks: { $slice: ["$feedbacks", skip, limit] }
-        }
-      }
+          feedbacks: { $slice: ["$feedbacks", skip, limit] },
+        },
+      },
     ]);
 
     if (!apartmentWithFeedback.length) {
-      return NextResponse.json({ success: false, message: "Apartment not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "Apartment not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({
@@ -153,9 +170,12 @@ export async function GET(req: Request, { params }: RouteContext) {
       page,
       limit,
       totalFeedbacks: apartmentWithFeedback[0].feedbackCount,
-      data: apartmentWithFeedback[0]
+      data: apartmentWithFeedback[0],
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }

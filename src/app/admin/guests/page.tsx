@@ -1,9 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
-import { getAllUsers } from '@/services/api-services';
+import { getAllUsers, deleteUser } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
+
+// Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    console.log('Debouncing value:', value);
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 interface User {
   _id: string;
@@ -29,63 +47,101 @@ interface UsersResponse {
 export default function AdminGuestsPage() {
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
   const limit = 10;
+  const debouncedSearch = useDebounce(search, 500);
 
   const fetchUsers = async (page: number = 1, searchQuery?: string) => {
     try {
+      console.log('Fetching users with params:', { page, limit, searchQuery });
       setLoading(true);
       setError(null);
-      
-      const response: UsersResponse = await getAllUsers(page, limit, searchQuery);
-      
-      setUsers(response.users || []);
+
+      const response: UsersResponse = await getAllUsers(page, limit, searchQuery?.trim() || undefined);
+      console.log('API response:', response);
+
+      // Validate response
+      if (!response.users || !Array.isArray(response.users)) {
+        throw new Error('Invalid response: users array is missing or not an array');
+      }
+      if (!response.pagination || typeof response.pagination.total !== 'number') {
+        console.warn('Invalid pagination data, using defaults');
+      }
+
+      // Log the number of users returned to verify filtering
+      console.log(`Received ${response.users.length} users for search: "${searchQuery || ''}"`);
+
+      setUsers(response.users);
       setTotalPages(response.pagination?.pages || 1);
       setTotalUsers(response.pagination?.total || 0);
-      setCurrentPage(response.pagination?.page || 1);
+      setCurrentPage(response.pagination?.page || page);
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch users');
+      const errorMessage = err.message || 'Failed to fetch users';
+      setError(errorMessage);
       console.error('Error fetching users:', err);
+      setUsers([]); // Clear users on error to avoid showing stale data
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDeleteClick = (userId: string) => {
+    setUserToDelete(userId);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+
+    try {
+      setLoading(true);
+      await deleteUser(userToDelete);
+      await fetchUsers(currentPage, debouncedSearch);
+      setIsModalOpen(false);
+      setUserToDelete(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete user');
+      console.error('Error deleting user:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setIsModalOpen(false);
+    setUserToDelete(null);
+  };
+
   useEffect(() => {
-    fetchUsers(1, search);
-  }, []);
+    console.log('Effect triggered with debouncedSearch:', debouncedSearch, 'currentPage:', currentPage);
+    fetchUsers(currentPage, debouncedSearch);
+  }, [debouncedSearch, currentPage]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    console.log('Search input changed:', value);
     setSearch(value);
-    
-    // Debounce search
-    const timeoutId = setTimeout(() => {
-      fetchUsers(1, value);
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
-      fetchUsers(page, search);
+      console.log('Changing to page:', page);
+      setCurrentPage(page);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
-        <div className="flex justify-center items-center h-64">
-          <ApartmentLoadingPage />
-        </div>
-      </div>
-    );
+  const memoizedUsers = useMemo(() => users, [users]);
+
+  if (loading && users.length === 0) {
+    return <ApartmentLoadingPage />;
   }
 
   if (error) {
@@ -109,6 +165,7 @@ export default function AdminGuestsPage() {
           value={search}
           onChange={handleSearch}
         />
+        {loading && <div className="text-gray-500 text-sm">Searching...</div>}
       </div>
 
       {/* Desktop Table */}
@@ -124,17 +181,20 @@ export default function AdminGuestsPage() {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
+            {memoizedUsers.map((user) => (
               <tr key={user._id} className="text-[#111827] text-sm font-normal">
                 <td className="py-3 font-medium">{user.fullname}</td>
                 <td>{user.email}</td>
                 <td>{user.phone}</td>
                 <td>{user.totalBookings}</td>
                 <td className="flex gap-3 items-center py-2">
-                  <button className="text-blue-600 hover:underline flex items-center gap-1">
+                  <button className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1">
                     <Pencil className="w-4 h-4" /> Edit
                   </button>
-                  <button className="text-red-600 hover:underline flex items-center gap-1">
+                  <button
+                    onClick={() => handleDeleteClick(user._id)}
+                    className="text-red-600 hover:underline flex cursor-pointer items-center gap-1"
+                  >
                     <Trash2 className="w-4 h-4" /> Delete
                   </button>
                 </td>
@@ -146,7 +206,7 @@ export default function AdminGuestsPage() {
 
       {/* Mobile Cards */}
       <div className="lg:hidden space-y-4 mt-6">
-        {users.map((user) => (
+        {memoizedUsers.map((user) => (
           <div
             key={user._id}
             className="bg-white rounded-lg shadow-md p-4 relative"
@@ -158,10 +218,13 @@ export default function AdminGuestsPage() {
               Total Bookings: {user.totalBookings}
             </p>
             <div className="flex gap-4 mt-4">
-              <button className="flex-1 bg-[#f3f4f6] text-[#374151] py-2 rounded-md text-sm font-medium flex items-center justify-center gap-1">
+              <button className="flex-1 bg-[#f3f4f6] text-[#374151] py-2 cursor-pointer rounded-md text-sm font-medium flex items-center justify-center gap-1">
                 <Pencil className="w-4 h-4" /> Edit
               </button>
-              <button className="flex-1 bg-[#fef2f2] text-[#dc2626] py-2 rounded-md text-sm font-medium flex items-center justify-center gap-1">
+              <button
+                onClick={() => handleDeleteClick(user._id)}
+                className="flex-1 bg-[#fef2f2] text-[#dc2626] py-2 cursor-pointer rounded-md text-sm font-medium flex items-center justify-center gap-1"
+              >
                 <Trash2 className="w-4 h-4" /> Delete
               </button>
             </div>
@@ -169,8 +232,37 @@ export default function AdminGuestsPage() {
         ))}
       </div>
 
+      {/* Delete Confirmation Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              Confirm Deletion
+            </h2>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to delete this user? This action cannot be undone.
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={handleCancelDelete}
+                className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-md text-sm font-medium cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="flex-1 bg-red-600 text-white py-2 rounded-md text-sm font-medium cursor-pointer"
+                disabled={loading}
+              >
+                {loading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Empty State */}
-      {users.length === 0 && !loading && (
+      {memoizedUsers.length === 0 && !loading && (
         <div className="w-full max-w-[1200px] bg-white rounded-lg shadow-md p-8 text-center">
           <p className="text-gray-500">No users found.</p>
         </div>
@@ -190,11 +282,9 @@ export default function AdminGuestsPage() {
             >
               Prev
             </button>
-            
             {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
               const pageNumber = Math.max(1, currentPage - 1) + i;
               if (pageNumber > totalPages) return null;
-              
               return (
                 <button
                   key={pageNumber}
@@ -207,7 +297,6 @@ export default function AdminGuestsPage() {
                 </button>
               );
             })}
-            
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
