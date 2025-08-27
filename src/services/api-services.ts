@@ -20,8 +20,6 @@ export async function addApartment(
   images: File[] = []
 ): Promise<any> {
   try {
-    console.log("Adding apartment with data:", apartmentData);
-
     // Validation
     if (!apartmentData.name?.trim()) {
       throw new Error("Apartment name is required");
@@ -98,7 +96,6 @@ export async function addApartment(
       // Don't set Content-Type manually — browser will handle it
     });
 
-    console.log("Apartment added successfully:", response);
     return response;
   } catch (error: any) {
     console.error("Failed to add apartment:", error);
@@ -116,8 +113,6 @@ export async function addApartment(
 
 export async function getApartments(page: number = 1, limit: number = 10, location?: string): Promise<any> {
   try {
-    console.log(`Fetching all apartments - Page: ${page}, Limit: ${limit}`, location ? `Location: ${location}` : '');
-
     // Build query parameters
     const params = new URLSearchParams({
       page: String(page),
@@ -131,8 +126,6 @@ export async function getApartments(page: number = 1, limit: number = 10, locati
     const response = await apiHandler(`/api/admin/apartment?${params.toString()}`, {
       method: 'GET',
     });
-
-    console.log('Apartments fetched successfully:', response);
 
     if (response.success && Array.isArray(response.data)) {
       response.data = response.data.map((apt: any) => ({
@@ -165,13 +158,10 @@ export async function getApartmentById(apartmentId: string): Promise<any> {
       throw new Error("Apartment ID is required");
     }
 
-    console.log(`Fetching apartment with ID: ${apartmentId}`);
-
     const response = await apiHandler(`/api/apartment/${apartmentId}`, {
       method: "GET",
     });
 
-    console.log("Apartment fetched successfully:", response);
     if (!response.success || !response.data) {
       throw new Error("Invalid response from server");
     }
@@ -206,8 +196,6 @@ export async function updateApartment(
     if (!apartmentId?.trim()) {
       throw new Error("Apartment ID is required for update");
     }
-
-    console.log(`Updating apartment with ID: ${apartmentId}`);
 
     // Validation
     if (!apartmentData.name?.trim()) {
@@ -283,7 +271,6 @@ export async function updateApartment(
       body: formData,
     });
 
-    console.log("Apartment updated successfully:", response);
     return response;
   } catch (error: any) {
     console.error("Failed to update apartment:", error);
@@ -305,13 +292,10 @@ export async function deleteApartment(apartmentId: string): Promise<any> {
       throw new Error("Apartment ID is required for deletion");
     }
 
-    console.log(`Deleting apartment with ID: ${apartmentId}`);
-
     const response = await apiHandler(`/api/apartment/${apartmentId}`, {
       method: "DELETE",
     });
 
-    console.log("Apartment deleted successfully:", response);
     return response;
   } catch (error: any) {
     console.error("Failed to delete apartment:", error);
@@ -376,14 +360,11 @@ export async function createBooking(
       throw new Error("Invalid phone number");
     }
 
-    console.log(`Creating booking for apartment ID: ${apartmentId}`, bookingData);
-
     const response = await apiHandler(`/api/apartment/${apartmentId}/book`, {
       method: "POST",
       body: bookingData,
     });
 
-    console.log("Booking created successfully:", response);
     return response;
   } catch (error: any) {
     console.error(`Failed to create booking for apartment ID ${apartmentId}:`, error);
@@ -409,8 +390,6 @@ export async function initiateCheckout(bookingId: string, paymentMethod: 'card' 
     const baseUrl = process.env.NODE_ENV === 'production' 
       ? 'https://jenriana-frontend.vercel.app' 
       : 'http://localhost:3000';
-    
-    console.log('Initiating checkout with callback URL:', `${baseUrl}/payment-success?bookingId=${bookingId}`);
         
     const response = await apiHandler(`/api/booking/${bookingId}/checkout`, {
       method: "POST",
@@ -421,7 +400,6 @@ export async function initiateCheckout(bookingId: string, paymentMethod: 'card' 
       },
     });
  
-    console.log("Checkout initialized successfully:", response);
     if (!response.success || !response.payment || !response.payment.authorization_url) {
       throw new Error("Invalid checkout response from server");
     }
@@ -442,13 +420,10 @@ export async function initiateCheckout(bookingId: string, paymentMethod: 'card' 
     
 export async function getActiveBookings(): Promise<any> {
   try {
-    console.log("Fetching active bookings");
-
     const response = await apiHandler(`/api/booking/user?type=active`, {
       method: "GET",
     });
 
-    console.log("Active bookings fetched successfully:", response);
     // Remove the success check since your API doesn't return a success field
     if (!response.bookings || !Array.isArray(response.bookings)) {
       throw new Error("Invalid response from server");
@@ -467,19 +442,13 @@ export async function getActiveBookings(): Promise<any> {
     );
   }
 }
-
-   
     
-
 export async function getBookingHistory(): Promise<any> {
   try {
-    console.log("Fetching booking history");
-
     const response = await apiHandler(`/api/booking/user?type=history`, {
       method: "GET",
     });
 
-    console.log("Booking history fetched successfully:", response);
     // Remove the success check since your API doesn't return a success field
     if (!response.bookings || !Array.isArray(response.bookings)) {
       throw new Error("Invalid response from server");
@@ -511,14 +480,11 @@ export async function postApartmentComment(apartmentId: string, rating: number, 
       throw new Error("Comment is required");
     }
 
-    console.log(`Posting comment for apartment ID: ${apartmentId}`);
-
     const response = await apiHandler(`/api/apartment/${apartmentId}/comment`, {
       method: "POST",
       data: { rating, comment },
     });
 
-    console.log("Comment posted successfully:", response);
     if (!response.success) {
       throw new Error("Invalid response from server");
     }
@@ -537,12 +503,8 @@ export async function postApartmentComment(apartmentId: string, rating: number, 
   }
 }
 
-
-
 export async function getAllBookings(page: number = 1, limit: number = 10, search?: string): Promise<any> {
   try {
-    console.log(`Fetching all bookings - Page: ${page}, Limit: ${limit}`, search ? `Search: ${search}` : '');
-
     // Build query parameters
     const params = new URLSearchParams({
       page: String(page),
@@ -557,7 +519,6 @@ export async function getAllBookings(page: number = 1, limit: number = 10, searc
       method: "GET",
     });
 
-    console.log("All bookings fetched successfully:", response);
     return response;
   } catch (error: any) {
     console.error("Failed to fetch all bookings:", error);
@@ -575,8 +536,6 @@ export async function getAllBookings(page: number = 1, limit: number = 10, searc
 
 export async function getAllUsers(page: number = 1, limit: number = 10, search?: string): Promise<any> {
   try {
-    console.log(`Fetching all users - Page: ${page}, Limit: ${limit}`, search ? `Search: ${search}` : '');
-
     // Build query parameters
     const params = new URLSearchParams({
       page: String(page),
@@ -591,7 +550,6 @@ export async function getAllUsers(page: number = 1, limit: number = 10, search?:
       method: "GET",
     });
 
-    console.log("All users fetched successfully:", response);
     return response;
   } catch (error: any) {
     console.error("Failed to fetch all users:", error);
@@ -616,13 +574,10 @@ export async function verifyPayment(reference: string, bookingId: string): Promi
       throw new Error("Booking ID is required");
     }
 
-    console.log(`Verifying payment for booking ID: ${bookingId}, reference: ${reference}`);
-
     const response = await apiHandler(`/api/payment/verify?reference=${reference}&bookingId=${bookingId}`, {
       method: "GET",
     });
 
-    console.log("Payment verified successfully:", response);
     return response;
   } catch (error: any) {
     console.error(`Failed to verify payment for booking ID ${bookingId}:`, error);
@@ -656,13 +611,9 @@ export async function getApartmentBookedDates(apartmentId: string): Promise<stri
       throw new Error("Apartment ID is required");
     }
 
-    console.log(`Fetching booked dates for apartment ID: ${apartmentId}`);
-
     const response = await apiHandler(`/api/apartment/${apartmentId}/booked-dates`, {
       method: "GET",
     });
-
-    console.log("Booked dates fetched successfully:", response);
 
     // Validate response structure
     if (!response.bookedDates || !Array.isArray(response.bookedDates)) {
@@ -723,7 +674,6 @@ export function getNextAvailableDate(fromDate: string, bookedDates: string[]): s
   return currentDate.toISOString().split('T')[0];
 }
 
-
 export async function cancelBooking(bookingId: string): Promise<CancelBookingResponse> {
   try {
     const response = await apiHandler(`/api/booking/${bookingId}`, {
@@ -742,13 +692,10 @@ export async function deleteUser(userId: string): Promise<any> {
       throw new Error("User ID is required for deletion");
     }
 
-    console.log(`Deleting user with ID: ${userId}`);
-
     const response = await apiHandler(`/api/admin/users/${userId}`, {
       method: "DELETE",
     });
 
-    console.log("User deleted successfully:", response);
     return response;
   } catch (error: any) {
     console.error(`Failed to delete user with ID ${userId}:`, error);
@@ -762,7 +709,6 @@ export async function deleteUser(userId: string): Promise<any> {
     );
   }
 }
-
 
 export async function getActivity(): Promise<ActivityResponse> {
  try {
