@@ -18,7 +18,6 @@ function PaymentSuccessContent() {
   const [debugLogs, setDebugLogs] = useState<string[]>([]); // Store logs for HTML display
 
   useEffect(() => {
-    // Log initial page load and URL
     setDebugLogs((prev) => [
       ...prev,
       `Page loaded at: ${new Date().toLocaleString('en-US', { timeZone: 'Africa/Lagos' })}`,
@@ -127,19 +126,6 @@ function PaymentSuccessContent() {
       >
         Go to homepage now
       </button>
-      {/* Debug logs visible in HTML */}
-      {/* {debugLogs.length > 0 && (
-        <div className="mt-6 text-left text-sm text-gray-800 bg-white p-4 rounded-md max-w-md w-full">
-          <h3 className="font-semibold mb-2">Debug Logs</h3>
-          <ul className="list-disc pl-5">
-            {debugLogs.map((log, index) => (
-              <li key={index} className="break-words">
-                {log}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )} */}
     </div>
   );
 }

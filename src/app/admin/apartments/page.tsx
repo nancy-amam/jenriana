@@ -1,10 +1,11 @@
 'use client';
 
-import { Pencil, Trash2, MapPin, BedDouble, Bath, X, Users } from 'lucide-react';
+import { Pencil, Trash2, MapPin, BedDouble, Bath, Users } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import AddEditApartmentModal from '../components/add-apartment';
-import { getApartments, deleteApartment, getApartmentById } from '@/services/api-services';
+import DeleteApartmentModal from '../components/delete-modal';
+import { getAdminApartments, deleteApartment, getApartmentById } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
 import { useApartmentModal } from '@/context/apartment-context';
 
@@ -12,7 +13,6 @@ import { useApartmentModal } from '@/context/apartment-context';
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
-    console.log('Debouncing value:', value);
     const handler = setTimeout(() => setDebouncedValue(value), delay);
     return () => clearTimeout(handler);
   }, [value, delay]);
@@ -79,11 +79,10 @@ export default function ApartmentsManagementPage() {
 
   const fetchApartments = async (page: number = 1, locationQuery?: string) => {
     try {
-      console.log('Fetching apartments with params:', { page, limit, locationQuery });
       setLoading(true);
       setError(null);
 
-      const response: ApartmentsResponse = await getApartments(page, limit, locationQuery?.trim());
+      const response: ApartmentsResponse = await getAdminApartments(page, limit, locationQuery?.trim());
       if (!Array.isArray(response.data)) {
         throw new Error('Invalid response: data array is missing or not an array');
       }
@@ -107,7 +106,6 @@ export default function ApartmentsManagementPage() {
         new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
       );
 
-      console.log(`Received ${sortedData.length} apartments for location: "${locationQuery || ''}"`);
       setApartments(sortedData);
       setTotalPages(response.pagination.totalPages);
       setTotalApartments(response.pagination.total);
@@ -120,11 +118,6 @@ export default function ApartmentsManagementPage() {
           ? 'Server error while fetching apartments. Please try again later.'
           : err.message || 'Failed to fetch apartments. Please try again later.';
       setError(errorMessage);
-      console.error('Error fetching apartments:', {
-        message: err.message,
-        status: err.status,
-        details: err.details || err,
-      });
       setApartments([]);
     } finally {
       setLoading(false);
@@ -132,13 +125,12 @@ export default function ApartmentsManagementPage() {
   };
 
   useEffect(() => {
-    console.log('Effect triggered with debouncedLocation:', debouncedLocation, 'currentPage:', currentPage);
     fetchApartments(currentPage, debouncedLocation);
   }, [debouncedLocation, currentPage]);
 
   const handleSuccess = async () => {
     try {
-      const response = await getApartments(currentPage, debouncedLocation);
+      const response = await getAdminApartments(currentPage, debouncedLocation);
       // Parse and sort as in fetchApartments
       const parsedData = response.data.map(apartment => ({
         ...apartment,
@@ -157,7 +149,6 @@ export default function ApartmentsManagementPage() {
       setTotalApartments(response.pagination.total);
       setCurrentPage(Math.min(currentPage, response.pagination.totalPages) || 1);
     } catch (err: any) {
-      console.error('Error refreshing apartments:', err);
       setError(err.message || 'Failed to refresh apartments after adding/editing');
     } finally {
       closeModal();
@@ -167,7 +158,6 @@ export default function ApartmentsManagementPage() {
   const handleEditClick = async (apartmentId: string) => {
     try {
       setEditLoading(apartmentId);
-      console.log('Fetching complete apartment data for:', apartmentId);
       const response = await getApartmentById(apartmentId);
       const fullApartmentData = response.data;
 
@@ -179,7 +169,6 @@ export default function ApartmentsManagementPage() {
         ? JSON.parse(fullApartmentData.rules[0])
         : fullApartmentData.rules || [];
 
-      console.log('Complete apartment data:', fullApartmentData);
       const modalData = {
         id: fullApartmentData._id,
         _id: fullApartmentData._id,
@@ -223,10 +212,8 @@ export default function ApartmentsManagementPage() {
           })
         ),
       };
-      console.log('Opening edit modal with data:', modalData);
       openEditModal(modalData);
     } catch (err: any) {
-      console.error('Error fetching apartment details for edit:', err);
       alert('Failed to load apartment details for editing');
     } finally {
       setEditLoading(null);
@@ -277,9 +264,7 @@ export default function ApartmentsManagementPage() {
       await deleteApartment(deleteModalState.apartmentId);
       await fetchApartments(currentPage, debouncedLocation);
       handleCloseDeleteModal();
-      console.log('Apartment deleted successfully');
     } catch (err: any) {
-      console.error('Error deleting apartment:', err);
       alert(err.message || 'Failed to delete apartment');
     } finally {
       setDeleteModalState(prev => ({ ...prev, isDeleting: false }));
@@ -288,14 +273,12 @@ export default function ApartmentsManagementPage() {
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log('Location input changed:', value);
     setLocation(value);
     setCurrentPage(1);
   };
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
-      console.log('Changing to page:', page);
       setCurrentPage(page);
     }
   };
@@ -524,51 +507,14 @@ export default function ApartmentsManagementPage() {
         </div>
       )}
 
-      {deleteModalState.open && (
-        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="flex justify-between items-center p-6 border-b">
-              <h3 className="text-lg font-semibold text-gray-900 cursor-pointer">Delete Apartment</h3>
-              <button
-                onClick={handleCloseDeleteModal}
-                disabled={deleteModalState.isDeleting}
-                className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="p-6">
-              <p className="text-sm text-gray-600 mb-4">
-                Are you sure you want to delete <span className="font-semibold">"{deleteModalState.apartmentName}"</span>? 
-                This action cannot be undone.
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={handleCloseDeleteModal}
-                  disabled={deleteModalState.isDeleting}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirmDelete}
-                  disabled={deleteModalState.isDeleting}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {deleteModalState.isDeleting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Deleting...
-                    </>
-                  ) : (
-                    'Delete Apartment'
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Use the new DeleteApartmentModal component */}
+      <DeleteApartmentModal
+        isOpen={deleteModalState.open}
+        apartmentName={deleteModalState.apartmentName}
+        isDeleting={deleteModalState.isDeleting}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+      />
 
       <AddEditApartmentModal 
         open={modalState.open}

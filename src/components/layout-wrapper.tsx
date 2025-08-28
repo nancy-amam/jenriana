@@ -14,7 +14,6 @@ export default function LayoutWrapper({
   const pathname = usePathname();
   const [loading, setLoading] = useState(false);
 
-  // Hide navbar and footer on some paths (your existing logic)
   const hideNavAndFooter =
     pathname.includes('/sign-up') || pathname.includes('/login') || pathname.includes('/admin');
 
@@ -23,8 +22,6 @@ export default function LayoutWrapper({
 
   useEffect(() => {
     setLoading(true);
-
-    // You can adjust the delay to fit your UX
     const timer = setTimeout(() => {
       setLoading(false);
     }, 400);

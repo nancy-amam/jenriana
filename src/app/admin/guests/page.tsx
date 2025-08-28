@@ -4,13 +4,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import { getAllUsers, deleteUser } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
+import DeleteUserModal from '../components/delete-user';
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
-    console.log('Debouncing value:', value);
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
@@ -60,23 +60,14 @@ export default function AdminGuestsPage() {
 
   const fetchUsers = async (page: number = 1, searchQuery?: string) => {
     try {
-      console.log('Fetching users with params:', { page, limit, searchQuery });
       setLoading(true);
       setError(null);
 
       const response: UsersResponse = await getAllUsers(page, limit, searchQuery?.trim() || undefined);
-      console.log('API response:', response);
 
-      // Validate response
       if (!response.users || !Array.isArray(response.users)) {
         throw new Error('Invalid response: users array is missing or not an array');
       }
-      if (!response.pagination || typeof response.pagination.total !== 'number') {
-        console.warn('Invalid pagination data, using defaults');
-      }
-
-      // Log the number of users returned to verify filtering
-      console.log(`Received ${response.users.length} users for search: "${searchQuery || ''}"`);
 
       setUsers(response.users);
       setTotalPages(response.pagination?.pages || 1);
@@ -85,8 +76,7 @@ export default function AdminGuestsPage() {
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to fetch users';
       setError(errorMessage);
-      console.error('Error fetching users:', err);
-      setUsers([]); // Clear users on error to avoid showing stale data
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -108,7 +98,6 @@ export default function AdminGuestsPage() {
       setUserToDelete(null);
     } catch (err: any) {
       setError(err.message || 'Failed to delete user');
-      console.error('Error deleting user:', err);
     } finally {
       setLoading(false);
     }
@@ -120,20 +109,17 @@ export default function AdminGuestsPage() {
   };
 
   useEffect(() => {
-    console.log('Effect triggered with debouncedSearch:', debouncedSearch, 'currentPage:', currentPage);
     fetchUsers(currentPage, debouncedSearch);
   }, [debouncedSearch, currentPage]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log('Search input changed:', value);
     setSearch(value);
     setCurrentPage(1);
   };
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
-      console.log('Changing to page:', page);
       setCurrentPage(page);
     }
   };
@@ -233,33 +219,12 @@ export default function AdminGuestsPage() {
       </div>
 
       {/* Delete Confirmation Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
-              Confirm Deletion
-            </h2>
-            <p className="text-sm text-gray-600 mb-6">
-              Are you sure you want to delete this user? This action cannot be undone.
-            </p>
-            <div className="flex gap-4">
-              <button
-                onClick={handleCancelDelete}
-                className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-md text-sm font-medium cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="flex-1 bg-red-600 text-white py-2 rounded-md text-sm font-medium cursor-pointer"
-                disabled={loading}
-              >
-                {loading ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteUserModal
+        isOpen={isModalOpen}
+        loading={loading}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
 
       {/* Empty State */}
       {memoizedUsers.length === 0 && !loading && (

@@ -1,10 +1,7 @@
-// components/ApartmentList.tsx
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { getApartments } from '@/services/api-services'; // Adjust path
-import { ApartmentCard } from '@/components/apartment-card';
-import { ApartmentData } from '@/lib/interface'; // Adjust path to your interface
+import Link from "next/link";
+import { FeaturedApartmentCard } from "./apartsment-card";
 
 interface Apartment {
   _id: string;
@@ -12,76 +9,65 @@ interface Apartment {
   location: string;
   pricePerNight: number;
   ratings?: number;
+  reviews?: number;
   maxGuests?: number;
   rooms?: number;
   bathrooms?: number;
   gallery?: string[];
 }
 
-export default function ApartmentList() {
-  const [apartments, setApartments] = useState<Apartment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface ApartmentListProps {
+  apartments: Apartment[];
+  loading: boolean;
+  error: string | null;
+}
 
-  useEffect(() => {
-    const fetchApartments = async () => {
-      try {
-        setLoading(true);
-        const response = await getApartments();
-        setApartments(response.data || []);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch apartments');
-        console.error('Error fetching apartments:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchApartments();
-  }, []);
-
+export default function ApartmentList({
+  apartments,
+  loading,
+  error,
+}: ApartmentListProps) {
   if (loading) {
     return (
-      <div className="p-4 text-center">
-        <p>Loading apartments...</p>
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, index) => (
+          <div
+            key={index}
+            className="w-full max-w-[313px] h-[385px] bg-gray-200 animate-pulse rounded-lg mx-auto"
+          ></div>
+        ))}
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="p-4 text-center text-red-500">
-        <p>Error: {error}</p>
-      </div>
-    );
+    return <div className="p-4 text-center text-red-500">Error: {error}</div>;
   }
 
   if (apartments.length === 0) {
-    return (
-      <div className="p-4 text-center">
-        <p>No apartments found.</p>
-      </div>
-    );
+    return <div className="p-4 text-center">No apartments found.</div>;
   }
 
   return (
-    <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <>
       {apartments.map((apt) => (
-        <ApartmentCard
-          key={apt._id}
-          id={apt._id}
-          imageUrl={apt.gallery?.[0] || '/placeholder.svg'}
-          name={apt.name}
-          location={apt.location}
-          price={`₦${apt.pricePerNight.toLocaleString()}`}
-          rating={apt.ratings || 0}
-          guests={apt.maxGuests || 1}
-          beds={apt.rooms || 1}
-          baths={apt.bathrooms || 1}
-        />
+        <Link key={apt._id} href={`/apartment/${apt._id}`} className="block">
+          <FeaturedApartmentCard
+            id={apt._id}
+            imageUrl={apt.gallery?.[0] || "/placeholder.svg"}
+            name={apt.name}
+            location={apt.location}
+            price={`₦${apt.pricePerNight.toLocaleString()}`}
+            rating={apt.ratings || 0}
+            reviews={apt.reviews || 0}
+            guests={apt.maxGuests || 1}
+            beds={apt.rooms || 1}
+            baths={apt.bathrooms || 1}
+            isGuestFavourite={Math.random() > 0.7} // 👈 random for demo
+            className="mx-auto"
+          />
+        </Link>
       ))}
-    </div>
+    </>
   );
 }
-

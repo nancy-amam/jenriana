@@ -6,8 +6,6 @@ export default function ContactUsPage() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     alert('Form submitted! (This is a placeholder action)');
-    // In a real application, you would handle form submission here,
-    // e.g., send data to an API or Server Action.
   };
 
   return (

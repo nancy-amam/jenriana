@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
 import { getAllBookings } from '@/services/api-services';
 import ApartmentLoadingPage from '@/components/loading';
 import GuestInfoModal from '../components/guest-information';
@@ -81,18 +80,13 @@ export default function AdminBookingPage() {
       setError(null);
 
       const response: BookingsResponse = await getAllBookings(page, limit, searchQuery?.trim());
-      console.log('API response:', response);
-
-      // Validate response
+     
       if (!response.bookings || !Array.isArray(response.bookings)) {
         throw new Error('Invalid response: bookings array is missing or not an array');
       }
       if (typeof response.total !== 'number' || typeof response.page !== 'number' || typeof response.pages !== 'number') {
         console.warn('Invalid pagination data, using defaults');
       }
-
-      // Log the number of bookings returned to verify filtering
-      console.log(`Received ${response.bookings.length} bookings for search: "${searchQuery || ''}"`);
 
       setBookings(response.bookings);
       setTotalPages(response.pages || 1);
@@ -323,7 +317,6 @@ export default function AdminBookingPage() {
         </div>
       )}
 
-      {/* Guest Info Modal */}
       <GuestInfoModal
         booking={selectedBooking}
         isOpen={isModalOpen}

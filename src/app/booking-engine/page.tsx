@@ -56,9 +56,8 @@ function BookingEngineContent() {
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  // Cleanup old bookings function - Updated to respect payment in progress
   const cleanupOldBookings = () => {
-    const ONE_HOUR = 60 * 60 * 1000; // 1 hour in milliseconds
+    const ONE_HOUR = 60 * 60 * 1000; 
     const now = Date.now();
 
     for (let i = 0; i < localStorage.length; i++) {
@@ -70,28 +69,22 @@ function BookingEngineContent() {
             const booking = JSON.parse(bookingData);
             const bookingTime = new Date(booking.createdAt).getTime();
             const bookingId = booking._id;
-            
-            // Check if payment is in progress
             const paymentInProgress = localStorage.getItem(`booking_${bookingId}_payment_in_progress`);
             
-            // Delete bookings older than 1 hour, but only if payment is not in progress
             if (now - bookingTime > ONE_HOUR && !paymentInProgress) {
               localStorage.removeItem(key);
-              // Also cleanup related payment flags
               localStorage.removeItem(`booking_${bookingId}_payment_method`);
               localStorage.removeItem(`booking_${bookingId}_payment_in_progress`);
               console.log(`Cleaned up old booking: ${key}`);
             }
           }
         } catch (error) {
-          // If parsing fails, remove the corrupted data
           localStorage.removeItem(key);
         }
       }
     }
   };
 
-  // Check if current booking is expired and handle accordingly - Updated to respect payment in progress
   const checkCurrentBookingExpiry = useCallback(() => {
     if (!booking || isProcessingPayment) return;
     
@@ -99,12 +92,8 @@ function BookingEngineContent() {
     const now = Date.now();
     const bookingTime = new Date(booking.createdAt).getTime();
     
-    // Check if payment is in progress
     const paymentInProgress = localStorage.getItem(`booking_${booking._id}_payment_in_progress`);
-    
-    // Only expire if not in payment process
     if (now - bookingTime > ONE_HOUR && !paymentInProgress) {
-      // Current booking is expired
       localStorage.removeItem(`booking_${bookingId}`);
       localStorage.removeItem(`booking_${booking._id}_payment_method`);
       localStorage.removeItem(`booking_${booking._id}_payment_in_progress`);
@@ -114,7 +103,6 @@ function BookingEngineContent() {
   }, [booking, isProcessingPayment, bookingId]);
 
   useEffect(() => {
-    // Cleanup old bookings on component mount
     cleanupOldBookings();
 
     if (!bookingId) {
@@ -133,33 +121,26 @@ function BookingEngineContent() {
       const parsedBooking = JSON.parse(storedBooking);
       setBooking(parsedBooking);
 
-      // Fetch apartment gallery
       const fetchApartment = async () => {
         try {
-          const response = await getApartmentById(parsedBooking.apartmentId);
-          console.log('Apartment response:', response); // Debug log
-          
+          const response = await getApartmentById(parsedBooking.apartmentId);    
           const gallery = response.data.gallery || [];
-          console.log('Gallery from API:', gallery); // Debug log
           
           if (gallery.length >= 3) {
             setGalleryImages(gallery.slice(0, 3));
           } else if (gallery.length > 0) {
-            // Use available images and fill with placeholders if needed
             const images = [...gallery];
             while (images.length < 3) {
               images.push(passedImage ? decodeURIComponent(passedImage) : '/images/placeholder.jpg');
             }
             setGalleryImages(images.slice(0, 3));
           } else if (passedImage) {
-            // No gallery images, use passed image
             setGalleryImages([
               decodeURIComponent(passedImage),
               decodeURIComponent(passedImage),
               decodeURIComponent(passedImage)
             ]);
           } else {
-            // No images at all, use placeholders
             setGalleryImages([
               '/images/image18.png',
               '/images/image19.png',
@@ -168,7 +149,6 @@ function BookingEngineContent() {
           }
         } catch (err: any) {
           console.error('BookingEnginePage: Failed to fetch apartment gallery:', err);
-          // Fallback to passed image or placeholders
           if (passedImage) {
             setGalleryImages([
               decodeURIComponent(passedImage),
@@ -197,7 +177,7 @@ function BookingEngineContent() {
   useEffect(() => {
     const interval = setInterval(() => {
       checkCurrentBookingExpiry();
-    }, 5 * 60 * 1000); // Check every 5 minutes
+    }, 5 * 60 * 1000); 
 
     // Also check immediately when component mounts (after booking is loaded)
     if (booking) {
@@ -344,7 +324,6 @@ function BookingEngineContent() {
       <div className="max-w-[1550px] mx-auto grid grid-cols-1 md:grid-cols-[757px_minmax(0,1fr)] md:gap-8">
         {/* Left Column */}
         <div className="flex flex-col gap-4">
-          {/* Apartment Info Card */}
           <div className="bg-white rounded-lg p-6 shadow-md w-full">
             <div className="flex flex-col sm:flex-row sm:justify-between">
               <h2 className="order-2 sm:order-1 text-2xl font-normal text-[#111827]">
