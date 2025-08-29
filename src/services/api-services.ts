@@ -111,7 +111,7 @@ export async function addApartment(
   }
 }
 
-export async function getApartments(page: number = 1, limit: number = 10, location?: string): Promise<any> {
+export async function getAdminApartments(page: number = 1, limit: number = 10, location?: string): Promise<any> {
   try {
     // Build query parameters
     const params = new URLSearchParams({
@@ -186,6 +186,48 @@ export async function getApartmentById(apartmentId: string): Promise<any> {
     );
   }
 }
+
+export async function getApartments(
+  page: number = 1,
+  limit: number = 10,
+  location?: string
+): Promise<any> {
+  try {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
+
+    if (location?.trim()) {
+      params.append("location", location.trim());
+    }
+
+    const response = await apiHandler(
+      `/api/apartment?${params.toString()}`,
+      { method: "GET" }
+    );
+
+    if (response.success && Array.isArray(response.data)) {
+      response.data = response.data.map((apt: any) => ({
+        ...apt,
+        id: apt._id,
+      }));
+    }
+
+    return response;
+  } catch (error: any) {
+    console.error("Failed to fetch apartments:", {
+      message: error.message,
+      status: error.status,
+      details: error,
+    });
+
+    throw new Error(
+      error.message || "Failed to fetch apartments. Please try again later."
+    );
+  }
+}
+
 
 export async function updateApartment(
   apartmentId: string,
@@ -720,4 +762,12 @@ export async function getActivity(): Promise<ActivityResponse> {
    console.error("Error fetching activity:", error);
    throw error;
  }
+}
+
+export async function getApartmentReviews(apartmentId: string) {
+  if (!apartmentId) throw new Error("Apartment ID is required");
+
+  return apiHandler(`/apartment/${apartmentId}/comment`, {
+    method: "GET",
+  });
 }

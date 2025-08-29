@@ -63,6 +63,19 @@ interface FormData {
   maxGuests: number;
 }
 
+// Local pricing type for UI display
+type UIPricingType = "per/day" | "per/night" | "one time fee";
+
+// Local addon interface for UI state
+interface UIAddon {
+  id: string;
+  name: string;
+  price: number;
+  pricingType: UIPricingType;
+  description: string;
+  active: boolean;
+}
+
 export default function AddEditApartmentModal({ 
   open, 
   onClose, 
@@ -78,7 +91,7 @@ export default function AddEditApartmentModal({
     childrenAllowed: true,
     maxGuests: true
   });
-  const [addOns, setAddOns] = useState<Addon[]>([]);
+  const [addOns, setAddOns] = useState<UIAddon[]>([]);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [formData, setFormData] = useState<FormData>({
@@ -144,19 +157,18 @@ export default function AddEditApartmentModal({
     'max-guests-enforced': 'maxGuests'
   };
 
-  const pricingTypeToApi: Record<"per/day" | "per/night" | "one time fee", "perNight" | "oneTime"> = {
+  const pricingTypeToApi: Record<UIPricingType, "perNight" | "oneTime"> = {
     "per/day": "perNight",
     "per/night": "perNight",
     "one time fee": "oneTime",
   };
 
-  const apiToPricingType: Record<"perNight" | "oneTime", "per/night" | "one time fee"> = {
+  const apiToPricingType: Record<"perNight" | "oneTime", UIPricingType> = {
     perNight: "per/night",
     oneTime: "one time fee",
   };
 
   useEffect(() => {
-    console.log('useEffect triggered', { editMode, open, apartmentData });
     if (editMode && apartmentData && open) {
       setFormData({
         name: apartmentData.name || '',
@@ -197,10 +209,9 @@ export default function AddEditApartmentModal({
         setExistingImages(apartmentData.gallery);
       }
 
-      console.log('Received addons:', apartmentData.addons);
       if (apartmentData.addons && apartmentData.addons.length > 0) {
         setAddOns(
-          apartmentData.addons.map((addon, index) => {
+          apartmentData.addons.map((addon, index): UIAddon => {
             const pricingType = apiToPricingType[addon.pricingType as keyof typeof apiToPricingType] || 'per/night';
             return {
               id: addon.id || `${Date.now()}-${index}`,
@@ -209,11 +220,10 @@ export default function AddEditApartmentModal({
               pricingType,
               description: (addon.description ?? '').trim(),
               active: addon.active ?? true,
-            } as Addon;
+            };
           })
         );
       } else {
-        console.log('No addons received, setting empty array');
         setAddOns([]);
       }
 
@@ -303,7 +313,7 @@ export default function AddEditApartmentModal({
         pricingType: "per/night",
         description: "",
         active: true,
-      } as Addon,
+      },
     ]);
   };
 
@@ -317,7 +327,7 @@ export default function AddEditApartmentModal({
     ));
   };
 
-  const updateAddOn = (id: string, field: keyof Addon, value: string | number | boolean) => {
+  const updateAddOn = (id: string, field: keyof UIAddon, value: string | number | boolean) => {
     setAddOns(prev => prev.map(addon => 
       addon.id === id ? { ...addon, [field]: value } : addon
     ));
@@ -325,7 +335,6 @@ export default function AddEditApartmentModal({
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    console.log('Selected files:', files.map(f => f.name));
     setUploadedImages(prev => [...prev, ...files]);
   };
 
@@ -391,10 +400,10 @@ export default function AddEditApartmentModal({
       if (rules.childrenAllowed) rulesArray.push('children-allowed');
       if (rules.maxGuests) rulesArray.push('do-not-exceed-guest-count');
 
-      const addOnsPayload = addOns
+      const addOnsPayload: Addon[] = addOns
         .filter(addon => addon.name.trim() && addon.pricingType && addon.price > 0)
         .map(addon => {
-          const mappedPricingType = pricingTypeToApi[addon.pricingType as keyof typeof pricingTypeToApi];
+          const mappedPricingType = pricingTypeToApi[addon.pricingType];
           if (!mappedPricingType) {
             throw new Error(`Invalid pricing type for add-on "${addon.name}": ${addon.pricingType}`);
           }
@@ -423,8 +432,6 @@ export default function AddEditApartmentModal({
         addons: addOnsPayload
       };
 
-      console.log('Submitting payload:', apartmentPayload);
-
       let response;
       if (editMode && apartmentData?.id) {
         response = await updateApartment(apartmentData.id, apartmentPayload, uploadedImages);
@@ -441,7 +448,6 @@ export default function AddEditApartmentModal({
         onClose();
       }, 3000);
     } catch (err: any) {
-      console.error('Submission error:', err);
       let errorMessage = `Failed to ${editMode ? 'update' : 'add'} apartment`;
       
       if (err && typeof err === 'object') {
@@ -740,7 +746,7 @@ export default function AddEditApartmentModal({
                   </label>
                   <select
                     value={addon.pricingType}
-                    onChange={(e) => !isLoading && updateAddOn(addon.id, 'pricingType', e.target.value)}
+                    onChange={(e) => !isLoading && updateAddOn(addon.id, 'pricingType', e.target.value as UIPricingType)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     disabled={isLoading}
                   >

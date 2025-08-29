@@ -7,7 +7,6 @@ import { signUp } from '@/services/api-services'
 import { FiEye, FiEyeOff } from 'react-icons/fi'
 import { useRouter } from 'next/navigation'
 
-
 export default function SignupPage() {
   const [formData, setFormData] = useState({
     fullname: '',
@@ -19,10 +18,8 @@ export default function SignupPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
-
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,7 +48,6 @@ export default function SignupPage() {
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
-
   
 const resetForm = () => {
   setFormData({
@@ -66,7 +62,6 @@ const resetForm = () => {
   setShowConfirmPassword(false)
 }
 
-
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault()
   if (!validate()) return
@@ -74,9 +69,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   setLoading(true)
   try {
     const res = await signUp(formData)
-    console.log('Signup success:', res)
-    
-    
+    console.log('Signup success:', res) 
     resetForm()
     router.push('/login')
   } catch (err: any) {
@@ -98,7 +91,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           <p className="text-base text-[#4b5563] mb-8 text-center">
             Book premium apartments across Nigeria with ease.
           </p>
-
           <form
             className="flex flex-col space-y-3"
             onSubmit={handleSubmit}
@@ -139,8 +131,6 @@ const handleSubmit = async (e: React.FormEvent) => {
             {errors.phone && (
               <p className="text-red-500 text-sm">{errors.phone}</p>
             )}
-
-            {/* Password Field with Eye Icon */}
             <div className="relative w-full">
               <input
                 name="password"
@@ -160,8 +150,6 @@ const handleSubmit = async (e: React.FormEvent) => {
             {errors.password && (
               <p className="text-red-500 text-sm">{errors.password}</p>
             )}
-
-            {/* Confirm Password Field with Eye Icon */}
             <div className="relative w-full">
               <input
                 name="confirmPassword"
@@ -181,13 +169,11 @@ const handleSubmit = async (e: React.FormEvent) => {
             {errors.confirmPassword && (
               <p className="text-red-500 text-sm">{errors.confirmPassword}</p>
             )}
-
             {errors.general && (
               <p className="text-red-500 text-sm text-center">
                 {errors.general}
               </p>
             )}
-
             <button
               type="submit"
               disabled={loading}
@@ -196,7 +182,6 @@ const handleSubmit = async (e: React.FormEvent) => {
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
-
           <p className="text-center text-[#4b5563] mt-1">
             Already have an account?{' '}
             <Link
@@ -208,7 +193,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           </p>
         </div>
       </div>
-
       {/* Right Section: Image and Text */}
       <div className="relative w-full md:w-7/10 h-[400px] md:h-screen overflow-hidden">
         <Image
@@ -218,7 +202,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           className="object-cover"
           priority
         />
-
         <div className="absolute bottom-8 left-8 right-8 text-white flex flex-col justify-end">
           <p className="text-lg font-normal">
             Ikoyi Heights — Luxury Balcony with Lagoon View
