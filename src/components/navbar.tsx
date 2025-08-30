@@ -32,10 +32,7 @@ const Navbar = () => {
     }
   };
 
-  const handleProtectedLinkClick = (
-    e: React.MouseEvent,
-    href: string
-  ) => {
+  const handleProtectedLinkClick = (e: React.MouseEvent, href: string) => {
     if (!isLoggedIn) {
       e.preventDefault();
       router.push("/login");
@@ -56,17 +53,11 @@ const Navbar = () => {
             Home
           </Link>
 
-          <Link
-            href="/apartment"
-            className="text-[#1e1e1e] hover:text-black font-medium"
-          >
+          <Link href="/apartment" className="text-[#1e1e1e] hover:text-black font-medium">
             Apartments
           </Link>
 
-          <Link
-            href="/contact-us"
-            className="text-[#1e1e1e] hover:text-black font-medium"
-          >
+          <Link href="/contact-us" className="text-[#1e1e1e] hover:text-black font-medium">
             Contact
           </Link>
 
@@ -79,10 +70,7 @@ const Navbar = () => {
           </Link>
 
           {isAdmin && (
-            <Link
-              href="/admin"
-              className="text-[#1e1e1e] hover:text-black font-medium"
-            >
+            <Link href="/admin" className="text-[#1e1e1e] hover:text-black font-medium">
               Admin
             </Link>
           )}
@@ -105,11 +93,7 @@ const Navbar = () => {
           </button>
         )}
 
-        <button
-          className="md:hidden text-[#1e1e1e]"
-          onClick={() => setIsOpen(!isOpen)}
-          type="button"
-        >
+        <button className="md:hidden text-[#1e1e1e]" onClick={() => setIsOpen(!isOpen)} type="button">
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
@@ -117,27 +101,15 @@ const Navbar = () => {
       {/* Mobile Dropdown */}
       {isOpen && (
         <div className="md:hidden absolute top-16 left-0 w-full bg-white z-50 px-4 py-3 space-y-3">
-          <Link
-            href="/"
-            className="block text-[#1e1e1e]"
-            onClick={() => setIsOpen(false)}
-          >
+          <Link href="/" className="block text-[#1e1e1e]" onClick={() => setIsOpen(false)}>
             Home
           </Link>
 
-          <Link
-            href="/apartment"
-            className="block text-[#1e1e1e]"
-            onClick={() => setIsOpen(false)}
-          >
+          <Link href="/apartment" className="block text-[#1e1e1e]" onClick={() => setIsOpen(false)}>
             Apartments
           </Link>
 
-          <Link
-            href="/contact-us"
-            className="block text-[#1e1e1e]"
-            onClick={() => setIsOpen(false)}
-          >
+          <Link href="/contact-us" className="block text-[#1e1e1e]" onClick={() => setIsOpen(false)}>
             Contact
           </Link>
 
@@ -153,11 +125,7 @@ const Navbar = () => {
           </Link>
 
           {isAdmin && (
-            <Link
-              href="/admin"
-              className="block text-[#1e1e1e]"
-              onClick={() => setIsOpen(false)}
-            >
+            <Link href="/admin" className="block text-[#1e1e1e]" onClick={() => setIsOpen(false)}>
               Admin
             </Link>
           )}

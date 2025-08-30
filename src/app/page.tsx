@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { getApartments } from '@/services/api-services';
-import HeroSection from '@/components/hero-section';
-import SearchBar from '@/components/filter-section';
-import FeaturedListings from '@/components/featured-listings';
-import TestimonialsSection from '@/components/testimonials-section';
-import TrendingSection from '@/components/trending-section';
-import Features from '@/components/explore-features';
-import Contact from '@/components/contact-us';
+import { useState, useEffect, useCallback } from "react";
+import { getApartments } from "@/services/api-services";
+import HeroSection from "@/components/hero-section";
+import SearchBar from "@/components/filter-section";
+import FeaturedListings from "@/components/featured-listings";
+import TestimonialsSection from "@/components/testimonials-section";
+import TrendingSection from "@/components/trending-section";
+import Features from "@/components/explore-features";
+import Contact from "@/components/contact-us";
 
 interface Apartment {
   _id: string;
@@ -50,14 +50,10 @@ export default function HomePage() {
       // ✅ Apply filters ONLY to featured
       let featured = normalized;
       if (filters.location) {
-        featured = featured.filter((apt) =>
-          apt.location.toLowerCase().includes(filters.location.toLowerCase())
-        );
+        featured = featured.filter((apt) => apt.location.toLowerCase().includes(filters.location.toLowerCase()));
       }
       if (filters.guests && filters.guests > 0) {
-        featured = featured.filter(
-          (apt) => (apt.maxGuests || 1) >= filters.guests
-        );
+        featured = featured.filter((apt) => (apt.maxGuests || 1) >= filters.guests);
       }
 
       // Shuffle featured
@@ -88,28 +84,19 @@ export default function HomePage() {
   }, [fetchApartments]);
 
   return (
-    <main className=' bg-[#f1f1f1]'>
+    <main className=" bg-[#f1f1f1]">
       <HeroSection />
-      <SearchBar 
+      <SearchBar
         filters={filters}
         onFilterChange={handleFilterChange}
         onSearch={fetchApartments}
         buttonLabel="Find Apartments"
       />
       <Features />
-      <FeaturedListings 
-        apartments={featuredApartments}
-        loading={loading}
-        error={error}
-        onRetry={fetchApartments}
-      />
+      <FeaturedListings apartments={featuredApartments} loading={loading} error={error} onRetry={fetchApartments} />
+      <TrendingSection apartments={trendingApartments} loading={loading} error={error} onRetry={fetchApartments} />
       <TestimonialsSection />
-      <TrendingSection 
-        apartments={trendingApartments}
-        loading={loading}
-        error={error}
-        onRetry={fetchApartments}
-      />
+
       <Contact />
     </main>
   );

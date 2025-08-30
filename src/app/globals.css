@@ -1,11 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap");
 
 @import "tailwindcss";
 
 body {
   /* background: #f1f1f1; */
   color: black;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+
+  font-family: "Montserrat", sans-serif;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -33,7 +34,7 @@ body {
 
 /* Calendar styling */
 input[type="date"]::-webkit-calendar-picker-indicator {
-  color: #A6A6A6;
+  color: #a6a6a6;
   border-radius: 4px;
   padding: 4px;
   cursor: pointer;
@@ -45,7 +46,7 @@ input[type="date"]::-webkit-clear-button {
 }
 
 .custom-date::-webkit-calendar-picker-indicator {
-  background: #A6A6A6;
+  background: #a6a6a6;
   border-radius: 4px;
   padding: 4px;
 }
@@ -55,4 +56,3 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: none;
   -webkit-appearance: none;
 }
-
