@@ -1,12 +1,12 @@
-import Link from "next/link"
-import { InstagramIcon, TwitterIcon, PhoneIcon as WhatsappIcon, MailIcon, PhoneIcon, MountainIcon } from "lucide-react"
+import Link from "next/link";
+import { InstagramIcon, TwitterIcon, PhoneIcon as WhatsappIcon, MailIcon, PhoneIcon, MountainIcon } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="bg-[#212121] text-[#9ca3af] text-base py-16 md:py-16 px-10 md:px-20 ">
-      <div className="container mx-auto flex flex-col md:flex-row  justify-around gap-2 ">
+    <footer className="bg-[#212121] text-[#9ca3af] text-base py-16 md:py-16 px-5 md:px-20 ">
+      <div className="container mx-auto grid grid-cols-2 lg:grid-cols-4 justify-around  gap-10 ">
         {/* Jenrianna Section */}
-        <div className="flex flex-col gap-4 ">
+        <div className="flex flex-col gap-4 col-span-2 lg:col-span-1 ">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold text-white">
             <span>Jenrianna</span>
           </Link>
@@ -81,5 +81,5 @@ export function Footer() {
         &copy; {new Date().getFullYear()} Jenrianna. All rights reserved.
       </div>
     </footer>
-  )
+  );
 }

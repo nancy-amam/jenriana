@@ -51,7 +51,7 @@ const TrendingSection: React.FC<TrendingSectionProps> = ({ apartments, loading, 
 
   return (
     <section className="px-4 md:px-16 mt-3 relative">
-      <h2 className="lg:text-xl font-bold mb-6 md:mb-5 text-[#1e1e1e] text-left">Trending This Week</h2>
+      <h2 className="lg:text-xl font-bold mb-6 md:mb-5 text-[#1e1e1e] text-left text-lg">Trending This Week</h2>
 
       {loading ? (
         <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">

@@ -2,6 +2,8 @@ import React, { useRef, useState } from "react";
 import { ApartmentCard } from "@/components/apartment-card";
 import ApartmentLoadingPage from "@/components/loading";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { HiArrowNarrowRight } from "react-icons/hi";
+import Link from "next/link";
 
 interface Apartment {
   _id: string;
@@ -51,7 +53,13 @@ const FeaturedListings: React.FC<FeaturedListingsProps> = ({ apartments, loading
 
   return (
     <section className="px-4 py-10 md:px-16 relative">
-      <h2 className="lg:text-xl font-bold mb-6 md:mb-5 text-[#1e1e1e] text-left">Featured Listings</h2>
+      <div className="flex justify-between items-center mb-6 md:mb-5">
+        <h2 className="lg:text-xl font-bold  text-[#1e1e1e] text-left text-lg">Featured Listings</h2>
+        <Link href={"/apartment"} className="flex gap-1 items-center">
+          View more
+          <HiArrowNarrowRight />
+        </Link>
+      </div>
 
       {loading ? (
         <div className="p-4 sm:p-6 min-h-screen">

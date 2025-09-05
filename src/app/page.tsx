@@ -88,6 +88,7 @@ export default function HomePage() {
       <HeroSection />
       <SearchBar
         filters={filters}
+        showBlack
         onFilterChange={handleFilterChange}
         onSearch={fetchApartments}
         buttonLabel="Find Apartments"

@@ -1,26 +1,26 @@
 // app/admin/layout.tsx
-'use client';
+"use client";
 
-import { usePathname } from 'next/navigation';
-import { Menu } from 'lucide-react';
-import AdminSidebar from './components/admin-sidebar';
-import AdminNavbar from './components/admin-navbar';
-import MobileNavbar from './components/mobile-navbar';
-import { useState } from 'react';
-import Link from 'next/link';
-import { ApartmentModalProvider } from '@/context/apartment-context';
+import { usePathname } from "next/navigation";
+import { Menu } from "lucide-react";
+import AdminSidebar from "./components/admin-sidebar";
+import AdminNavbar from "./components/admin-navbar";
+import MobileNavbar from "./components/mobile-navbar";
+import { useState } from "react";
+import Link from "next/link";
+import { ApartmentModalProvider } from "@/context/apartment-context";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const isApartmentsPage = pathname.includes('/apartments');
+  const isApartmentsPage = pathname.includes("/apartments");
 
   return (
     <ApartmentModalProvider>
       <div className="flex flex-col min-h-screen bg-[#f1f1f1]">
         {/* Mobile Navbar */}
-        <div className="md:hidden bg-white">
-          <nav className="flex items-center justify-between px-4 py-3">
+        <div className="md:hidden">
+          <nav className="flex items-center justify-between px-4 py-3 bg-white">
             <Link href="/" className="text-2xl font-semibold text-[#1e1e1e]">
               Jenrianna
             </Link>
@@ -31,10 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           {mobileMenuOpen && (
             <div>
-              <AdminSidebar
-                isMobile={true}
-                onLinkClick={() => setMobileMenuOpen(false)}
-              />
+              <AdminSidebar isMobile={true} onLinkClick={() => setMobileMenuOpen(false)} />
             </div>
           )}
 

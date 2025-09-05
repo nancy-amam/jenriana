@@ -39,7 +39,7 @@ export default function SearchBar({
     " • Dates";
 
   return (
-    <div className={`mt-10 md:-mt-[80px] px-4 md:px-16 z-20 relative ${showBlack && "bg-black/5"}`}>
+    <div className={`mt-10 md:-mt-[80px] py-2 px-4 md:px-16 z-20 relative ${showBlack && "bg-black/5"}`}>
       <div className="hidden md:grid bg-[#f1f1f1] md:bg-white text-[#1e1e1e] md:rounded-lg md:shadow-lg p-4 md:p-6 grid-cols-1 md:grid-cols-5 gap-4 items-end">
         <div>
           <label htmlFor="location" className="block text-base font-normal text-[#1e1e1e] mb-2 md:mb-1">

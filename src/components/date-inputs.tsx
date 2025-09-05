@@ -59,7 +59,7 @@ const DateInput: React.FC<DateInputProps> = ({ id, label, bookedDates = [], onDa
         {open && (
           <>
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 md:hidden"
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:hidden"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
