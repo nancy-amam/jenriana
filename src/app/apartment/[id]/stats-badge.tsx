@@ -31,7 +31,7 @@ export default function StatBadges({ maxGuests, beds, baths, location }: Props) 
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="border border-gray-200 rounded-xl p-4 flex flex-col items-center bg-white/70 backdrop-blur"
+          className="border border-gray-200 rounded-xl p-4 flex flex-col items-center bg-white/70"
         >
           <it.icon className="w-5 h-5 mb-1 text-[#111827]" />
           <span className="text-sm font-medium text-[#111827]">{it.label}</span>
