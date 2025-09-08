@@ -4,9 +4,10 @@ export interface IUser extends Document {
   email: string;
   fullname: string;
   phone: string;
-  password: string
+  password: string;
   role: "admin" | "user";
-  totalBookings: number
+  totalBookings: number;
+  favorites: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,8 +18,9 @@ const UserSchema: Schema = new Schema(
     fullname: { type: String, required: true },
     phone: { type: String, required: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["admin", "user"], default: "user"},
-    totalBookings: { type: Number, default: 0 }
+    role: { type: String, enum: ["admin", "user"], default: "user" },
+    totalBookings: { type: Number, default: 0 },
+    favorites: [{ type: Schema.Types.ObjectId, ref: "Apartment" }],
   },
   { timestamps: true }
 );

@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// /app/api/apartments/[id]/route.ts
-
 import { NextResponse } from "next/server";
 import Apartment from "@/models/apartment";
 import connectDB from "../../lib/mongodb";

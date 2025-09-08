@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextResponse } from "next/server";
 import connectDB from "../lib/mongodb";
 import Apartment, { IAddon } from "@/models/apartment";
@@ -58,7 +57,6 @@ export async function POST(request: Request) {
     }
     const formData = await request.formData();
 
-    // Map frontend fields to variables
     const name = formData.get("name") as string;
     const location = formData.get("location") as string;
     const address = formData.get("address") as string;

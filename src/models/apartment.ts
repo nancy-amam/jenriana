@@ -5,7 +5,7 @@ export interface IAddon {
   name: string;
   description?: string;
   price: number;
-  pricingType: "perNight" | "oneTime"; // pricing model
+  pricingType: "perNight" | "oneTime"; 
   active: boolean;
 }
 export interface IApartment extends Document {
@@ -26,7 +26,7 @@ export interface IApartment extends Document {
     createdAt: Date;
   }[];
   rules: string[];
-  status: 'active' | 'inactive'
+  status: "active" | "inactive";
   isTrending: boolean;
   addons: IAddon[];
   createdAt: Date;
@@ -61,13 +61,13 @@ const ApartmentSchema: Schema = new Schema(
         userId: { type: Schema.Types.ObjectId, ref: "User" },
         comment: { type: String, required: true },
         rating: { type: Number, required: true },
-        createdAt: { type: Date, default: Date.now }
-      }
+        createdAt: { type: Date, default: Date.now },
+      },
     ],
     rules: [String],
     isTrending: { type: Boolean, default: false },
     addons: { type: [AddonSchema], default: [] },
-    status: { type: String, enum: ["active", "inactive"], default : 'active'}
+    status: { type: String, enum: ["active", "inactive"], default: "active" },
   },
   { timestamps: true }
 );
