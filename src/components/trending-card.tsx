@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { StarIcon } from "lucide-react";
+import { useInView } from "react-intersection-observer";
 
 interface Apartment {
   id: string;
@@ -18,13 +21,22 @@ interface TrendingApartmentCardProps {
   apartment: Apartment;
 }
 
-export function TrendingApartmentCard({ apartment }: TrendingApartmentCardProps) {
-  const displayRating = typeof apartment.rating === "number" ? apartment.rating.toFixed(1) : "4.8";
+export function TrendingApartmentCard({
+  apartment,
+}: TrendingApartmentCardProps) {
+  const displayRating =
+    typeof apartment.rating === "number" ? apartment.rating.toFixed(1) : "4.8";
+  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.2 });
 
   return (
     <Link href={`/apartment/${apartment.id}`}>
-      <div className="w-[313px] h-[464px] flex-shrink-0 rounded-[20px] border border-white overflow-hidden bg-white cursor-pointer">
-        <div className="w-full h-[332px] overflow-hidden rounded-t-[20px]">
+      <div
+        ref={ref}
+        className={`w-[250px] flex-shrink-0 rounded-lg border border-white overflow-hidden bg-white cursor-pointer transition-all duration-700 ease-out transform-gpu will-change-transform ${
+          inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+        }`}
+      >
+        <div className="w-full h-[150px] overflow-hidden rounded-t-lg">
           <Image
             src={apartment.imageUrl || "/placeholder.svg"}
             alt={apartment.name}
@@ -33,14 +45,20 @@ export function TrendingApartmentCard({ apartment }: TrendingApartmentCardProps)
             className="w-full h-full object-cover"
           />
         </div>
-        <div className="p-4 flex flex-col gap-2 rounded-b-[20px]">
-          <h3 className="text-base text-[#1e1e1e] font-normal">{apartment.name}</h3>
-          <p className="text-sm text-[#4b5568]">{apartment.location}</p>
+        <div className="p-4 flex flex-col rounded-b-[20px]">
+          <h3 className="text-sm capitalize text-[#1e1e1e] font-semibold">
+            {apartment.name}
+          </h3>
+          <p className="text-xs text-[#4b5568] capitalize">
+            {apartment.location}
+          </p>
           <div className="flex items-center justify-between mt-2">
-            <span className="text-base text-[#1e1e1e] font-normal">{apartment.price}</span>
+            <span className="text-base text-[#1e1e1e] font-semibold">
+              {apartment.price}/night
+            </span>
             <div className="flex items-center gap-1">
-              <StarIcon className="h-4 w-4 text-amber-400 fill-amber-400" />
-              <span className="text-sm font-medium">{displayRating}</span>
+              <StarIcon className="h-2 w-2 text-amber-400 fill-amber-400" />
+              <span className="text-xs font-medium">{displayRating}</span>
             </div>
           </div>
         </div>

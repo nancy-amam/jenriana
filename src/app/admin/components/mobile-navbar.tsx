@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import { Plus } from 'lucide-react';
-import { useApartmentModal } from '@/context/apartment-context';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Plus } from "lucide-react";
+import { useApartmentModal } from "@/context/apartment-context";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const getPageTitle = (path: string) => {
-  if (path.includes('/apartments')) return 'Apartment Management';
-  if (path.includes('/bookings')) return 'Booking Management';
-  if (path.includes('/guests')) return 'User & Client Management';
-  return 'Analytics';
+  if (path.includes("/apartments")) return "Apartment Management";
+  if (path.includes("/bookings")) return "Booking Management";
+  if (path.includes("/guests")) return "User & Client Management";
+  return "Analytics";
 };
 
 const getPageCount = (path: string) => {
-  if (path.includes('/bookings')) return '';
-  if (path.includes('/guests')) return '';
-  return '';
+  if (path.includes("/bookings")) return "";
+  if (path.includes("/guests")) return "";
+  return "";
 };
 
 interface MobileNavbarProps {
@@ -25,11 +25,7 @@ interface MobileNavbarProps {
   apartmentData?: any; // Use your Apartment interface type
 }
 
-export default function MobileNavbar({ 
-  isApartmentsPage, 
-  editMode = false, 
-  apartmentData 
-}: MobileNavbarProps) {
+export default function MobileNavbar({ isApartmentsPage, editMode = false, apartmentData }: MobileNavbarProps) {
   const pathname = usePathname();
   const title = getPageTitle(pathname);
   const count = getPageCount(pathname);

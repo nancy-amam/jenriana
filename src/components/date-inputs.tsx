@@ -1,141 +1,116 @@
 "use client";
-import { FC, useRef, useEffect, useState } from "react";
+
+import React, { useEffect, useRef, useState } from "react";
+import { DayPicker } from "react-day-picker";
+import { format } from "date-fns";
+import { AnimatePresence, motion } from "framer-motion";
+import "react-day-picker/dist/style.css";
 
 interface DateInputProps {
   id: string;
   label: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  bookedDates?: string[];
-  minDate?: string;
-  maxDate?: string;
-  disabled?: boolean;
+  bookedDates?: Date[];
+  onDateChange?: (date: Date | undefined) => void;
 }
 
-const DateInput: FC<DateInputProps> = ({ 
-  id, 
-  label, 
-  value, 
-  onChange, 
-  bookedDates = [],
-  minDate,
-  maxDate,
-  disabled = false
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [isDateBooked, setIsDateBooked] = useState(false);
+const DateInput: React.FC<DateInputProps> = ({ id, label, bookedDates = [], onDateChange }) => {
+  const [selected, setSelected] = useState<Date | undefined>();
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Check if selected date is booked
   useEffect(() => {
-    if (value && bookedDates.length > 0) {
-      setIsDateBooked(bookedDates.includes(value));
-    } else {
-      setIsDateBooked(false);
-    }
-  }, [value, bookedDates]);
+    const onClick = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
 
-  const handleIconClick = () => {
-    if (!inputRef.current || disabled) return;
-
-    // For Chrome/Edge
-    if (typeof (inputRef.current as any).showPicker === "function") {
-      (inputRef.current as any).showPicker();
-    } else {
-      // Fallback for Safari/Firefox
-      inputRef.current.focus();
-    }
+  const handleSelect = (date: Date | undefined) => {
+    setSelected(date);
+    onDateChange?.(date);
+    setOpen(false);
   };
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedDate = e.target.value;
-    
-    // Check if the selected date is booked
-    if (selectedDate && bookedDates.includes(selectedDate)) {
-      // Show warning but still allow the change (parent component can handle validation)
-      console.warn(`Selected date ${selectedDate} is already booked`);
-    }
-    
-    if (onChange) {
-      onChange(e);
-    }
-  };
-
-  // Set min date to today if not provided
-  const defaultMinDate = minDate || new Date().toISOString().split('T')[0];
 
   return (
-    <div className="w-full">
-      <label
-        htmlFor={id}
-        className="block text-base font-normal text-[#1e1e1e] mb-2 md:mb-2"
-      >
+    <div ref={wrapperRef} className="relative">
+      <label htmlFor={id} className="block text-base font-normal text-[#1e1e1e] mb-2 md:mb-1">
         {label}
       </label>
 
-      <div className="relative w-full cursor-pointer">
-        <input
-          ref={inputRef}
-          id={id}
-          type="date"
-          value={value}
-          onChange={handleDateChange}
-          min={defaultMinDate}
-          max={maxDate}
-          disabled={disabled}
-          className={`w-full md:pr-10 px-1 py-1 md:px-3 md:py-3 cursor-pointer md:rounded-xl border border-[#ffffff] rounded-xl bg-white md:bg-white border-none md:border md:border-gray-300 focus:outline-none focus:ring-2 focus:ring-black text-left caret-black [appearance:none] [-moz-appearance:textfield] ${
-            !value ? 'text-transparent' : 'text-black'
-          } ${
-            disabled ? 'opacity-50 cursor-not-allowed' : ''
-          } ${
-            isDateBooked ? 'border-red-500 focus:ring-red-500' : ''
-          }`}
-          style={{
-            colorScheme: "light",
-          }}
-        />
+      <motion.button
+        id={id}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        whileTap={{ scale: 0.98 }}
+        className="w-full px-3 py-4 rounded-xl md:rounded-none bg-white md:bg-transparent border border-gray-200 text-left"
+      >
+        {selected ? format(selected, "MMM d, yyyy") : "Add date"}
+      </motion.button>
 
-        {/* Custom Placeholder-like Text */}
-        {!value && (
-          <span
-            className="pointer-events-none absolute left-5 top-[45%] -translate-y-1/2 text-black select-none text-base md:text-base"
-            style={{ userSelect: "none" }}
-          >
-            mm/dd/yyyy
-          </span>
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div
+                className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                onClick={() => setOpen(false)}
+                aria-hidden="true"
+              />
+              <motion.div
+                role="dialog"
+                aria-modal="true"
+                initial={{ y: 20, opacity: 0, scale: 0.98 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 20, opacity: 0, scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 380, damping: 28, mass: 0.6 }}
+                className="relative w-full max-w-sm rounded-2xl border bg-white shadow-2xl p-2"
+              >
+                <DayPicker
+                  mode="single"
+                  selected={selected}
+                  onSelect={handleSelect}
+                  modifiers={{ booked: bookedDates }}
+                  modifiersStyles={{ booked: { backgroundColor: "#e5e7eb", borderRadius: "50%", color: "#9ca3af" } }}
+                  disabled={bookedDates}
+                />
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              key="calendar-desktop"
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 380, damping: 26, mass: 0.6 }}
+              className="hidden md:block absolute left-0 mt-2 z-50"
+            >
+              <div className="bg-white rounded-xl border shadow-lg p-2">
+                <DayPicker
+                  mode="single"
+                  selected={selected}
+                  onSelect={handleSelect}
+                  modifiers={{ booked: bookedDates }}
+                  modifiersStyles={{ booked: { backgroundColor: "#e5e7eb", borderRadius: "50%", color: "#9ca3af" } }}
+                  disabled={bookedDates}
+                />
+              </div>
+            </motion.div>
+          </>
         )}
-
-        {/* Calendar Icon Button */}
-        <button
-          type="button"
-          onClick={handleIconClick}
-          disabled={disabled}
-          className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#a6a6a6] ${
-            disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-          }`}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-5 h-5"
-            fill="#a6a6a6"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-        </button>
-      </div>
-
-      {/* Warning message for booked dates */}
-      {isDateBooked && (
-        <p className="text-red-500 text-xs mt-0.5">
-          This date is already booked. Please select another date.
-        </p>
-      )}
+      </AnimatePresence>
     </div>
   );
 };

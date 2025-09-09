@@ -32,10 +32,7 @@ const Navbar = () => {
     }
   };
 
-  const handleProtectedLinkClick = (
-    e: React.MouseEvent,
-    href: string
-  ) => {
+  const handleProtectedLinkClick = (e: React.MouseEvent, href: string) => {
     if (!isLoggedIn) {
       e.preventDefault();
       router.push("/login");
@@ -52,7 +49,10 @@ const Navbar = () => {
 
         {/* Desktop Links */}
         <div className="hidden md:flex space-x-8 absolute left-1/2 transform -translate-x-1/2">
-          <Link href="/" className="text-[#1e1e1e] hover:text-black font-medium">
+          <Link
+            href="/"
+            className="text-[#1e1e1e] hover:text-black font-medium"
+          >
             Home
           </Link>
 
