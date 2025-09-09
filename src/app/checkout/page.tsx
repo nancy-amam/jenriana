@@ -10,7 +10,6 @@ import AddonSelection from './components/adds-on';
 import BookingSummary from './components/booking-summary';
 import { getApartmentById, createBooking } from '@/services/api-services';
 
-// Define interfaces
 interface Addon {
   _id: string;
   name: string;

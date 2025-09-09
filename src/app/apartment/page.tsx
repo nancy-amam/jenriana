@@ -28,20 +28,27 @@ export default function ApartmentsPage() {
   const [visibleCount, setVisibleCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const fetchApartments = async () => {
-      try {
-        setLoading(true);
-        const response = await getApartments();
-        setApartments(response.data || []);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch apartments");
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Function to fetch apartments with current filters
+  const fetchApartments = async () => {
+    try {
+      setLoading(true);
+      const response = await getApartments(
+        1, // page
+        50, // limit - get more apartments at once
+        filters.location || undefined,
+        filters.guests || 2
+      );
+      setApartments(response.data || []);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch apartments");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Initial load
+  useEffect(() => {
     fetchApartments();
 
     // check mobile/desktop
@@ -51,7 +58,7 @@ export default function ApartmentsPage() {
     checkScreen();
     window.addEventListener("resize", checkScreen);
     return () => window.removeEventListener("resize", checkScreen);
-  }, []);
+  }, []); // Remove filters dependency to avoid infinite loops
 
   useEffect(() => {
     setVisibleCount(isMobile ? 3 : 8);
@@ -61,19 +68,14 @@ export default function ApartmentsPage() {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
 
-  const [searched, setSearched] = useState(false);
-  const filtered = searched
-    ? apartments.filter((apt) => {
-        const matchesLocation =
-          !filters.location ||
-          apt.location.toLowerCase().includes(filters.location.toLowerCase());
-        const matchesGuests =
-          !filters.guests || (apt.maxGuests ?? 0) >= filters.guests;
-        return matchesLocation && matchesGuests;
-      })
-    : apartments;
+  // Handle search - now actually calls the API
+  const handleSearch = async () => {
+    await fetchApartments();
+    setVisibleCount(isMobile ? 3 : 8); // Reset visible count after search
+  };
 
-  const sorted = [...filtered].sort((a, b) => {
+  // Since we're now filtering on the backend, we don't need client-side filtering
+  const sorted = [...apartments].sort((a, b) => {
     switch (sortBy) {
       case "priceLowHigh":
         return a.pricePerNight - b.pricePerNight;
@@ -99,7 +101,7 @@ export default function ApartmentsPage() {
         <SearchBar
           filters={filters}
           onFilterChange={handleFilterChange}
-          onSearch={() => setSearched(true)}
+          onSearch={handleSearch} // Now calls the API
           buttonLabel="Search"
         />
       </div>
@@ -122,7 +124,6 @@ export default function ApartmentsPage() {
           </select>
         </div>
 
-        {/* Apartments Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 md:gap-4 ">
           <ApartmentList
             apartments={visibleApartments}
@@ -131,7 +132,6 @@ export default function ApartmentsPage() {
           />
         </div>
 
-        {/* Load More Button */}
         {visibleCount < sorted.length && (
           <div className="flex justify-center mt-10">
             <button
