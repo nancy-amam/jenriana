@@ -28,13 +28,12 @@ export default function ApartmentsPage() {
   const [visibleCount, setVisibleCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Function to fetch apartments with current filters
   const fetchApartments = async () => {
     try {
       setLoading(true);
       const response = await getApartments(
-        1, // page
-        50, // limit - get more apartments at once
+        1, 
+        50, 
         filters.location || undefined,
         filters.guests || 2
       );
@@ -47,18 +46,18 @@ export default function ApartmentsPage() {
     }
   };
 
-  // Initial load
+  
   useEffect(() => {
     fetchApartments();
 
-    // check mobile/desktop
+ 
     const checkScreen = () => {
       setIsMobile(window.innerWidth < 768);
     };
     checkScreen();
     window.addEventListener("resize", checkScreen);
     return () => window.removeEventListener("resize", checkScreen);
-  }, []); // Remove filters dependency to avoid infinite loops
+  }, []); 
 
   useEffect(() => {
     setVisibleCount(isMobile ? 6 : 8);
@@ -68,13 +67,13 @@ export default function ApartmentsPage() {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Handle search - now actually calls the API
+
   const handleSearch = async () => {
     await fetchApartments();
-    setVisibleCount(isMobile ? 3 : 8); // Reset visible count after search
+    setVisibleCount(isMobile ? 3 : 8); 
   };
 
-  // Since we're now filtering on the backend, we don't need client-side filtering
+
   const sorted = [...apartments].sort((a, b) => {
     switch (sortBy) {
       case "priceLowHigh":
@@ -101,7 +100,7 @@ export default function ApartmentsPage() {
         <SearchBar
           filters={filters}
           onFilterChange={handleFilterChange}
-          onSearch={handleSearch} // Now calls the API
+          onSearch={handleSearch} 
           buttonLabel="Search"
         />
       </div>

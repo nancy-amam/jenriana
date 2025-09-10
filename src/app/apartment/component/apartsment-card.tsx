@@ -17,7 +17,7 @@ interface FeaturedApartmentCardProps {
   guests: number;
   beds: number;
   baths: number;
-  isGuestFavourite?: boolean; // 👈 optional
+  isGuestFavourite?: boolean; 
   className?: string;
 }
 
