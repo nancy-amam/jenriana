@@ -4,6 +4,26 @@ import Apartment from "@/models/apartment";
 import Booking from "@/models/bookings";
 import connectDB from "../../lib/mongodb";
 
+// CORS headers function
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:3000' 
+      : 'https://jenriana-frontend.vercel.app',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  };
+}
+
+// Handle preflight OPTIONS request
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: corsHeaders()
+  });
+}
+
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
@@ -17,7 +37,7 @@ export async function GET(req: NextRequest) {
 
     const checkIn = searchParams.get("checkIn");
     const checkOut = searchParams.get("checkOut");
-    const guests = searchParams.get("guests"); 
+    const guests = searchParams.get("guests");
 
     const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") === "asc" ? 1 : -1;
@@ -26,7 +46,6 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const skip = (page - 1) * limit;
 
-    
     const query: any = {};
 
     if (location) {
@@ -44,10 +63,9 @@ export async function GET(req: NextRequest) {
     }
 
     if (guests) {
-      query.maxGuests = { $gte: Number(guests) }; 
+      query.maxGuests = { $gte: Number(guests) };
     }
 
-    
     let bookedApartmentIds: string[] = [];
     if (checkIn && checkOut) {
       const bookings = await Booking.find({
@@ -66,7 +84,6 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    
     const apartments = await Apartment.find(query)
       .sort({ [sortBy]: sortOrder })
       .skip(skip)
@@ -82,13 +99,18 @@ export async function GET(req: NextRequest) {
       limit,
       total,
       totalPages,
-      apartments,
+      data: apartments, // Changed from 'apartments' to 'data' to match your getApartments function
+    }, {
+      headers: corsHeaders() // Add CORS headers to the response
     });
   } catch (error: any) {
     console.error("Search error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch apartments" },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: corsHeaders() // Add CORS headers to error response too
+      }
     );
   }
 }
