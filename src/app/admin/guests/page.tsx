@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
-import { getAllUsers, deleteUser } from '@/services/api-services';
-import ApartmentLoadingPage from '@/components/loading';
-import DeleteUserModal from '../components/delete-user';
+import { useState, useEffect, useMemo } from "react";
+import { Pencil, Trash2 } from "lucide-react";
+import { getAllUsers, deleteUser } from "@/services/api-services";
+import ApartmentLoadingPage from "@/components/loading";
+import DeleteUserModal from "../components/delete-user";
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -45,7 +45,7 @@ interface UsersResponse {
 }
 
 export default function AdminGuestsPage() {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +66,7 @@ export default function AdminGuestsPage() {
       const response: UsersResponse = await getAllUsers(page, limit, searchQuery?.trim() || undefined);
 
       if (!response.users || !Array.isArray(response.users)) {
-        throw new Error('Invalid response: users array is missing or not an array');
+        throw new Error("Invalid response: users array is missing or not an array");
       }
 
       setUsers(response.users);
@@ -74,7 +74,7 @@ export default function AdminGuestsPage() {
       setTotalUsers(response.pagination?.total || 0);
       setCurrentPage(response.pagination?.page || page);
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to fetch users';
+      const errorMessage = err.message || "Failed to fetch users";
       setError(errorMessage);
       setUsers([]);
     } finally {
@@ -97,7 +97,7 @@ export default function AdminGuestsPage() {
       setIsModalOpen(false);
       setUserToDelete(null);
     } catch (err: any) {
-      setError(err.message || 'Failed to delete user');
+      setError(err.message || "Failed to delete user");
     } finally {
       setLoading(false);
     }
@@ -163,7 +163,7 @@ export default function AdminGuestsPage() {
               <th>Email</th>
               <th>Phone Number</th>
               <th>Total Bookings</th>
-              <th>Actions</th>
+              {/* <th>Actions</th> */}
             </tr>
           </thead>
           <tbody>
@@ -173,7 +173,7 @@ export default function AdminGuestsPage() {
                 <td>{user.email}</td>
                 <td>{user.phone}</td>
                 <td>{user.totalBookings}</td>
-                <td className="flex gap-3 items-center py-2">
+                {/* <td className="flex gap-3 items-center py-2">
                   <button className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1">
                     <Pencil className="w-4 h-4" /> Edit
                   </button>
@@ -183,7 +183,7 @@ export default function AdminGuestsPage() {
                   >
                     <Trash2 className="w-4 h-4" /> Delete
                   </button>
-                </td>
+                </td> */}
               </tr>
             ))}
           </tbody>
@@ -193,17 +193,12 @@ export default function AdminGuestsPage() {
       {/* Mobile Cards */}
       <div className="lg:hidden space-y-4 mt-6">
         {memoizedUsers.map((user) => (
-          <div
-            key={user._id}
-            className="bg-white rounded-lg shadow-md p-4 relative"
-          >
+          <div key={user._id} className="bg-white rounded-lg shadow-md p-4 relative">
             <p className="text-sm font-semibold text-gray-800">{user.fullname}</p>
             <p className="text-sm text-gray-600">{user.email}</p>
             <p className="text-sm text-gray-600">{user.phone}</p>
-            <p className="text-sm text-gray-700 mt-1">
-              Total Bookings: {user.totalBookings}
-            </p>
-            <div className="flex gap-4 mt-4">
+            <p className="text-sm text-gray-700 mt-1">Total Bookings: {user.totalBookings}</p>
+            {/* <div className="flex gap-4 mt-4">
               <button className="flex-1 bg-[#f3f4f6] text-[#374151] py-2 cursor-pointer rounded-md text-sm font-medium flex items-center justify-center gap-1">
                 <Pencil className="w-4 h-4" /> Edit
               </button>
@@ -213,7 +208,7 @@ export default function AdminGuestsPage() {
               >
                 <Trash2 className="w-4 h-4" /> Delete
               </button>
-            </div>
+            </div> */}
           </div>
         ))}
       </div>
@@ -237,7 +232,7 @@ export default function AdminGuestsPage() {
       {totalUsers > 0 && (
         <div className="w-full max-w-[1200px] bottom-0 flex flex-col sm:flex-row items-center justify-between mt-6 text-sm text-gray-500">
           <span className="mb-2 sm:mb-0">
-            Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalUsers)} of {totalUsers} users
+            Showing {(currentPage - 1) * limit + 1} to {Math.min(currentPage * limit, totalUsers)} of {totalUsers} users
           </span>
           <div className="flex gap-2">
             <button
@@ -254,9 +249,7 @@ export default function AdminGuestsPage() {
                 <button
                   key={pageNumber}
                   onClick={() => handlePageChange(pageNumber)}
-                  className={`px-3 py-1 border rounded ${
-                    pageNumber === currentPage ? 'bg-black text-white' : ''
-                  }`}
+                  className={`px-3 py-1 border rounded ${pageNumber === currentPage ? "bg-black text-white" : ""}`}
                 >
                   {pageNumber}
                 </button>

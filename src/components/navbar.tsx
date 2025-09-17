@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
+import Image from "next/image";
 
 const Navbar = () => {
   const router = useRouter();
@@ -44,7 +45,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="text-2xl font-semibold text-[#1e1e1e]">
-          Jenrianna
+          <Image src={"/images/logo.png"} alt="Jenriana" width={100} height={30} />
         </Link>
 
         {/* Desktop Links */}

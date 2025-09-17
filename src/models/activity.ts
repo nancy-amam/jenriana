@@ -1,4 +1,3 @@
-// models/activity.ts
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export type ActivityType =

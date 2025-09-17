@@ -1,15 +1,16 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Building2, BookOpen, Users, Menu, ChartNoAxesColumn } from 'lucide-react';
-import { useState } from 'react';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Building2, BookOpen, Users, Menu, ChartNoAxesColumn } from "lucide-react";
+import { useState } from "react";
+import Image from "next/image";
 
 const links = [
-  { href: '/admin/apartments', label: 'Apartments', icon: <Building2 className="w-4 h-4" /> },
-  { href: '/admin/bookings', label: 'Bookings', icon: <BookOpen className="w-4 h-4" /> },
-  { href: '/admin/guests', label: 'Guests', icon: <Users className="w-4 h-4" /> },
-  { href: '/admin/analytics', label: 'Analytics', icon: <ChartNoAxesColumn /> }
+  { href: "/admin/apartments", label: "Apartments", icon: <Building2 className="w-4 h-4" /> },
+  { href: "/admin/bookings", label: "Bookings", icon: <BookOpen className="w-4 h-4" /> },
+  { href: "/admin/guests", label: "Guests", icon: <Users className="w-4 h-4" /> },
+  { href: "/admin/analytics", label: "Analytics", icon: <ChartNoAxesColumn /> },
 ];
 
 interface AdminSidebarProps {
@@ -33,7 +34,7 @@ export default function AdminSidebar({ isMobile = false, onLinkClick }: AdminSid
                 <Link
                   href={link.href}
                   className={`flex items-center gap-2 px-4 py-3 text-base
-                    ${isActive ? 'bg-black text-white' : 'text-[#212121] hover:bg-gray-50'}`}
+                    ${isActive ? "bg-black text-white" : "text-[#212121] hover:bg-gray-50"}`}
                   onClick={onLinkClick} // Close mobile menu when link is clicked
                 >
                   {link.icon}
@@ -51,8 +52,8 @@ export default function AdminSidebar({ isMobile = false, onLinkClick }: AdminSid
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden md:block w-64 bg-white p-4">
-        <Link href='/'>
-            <h2 className="text-[24px] text-[#1e1e1e] font-bold mb-6">Jenrianna</h2>
+        <Link href="/" className="bg-red-300">
+          <Image src={"/images/logo.png"} alt="Jenriana" width={150} height={30} />
         </Link>
         <ul className="space-y-4 mt-20">
           {links.map((link) => {
@@ -62,7 +63,7 @@ export default function AdminSidebar({ isMobile = false, onLinkClick }: AdminSid
                 <Link
                   href={link.href}
                   className={`flex items-center gap-2 text-base px-3 py-2 rounded transition-colors
-                    ${isActive ? 'bg-black text-white' : 'text-[#212121] hover:text-black hover:bg-gray-100'}`}
+                    ${isActive ? "bg-black text-white" : "text-[#212121] hover:text-black hover:bg-gray-100"}`}
                 >
                   {link.icon}
                   {link.label}
@@ -76,10 +77,7 @@ export default function AdminSidebar({ isMobile = false, onLinkClick }: AdminSid
       {/* Mobile Navbar - Only show when not in mobile prop mode */}
       <nav className="md:hidden bg-gray-100 px-4 py-3 flex items-center justify-between">
         <h2 className="text-[20px] text-[#1e1e1e] font-bold">Jenrianna</h2>
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="p-2 text-[#212121] hover:text-black"
-        >
+        <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 text-[#212121] hover:text-black">
           <Menu className="w-6 h-6" />
         </button>
       </nav>
@@ -95,7 +93,7 @@ export default function AdminSidebar({ isMobile = false, onLinkClick }: AdminSid
                   <Link
                     href={link.href}
                     className={`flex items-center gap-2 px-4 py-3 text-base
-                       ${isActive ? 'bg-black text-white' : 'text-[#212121] hover:bg-gray-50'}`}
+                       ${isActive ? "bg-black text-white" : "text-[#212121] hover:bg-gray-50"}`}
                     onClick={() => setMenuOpen(false)}
                   >
                     {link.icon}

@@ -30,9 +30,14 @@ const TestimonialsSection: React.FC = () => {
 
   return (
     <section className="px-4 md:px-16 text-center my-10 relative">
-      <h2 className="lg:text-xl font-semibold mb-6 md:mb-5 text-[#1e1e1e] text-left">What our guests say</h2>
+      <h2 className="lg:text-xl font-semibold mb-6 md:mb-5 text-[#1e1e1e] text-left">
+        What our guests say
+      </h2>
       <div className="relative">
-        <div ref={containerRef} className="flex overflow-x-hidden gap-6 no-scrollbar snap-x snap-mandatory">
+        <div
+          ref={containerRef}
+          className="flex overflow-x-hidden gap-6 no-scrollbar snap-x snap-mandatory"
+        >
           {testimonials.map((testimonial) => (
             <div key={testimonial.id} className="flex-shrink-0 snap-start w-72">
               <TestimonialCard testimonial={testimonial} />

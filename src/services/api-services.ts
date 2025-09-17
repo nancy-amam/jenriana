@@ -187,15 +187,18 @@ export async function getApartmentById(apartmentId: string): Promise<any> {
   }
 }
 
+
 export async function getApartments(
   page: number = 1,
   limit: number = 10,
-  location?: string
+  location?: string,
+  guests: number = 2
 ): Promise<any> {
   try {
     const params = new URLSearchParams({
       page: String(page),
       limit: String(limit),
+      guests: String(guests),
     });
 
     if (location?.trim()) {
@@ -203,7 +206,7 @@ export async function getApartments(
     }
 
     const response = await apiHandler(
-      `/api/apartment?${params.toString()}`,
+      `/api/apartment/search?${params.toString()}`,
       { method: "GET" }
     );
 
@@ -216,18 +219,17 @@ export async function getApartments(
 
     return response;
   } catch (error: any) {
-    console.error("Failed to fetch apartments:", {
+    console.error("Failed to search apartments:", {
       message: error.message,
       status: error.status,
       details: error,
     });
 
     throw new Error(
-      error.message || "Failed to fetch apartments. Please try again later."
+      error.message || "Failed to search apartments. Please try again later."
     );
   }
 }
-
 
 export async function updateApartment(
   apartmentId: string,
