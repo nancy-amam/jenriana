@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
+import Image from "next/image";
 
 const Navbar = () => {
   const router = useRouter();
@@ -44,29 +45,20 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="text-2xl font-semibold text-[#1e1e1e]">
-          Jenrianna
+          <Image src={"/images/logo.png"} alt="Jenriana" width={100} height={30} />
         </Link>
 
         {/* Desktop Links */}
         <div className="hidden md:flex space-x-8 absolute left-1/2 transform -translate-x-1/2">
-          <Link
-            href="/"
-            className="text-[#1e1e1e] hover:text-black font-medium"
-          >
+          <Link href="/" className="text-[#1e1e1e] hover:text-black font-medium">
             Home
           </Link>
 
-          <Link
-            href="/apartment"
-            className="text-[#1e1e1e] hover:text-black font-medium"
-          >
+          <Link href="/apartment" className="text-[#1e1e1e] hover:text-black font-medium">
             Apartments
           </Link>
 
-          <Link
-            href="/contact-us"
-            className="text-[#1e1e1e] hover:text-black font-medium"
-          >
+          <Link href="/contact-us" className="text-[#1e1e1e] hover:text-black font-medium">
             Contact
           </Link>
 
@@ -79,10 +71,7 @@ const Navbar = () => {
           </Link>
 
           {isAdmin && (
-            <Link
-              href="/admin"
-              className="text-[#1e1e1e] hover:text-black font-medium"
-            >
+            <Link href="/admin" className="text-[#1e1e1e] hover:text-black font-medium">
               Admin
             </Link>
           )}
@@ -105,11 +94,7 @@ const Navbar = () => {
           </button>
         )}
 
-        <button
-          className="md:hidden text-[#1e1e1e]"
-          onClick={() => setIsOpen(!isOpen)}
-          type="button"
-        >
+        <button className="md:hidden text-[#1e1e1e]" onClick={() => setIsOpen(!isOpen)} type="button">
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
@@ -117,27 +102,15 @@ const Navbar = () => {
       {/* Mobile Dropdown */}
       {isOpen && (
         <div className="md:hidden absolute top-16 left-0 w-full bg-white z-50 px-4 py-3 space-y-3">
-          <Link
-            href="/"
-            className="block text-[#1e1e1e]"
-            onClick={() => setIsOpen(false)}
-          >
+          <Link href="/" className="block text-[#1e1e1e]" onClick={() => setIsOpen(false)}>
             Home
           </Link>
 
-          <Link
-            href="/apartment"
-            className="block text-[#1e1e1e]"
-            onClick={() => setIsOpen(false)}
-          >
+          <Link href="/apartment" className="block text-[#1e1e1e]" onClick={() => setIsOpen(false)}>
             Apartments
           </Link>
 
-          <Link
-            href="/contact-us"
-            className="block text-[#1e1e1e]"
-            onClick={() => setIsOpen(false)}
-          >
+          <Link href="/contact-us" className="block text-[#1e1e1e]" onClick={() => setIsOpen(false)}>
             Contact
           </Link>
 
@@ -153,11 +126,7 @@ const Navbar = () => {
           </Link>
 
           {isAdmin && (
-            <Link
-              href="/admin"
-              className="block text-[#1e1e1e]"
-              onClick={() => setIsOpen(false)}
-            >
+            <Link href="/admin" className="block text-[#1e1e1e]" onClick={() => setIsOpen(false)}>
               Admin
             </Link>
           )}
