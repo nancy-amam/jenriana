@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { InstagramIcon, TwitterIcon, PhoneIcon as WhatsappIcon, MailIcon, PhoneIcon, MountainIcon } from "lucide-react";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -8,7 +9,7 @@ export function Footer() {
         {/* Jenrianna Section */}
         <div className="flex flex-col gap-4 col-span-2 lg:col-span-1 ">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold text-white">
-            <span>Jenrianna</span>
+            <Image src={"/images/logo2.jpg"} alt="Jenriana" width={100} height={30} />
           </Link>
           <p className="text-sm leading-relaxed max-w-[270px]">
             Your trusted partner for short-term apartment rentals across Nigeria.
@@ -20,22 +21,22 @@ export function Footer() {
           <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
           <ul className="space-y-2">
             <li>
-              <Link href="#" className="text-sm hover:underline underline-offset-4">
+              <Link href="/apartment" className="text-sm hover:underline underline-offset-4">
                 Apartments
               </Link>
             </li>
             <li>
-              <Link href="#" className="text-sm hover:underline underline-offset-4">
+              <Link href="/contact-us" className="text-sm hover:underline underline-offset-4">
                 Contact
               </Link>
             </li>
             <li>
-              <Link href="#" className="text-sm hover:underline underline-offset-4">
+              <Link href="/policy" className="text-sm hover:underline underline-offset-4">
                 Terms of Service
               </Link>
             </li>
             <li>
-              <Link href="#" className="text-sm hover:underline underline-offset-4">
+              <Link href="policy" className="text-sm hover:underline underline-offset-4">
                 Privacy Policy
               </Link>
             </li>
