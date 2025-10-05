@@ -36,6 +36,11 @@ export function Footer() {
               </Link>
             </li>
             <li>
+              <Link href="feedback" className="text-sm hover:underline underline-offset-4">
+                Feedback
+              </Link>
+            </li>
+            <li>
               <Link href="policy" className="text-sm hover:underline underline-offset-4">
                 Privacy Policy
               </Link>
