@@ -35,7 +35,7 @@ export function ApartmentCard({
   onToggleFavorite,
   disabled = false,
 }: ApartmentCardProps) {
-  const displayRating = typeof rating === "number" ? rating.toFixed(1) : "4.8";
+  const displayRating = typeof rating === "number" ? rating.toFixed(2) : "4.90";
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.2 });
   const [fav, setFav] = useState<boolean>(!!isFavorite);
 
@@ -53,55 +53,58 @@ export function ApartmentCard({
   };
 
   return (
-    <Link href={`/apartment/${id}`} className="group">
+    <Link href={`/apartment/${id}`} className="group block">
       <div
         ref={ref}
-        className={`w-[250px] flex-shrink-0 rounded-lg overflow-hidden bg-white transition-all duration-700 ease-out transform-gpu will-change-transform cursor-pointer ${
+        className={`w-[250px] flex-shrink-0 rounded-lg border border-white overflow-hidden bg-white cursor-pointer transition-all duration-700 ease-out transform-gpu will-change-transform ${
           inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
         }`}
       >
-        <div className="relative w-full h-[150px] overflow-hidden">
+        <div className="relative w-full  h-[150px]  overflow-hidden rounded-2xl">
           <Image
             src={imageUrl || "/placeholder.svg"}
             alt={name}
-            width={424}
-            height={384}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="(min-width:1280px) 16vw, (min-width:1024px) 20vw, (min-width:768px) 30vw, 50vw"
+            priority={false}
           />
           <button
             onClick={handleFavClick}
             aria-pressed={fav}
             aria-label={fav ? "Remove from favourites" : "Add to favourites"}
             disabled={disabled}
-            className={`absolute top-2 right-2 rounded-full p-2 shadow transition-all duration-200 ${
-              fav ? "bg-white text-red-500" : "bg-white/90 text-gray-700"
-            } opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:scale-105 active:scale-95`}
+            className={`absolute top-2 right-2 rounded-full p-2 bg-white/90 shadow transition hover:scale-105 active:scale-95 ${
+              fav ? "text-red-500" : "text-gray-800"
+            } opacity-100 md:opacity-0 md:group-hover:opacity-100`}
           >
             <Heart className={`h-5 w-5 ${fav ? "fill-red-500" : "fill-transparent"}`} />
           </button>
         </div>
 
-        <div className="p-4 flex flex-col text-[#1e1e1e] gap-2">
-          <h3 className="text-sm capitalize font-semibold">{name}</h3>
-          <p className="text-xs capitalize text-[#4b5568]">{location}</p>
-          <div className="flex items-center justify-between">
-            <span className="text-base text-[#1e1e1e] font-semibold">{price}/night</span>
-            <div className="flex items-center gap-1">
-              <StarIcon className="h-2 w-2 text-amber-400 fill-amber-400" />
-              <span className="text-xs font-medium">{displayRating}</span>
-            </div>
+        <div className="mt-2 lg:p-2 flex flex-col gap-1 p-2">
+          <h3 className="text-sm font-semibold text-[#1e1e1e] truncate">{name}</h3>
+          <p className="text-xs text-[#4b5563] truncate">{location}</p>
+          <div className="mt-1 flex items-center justify-between text-xs text-[#1e1e1e]">
+            <span className="flex items-center gap-1">
+              {price} / night <span className="text-[#9aa0a6]">•</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <StarIcon className="h-3 w-3 text-amber-400 fill-amber-400" />
+              {displayRating}
+            </span>
           </div>
-          <div className="flex items-center gap-4 text-[#4b5568] text-xs">
+          <div className="mt-1 flex items-center gap-4 text-[#4b5568] text-[11px]">
             <div className="flex items-center gap-1">
-              <UsersIcon className="h-2 w-2" />
+              <UsersIcon className="h-3 w-3" />
               <span>{guests} Guests</span>
             </div>
             <div className="flex items-center gap-1">
-              <BedIcon className="h-2 w-2" />
+              <BedIcon className="h-3 w-3" />
               <span>{beds} Beds</span>
             </div>
             <div className="flex items-center gap-1">
-              <BathIcon className="h-2 w-2" />
+              <BathIcon className="h-3 w-3" />
               <span>{baths} Baths</span>
             </div>
           </div>

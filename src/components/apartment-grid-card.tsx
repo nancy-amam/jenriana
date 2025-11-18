@@ -71,13 +71,13 @@ export function ApartmentGridCard({
       <div className="mt-2 lg:p-2">
         <h3 className="text-sm font-medium text-[#1e1e1e] truncate">{name}</h3>
         <p className="text-xs text-[#4b5563] truncate">{location}</p>
-        <p className="text-xs text-[#1e1e1e] mt-1 flex items-center justify-between gap-1">
+        <div className="text-xs text-[#1e1e1e] mt-1 flex items-center justify-between gap-1">
           {priceLabel} / night <span className="text-[#9aa0a6]">•</span>
           <div className="wrap flex items-center gap-1">
             <StarIcon className="h-3 w-3 text-amber-400 fill-amber-400" />
             {displayRating}
           </div>
-        </p>
+        </div>
       </div>
     </div>
   );

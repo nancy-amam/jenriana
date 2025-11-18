@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import DateInput from "@/components/date-inputs";
 import { Search, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface SearchFilters {
   location: string;
@@ -26,8 +27,26 @@ export default function SearchBar({
   showBlack,
 }: SearchBarProps) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlLocation = searchParams.get("location") || "";
+
+  useEffect(() => {
+    handleSearch();
+    if (urlLocation && urlLocation !== filters.location) {
+      onFilterChange("location", urlLocation);
+      if (pathname === "/") router.push("/apartment");
+    }
+    alert("hh");
+
+    if (urlLocation !== "") {
+      // alert(urlLocation);
+    }
+  }, [searchParams, urlLocation]);
 
   const handleSearch = () => {
+    // alert("hh");
     onSearch?.();
     setOpen(false);
   };
@@ -90,7 +109,10 @@ export default function SearchBar({
 
         <div className="md:pt-5 mx-auto w-full">
           <button
-            onClick={handleSearch}
+            onClick={() => {
+              if (pathname === "/") router.push("/apartment");
+              handleSearch();
+            }}
             className="w-full bg-black mt-2 md:mt-0 text-white py-3 md:px-6 px-16 rounded-xl hover:bg-gray-800 transition cursor-pointer"
           >
             {buttonLabel}
@@ -126,6 +148,7 @@ export default function SearchBar({
               className="absolute inset-0 bg-black/40 backdrop-blur-sm"
               onClick={() => setOpen(false)}
             />
+
             <motion.div
               initial={{ y: 32, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -141,7 +164,6 @@ export default function SearchBar({
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setOpen(false)}
                       className="h-9 w-9 inline-flex items-center justify-center rounded-full bg-black/5"
-                      aria-label="Close"
                       type="button"
                     >
                       <X className="h-4 w-4" />

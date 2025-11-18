@@ -39,6 +39,10 @@ const DateInput: React.FC<DateInputProps> = ({ id, label, bookedDates = [], onDa
     setOpen(false);
   };
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const disabledDays = [{ before: today }, ...bookedDates];
+
   return (
     <div ref={wrapperRef} className="relative">
       <label htmlFor={id} className="block text-base font-normal text-[#1e1e1e] mb-2 md:mb-1">
@@ -83,8 +87,10 @@ const DateInput: React.FC<DateInputProps> = ({ id, label, bookedDates = [], onDa
                   selected={selected}
                   onSelect={handleSelect}
                   modifiers={{ booked: bookedDates }}
-                  modifiersStyles={{ booked: { backgroundColor: "#e5e7eb", borderRadius: "50%", color: "#9ca3af" } }}
-                  disabled={bookedDates}
+                  modifiersStyles={{
+                    booked: { backgroundColor: "#e5e7eb", borderRadius: "50%", color: "#9ca3af" },
+                  }}
+                  disabled={disabledDays}
                 />
               </motion.div>
             </motion.div>
@@ -103,8 +109,10 @@ const DateInput: React.FC<DateInputProps> = ({ id, label, bookedDates = [], onDa
                   selected={selected}
                   onSelect={handleSelect}
                   modifiers={{ booked: bookedDates }}
-                  modifiersStyles={{ booked: { backgroundColor: "#e5e7eb", borderRadius: "50%", color: "#9ca3af" } }}
-                  disabled={bookedDates}
+                  modifiersStyles={{
+                    booked: { backgroundColor: "#e5e7eb", borderRadius: "50%", color: "#9ca3af" },
+                  }}
+                  disabled={disabledDays}
                 />
               </div>
             </motion.div>

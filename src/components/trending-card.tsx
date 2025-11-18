@@ -21,11 +21,8 @@ interface TrendingApartmentCardProps {
   apartment: Apartment;
 }
 
-export function TrendingApartmentCard({
-  apartment,
-}: TrendingApartmentCardProps) {
-  const displayRating =
-    typeof apartment.rating === "number" ? apartment.rating.toFixed(1) : "4.8";
+export function TrendingApartmentCard({ apartment }: TrendingApartmentCardProps) {
+  const displayRating = typeof apartment.rating === "number" ? apartment.rating.toFixed(1) : "4.8";
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.2 });
 
   return (
@@ -45,17 +42,13 @@ export function TrendingApartmentCard({
             className="w-full h-full object-cover"
           />
         </div>
-        <div className="p-4 flex flex-col rounded-b-[20px]">
-          <h3 className="text-sm capitalize text-[#1e1e1e] font-semibold">
+        <div className="p-2 flex flex-col rounded-b-[20px]">
+          <h3 className="text-sm capitalize text-[#1e1e1e] font-semibold whitespace-nowrap text-ellipsis overflow-hidden">
             {apartment.name}
           </h3>
-          <p className="text-xs text-[#4b5568] capitalize">
-            {apartment.location}
-          </p>
+          <p className="text-xs text-[#4b5568] capitalize">{apartment.location}</p>
           <div className="flex items-center justify-between mt-2">
-            <span className="text-base text-[#1e1e1e] font-semibold">
-              {apartment.price}/night
-            </span>
+            <span className="text-xs text-[#1e1e1e] font-semibold">{apartment.price}/night</span>
             <div className="flex items-center gap-1">
               <StarIcon className="h-2 w-2 text-amber-400 fill-amber-400" />
               <span className="text-xs font-medium">{displayRating}</span>

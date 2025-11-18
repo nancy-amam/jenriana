@@ -1,5 +1,12 @@
 import { apiHandler } from "@/utils/api-handler";
-import { SignInData, SignUpData, ApartmentData, AnalyticsResponse, CancelBookingResponse, ActivityResponse } from "@/lib/interface";
+import {
+  SignInData,
+  SignUpData,
+  ApartmentData,
+  AnalyticsResponse,
+  CancelBookingResponse,
+  ActivityResponse,
+} from "@/lib/interface";
 
 export async function signIn(data: SignInData) {
   return apiHandler("/api/auth/signin", {
@@ -15,10 +22,7 @@ export async function signUp(data: SignUpData) {
   });
 }
 
-export async function addApartment(
-  apartmentData: ApartmentData,
-  images: File[] = []
-): Promise<any> {
+export async function addApartment(apartmentData: ApartmentData, images: File[] = []): Promise<any> {
   try {
     // Validation
     if (!apartmentData.name?.trim()) {
@@ -44,7 +48,7 @@ export async function addApartment(
         if (!addon.price || addon.price <= 0) {
           throw new Error(`Addon ${index + 1} price must be greater than 0`);
         }
-        if (!addon.pricingType || !['perNight', 'oneTime'].includes(addon.pricingType)) {
+        if (!addon.pricingType || !["perNight", "oneTime"].includes(addon.pricingType)) {
           throw new Error(`Addon ${index + 1} pricing type must be 'perNight' or 'oneTime'`);
         }
       });
@@ -104,10 +108,7 @@ export async function addApartment(
       throw error;
     }
 
-    throw new Error(
-      error.message ||
-        "Failed to add apartment. Please check your data and try again."
-    );
+    throw new Error(error.message || "Failed to add apartment. Please check your data and try again.");
   }
 }
 
@@ -120,11 +121,11 @@ export async function getAdminApartments(page: number = 1, limit: number = 10, l
     });
 
     if (location?.trim()) {
-      params.append('location', location.trim());
+      params.append("location", location.trim());
     }
 
     const response = await apiHandler(`/api/admin/apartment?${params.toString()}`, {
-      method: 'GET',
+      method: "GET",
     });
 
     if (response.success && Array.isArray(response.data)) {
@@ -136,7 +137,7 @@ export async function getAdminApartments(page: number = 1, limit: number = 10, l
 
     return response;
   } catch (error: any) {
-    console.error('Failed to fetch apartments:', {
+    console.error("Failed to fetch apartments:", {
       message: error.message,
       status: error.status,
       details: error,
@@ -146,9 +147,7 @@ export async function getAdminApartments(page: number = 1, limit: number = 10, l
       throw error;
     }
 
-    throw new Error(
-      error.message || 'Failed to fetch apartments. Please try again later.'
-    );
+    throw new Error(error.message || "Failed to fetch apartments. Please try again later.");
   }
 }
 
@@ -166,7 +165,7 @@ export async function getApartmentById(apartmentId: string): Promise<any> {
       throw new Error("Invalid response from server");
     }
 
-     // 🔥 normalize _id → id
+    // 🔥 normalize _id → id
     response.data = {
       ...response.data,
       id: response.data._id,
@@ -180,13 +179,9 @@ export async function getApartmentById(apartmentId: string): Promise<any> {
       throw error;
     }
 
-    throw new Error(
-      error.message ||
-        "Failed to fetch apartment. Please try again later."
-    );
+    throw new Error(error.message || "Failed to fetch apartment. Please try again later.");
   }
 }
-
 
 export async function getApartments(
   page: number = 1,
@@ -205,10 +200,7 @@ export async function getApartments(
       params.append("location", location.trim());
     }
 
-    const response = await apiHandler(
-      `/api/apartment/search?${params.toString()}`,
-      { method: "GET" }
-    );
+    const response = await apiHandler(`/api/apartment/search?${params.toString()}`, { method: "GET" });
 
     if (response.success && Array.isArray(response.data)) {
       response.data = response.data.map((apt: any) => ({
@@ -225,9 +217,7 @@ export async function getApartments(
       details: error,
     });
 
-    throw new Error(
-      error.message || "Failed to search apartments. Please try again later."
-    );
+    throw new Error(error.message || "Failed to search apartments. Please try again later.");
   }
 }
 
@@ -265,7 +255,7 @@ export async function updateApartment(
         if (!addon.price || addon.price <= 0) {
           throw new Error(`Addon ${index + 1} price must be greater than 0`);
         }
-        if (!addon.pricingType || !['perNight', 'oneTime'].includes(addon.pricingType)) {
+        if (!addon.pricingType || !["perNight", "oneTime"].includes(addon.pricingType)) {
           throw new Error(`Addon ${index + 1} pricing type must be 'perNight' or 'oneTime'`);
         }
       });
@@ -323,10 +313,7 @@ export async function updateApartment(
       throw error;
     }
 
-    throw new Error(
-      error.message ||
-        "Failed to update apartment. Please check your data and try again."
-    );
+    throw new Error(error.message || "Failed to update apartment. Please check your data and try again.");
   }
 }
 
@@ -348,9 +335,7 @@ export async function deleteApartment(apartmentId: string): Promise<any> {
       throw error;
     }
 
-    throw new Error(
-      error.message || "Failed to delete apartment. Please try again."
-    );
+    throw new Error(error.message || "Failed to delete apartment. Please try again.");
   }
 }
 
@@ -400,7 +385,7 @@ export async function createBooking(
     if (!bookingData.customerPhone?.trim()) {
       throw new Error("Customer phone is required");
     }
-    if (!/^\+?\d{10,14}$/.test(bookingData.customerPhone.replace(/\s/g, ''))) {
+    if (!/^\+?\d{10,14}$/.test(bookingData.customerPhone.replace(/\s/g, ""))) {
       throw new Error("Invalid phone number");
     }
 
@@ -417,51 +402,44 @@ export async function createBooking(
       throw error;
     }
 
-    throw new Error(
-      error.message ||
-        "Failed to create booking. Please check your data and try again."
-    );
+    throw new Error(error.message || "Failed to create booking. Please check your data and try again.");
   }
 }
 
-export async function initiateCheckout(bookingId: string, paymentMethod: 'card' | 'bank-transfer'): Promise<any> {
+export async function initiateCheckout(bookingId: string, paymentMethod: "card" | "bank-transfer"): Promise<any> {
   try {
     if (!bookingId?.trim()) {
       throw new Error("Booking ID is required");
     }
-    
+
     // Use your production URL instead of localhost
-    const baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://jenriana-frontend.vercel.app' 
-      : 'http://localhost:3000';
-        
+    const baseUrl =
+      process.env.NODE_ENV === "production" ? "https://jenriana-frontend.vercel.app" : "http://localhost:3000";
+
     const response = await apiHandler(`/api/booking/${bookingId}/checkout`, {
       method: "POST",
       data: {
         paymentMethod,
         // Include bookingId in the callback URL so it's available after payment
-        callback_url: `${baseUrl}/payment-success?bookingId=${bookingId}`
+        callback_url: `${baseUrl}/payment-success?bookingId=${bookingId}`,
       },
     });
- 
+
     if (!response.success || !response.payment || !response.payment.authorization_url) {
       throw new Error("Invalid checkout response from server");
     }
     return response;
   } catch (error: any) {
     console.error(`Failed to initiate checkout for booking ID ${bookingId}:`, error);
- 
+
     if (error.status && error.message) {
       throw error;
     }
- 
-    throw new Error(
-      error.message ||
-        "Failed to initiate checkout. Please try again later."
-    );
+
+    throw new Error(error.message || "Failed to initiate checkout. Please try again later.");
   }
 }
-    
+
 export async function getActiveBookings(): Promise<any> {
   try {
     const response = await apiHandler(`/api/booking/user?type=active`, {
@@ -480,13 +458,10 @@ export async function getActiveBookings(): Promise<any> {
       throw error;
     }
 
-    throw new Error(
-      error.message ||
-        "Failed to fetch active bookings. Please try again later."
-    );
+    throw new Error(error.message || "Failed to fetch active bookings. Please try again later.");
   }
 }
-    
+
 export async function getBookingHistory(): Promise<any> {
   try {
     const response = await apiHandler(`/api/booking/user?type=history`, {
@@ -505,10 +480,7 @@ export async function getBookingHistory(): Promise<any> {
       throw error;
     }
 
-    throw new Error(
-      error.message ||
-        "Failed to fetch booking history. Please try again later."
-    );
+    throw new Error(error.message || "Failed to fetch booking history. Please try again later.");
   }
 }
 
@@ -540,10 +512,7 @@ export async function postApartmentComment(apartmentId: string, rating: number, 
       throw error;
     }
 
-    throw new Error(
-      error.message ||
-        "Failed to post comment. Please try again later."
-    );
+    throw new Error(error.message || "Failed to post comment. Please try again later.");
   }
 }
 
@@ -556,7 +525,7 @@ export async function getAllBookings(page: number = 1, limit: number = 10, searc
     });
 
     if (search?.trim()) {
-      params.append('search', search.trim());
+      params.append("search", search.trim());
     }
 
     const response = await apiHandler(`/api/booking/admin?${params.toString()}`, {
@@ -571,10 +540,7 @@ export async function getAllBookings(page: number = 1, limit: number = 10, searc
       throw error;
     }
 
-    throw new Error(
-      error.message ||
-        "Failed to fetch bookings. Please try again later."
-    );
+    throw new Error(error.message || "Failed to fetch bookings. Please try again later.");
   }
 }
 
@@ -587,7 +553,7 @@ export async function getAllUsers(page: number = 1, limit: number = 10, search?:
     });
 
     if (search?.trim()) {
-      params.append('search', search.trim());
+      params.append("search", search.trim());
     }
 
     const response = await apiHandler(`/api/admin/users?${params.toString()}`, {
@@ -602,10 +568,7 @@ export async function getAllUsers(page: number = 1, limit: number = 10, search?:
       throw error;
     }
 
-    throw new Error(
-      error.message ||
-        "Failed to fetch users. Please try again later."
-    );
+    throw new Error(error.message || "Failed to fetch users. Please try again later.");
   }
 }
 
@@ -630,10 +593,7 @@ export async function verifyPayment(reference: string, bookingId: string): Promi
       throw error;
     }
 
-    throw new Error(
-      error.message ||
-        "Failed to verify payment. Please try again later."
-    );
+    throw new Error(error.message || "Failed to verify payment. Please try again later.");
   }
 }
 
@@ -673,10 +633,7 @@ export async function getApartmentBookedDates(apartmentId: string): Promise<stri
       throw error;
     }
 
-    throw new Error(
-      error.message ||
-        "Failed to fetch booked dates. Please try again later."
-    );
+    throw new Error(error.message || "Failed to fetch booked dates. Please try again later.");
   }
 }
 
@@ -686,36 +643,32 @@ export function isDateBooked(date: string, bookedDates: string[]): boolean {
 }
 
 // Helper function to check if a date range overlaps with any booked dates
-export function isDateRangeAvailable(
-  checkIn: string, 
-  checkOut: string, 
-  bookedDates: string[]
-): boolean {
+export function isDateRangeAvailable(checkIn: string, checkOut: string, bookedDates: string[]): boolean {
   const startDate = new Date(checkIn);
   const endDate = new Date(checkOut);
-  
+
   // Generate all dates in the range (excluding checkout date)
   const dates = [];
   const currentDate = new Date(startDate);
-  
+
   while (currentDate < endDate) {
-    dates.push(currentDate.toISOString().split('T')[0]);
+    dates.push(currentDate.toISOString().split("T")[0]);
     currentDate.setDate(currentDate.getDate() + 1);
   }
-  
+
   // Check if any date in the range is booked
-  return !dates.some(date => bookedDates.includes(date));
+  return !dates.some((date) => bookedDates.includes(date));
 }
 
 // Helper function to get the next available date after a booked period
 export function getNextAvailableDate(fromDate: string, bookedDates: string[]): string {
   const currentDate = new Date(fromDate);
-  
-  while (bookedDates.includes(currentDate.toISOString().split('T')[0])) {
+
+  while (bookedDates.includes(currentDate.toISOString().split("T")[0])) {
     currentDate.setDate(currentDate.getDate() + 1);
   }
-  
-  return currentDate.toISOString().split('T')[0];
+
+  return currentDate.toISOString().split("T")[0];
 }
 
 export async function cancelBooking(bookingId: string): Promise<CancelBookingResponse> {
@@ -748,28 +701,32 @@ export async function deleteUser(userId: string): Promise<any> {
       throw error;
     }
 
-    throw new Error(
-      error.message || "Failed to delete user. Please try again."
-    );
+    throw new Error(error.message || "Failed to delete user. Please try again.");
   }
 }
 
 export async function getActivity(): Promise<ActivityResponse> {
- try {
-   const response = await apiHandler("/api/activity", {
-     method: "GET",
-   });
-   return response as ActivityResponse;
- } catch (error) {
-   console.error("Error fetching activity:", error);
-   throw error;
- }
+  try {
+    const response = await apiHandler("/api/activity", {
+      method: "GET",
+    });
+    return response as ActivityResponse;
+  } catch (error) {
+    console.error("Error fetching activity:", error);
+    throw error;
+  }
 }
 
 export async function getApartmentReviews(apartmentId: string) {
   if (!apartmentId) throw new Error("Apartment ID is required");
 
   return apiHandler(`/apartment/${apartmentId}/comment`, {
+    method: "GET",
+  });
+}
+
+export async function getBookedDates() {
+  return apiHandler(`/booking/booked-dates`, {
     method: "GET",
   });
 }

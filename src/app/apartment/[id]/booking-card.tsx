@@ -27,8 +27,6 @@ export default function BookingCard({ apartmentId, maxGuests, pricePerNight, ima
       if (!apartmentId) return;
       try {
         setLoadingBookedDates(true);
-        const dates = await getApartmentBookedDates(apartmentId);
-        setBookedDates(dates);
       } catch {
         setBookedDates([]);
       } finally {
@@ -36,6 +34,23 @@ export default function BookingCard({ apartmentId, maxGuests, pricePerNight, ima
       }
     };
     run();
+  }, [apartmentId]);
+
+  useEffect(() => {
+    const loadBookedDates = async () => {
+      const res = await fetch(`/api/booking/booked-dates?apartmentId=${apartmentId}`, {
+        cache: "no-store",
+      });
+      const data = await res.json();
+
+      console.log(data, "nnn");
+
+      if (data.success && Array.isArray(data.bookedDates)) {
+        setBookedDates(data.bookedDates.map((d: string) => new Date(d)));
+      }
+    };
+
+    loadBookedDates();
   }, [apartmentId]);
 
   useEffect(() => {
