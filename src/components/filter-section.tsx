@@ -38,7 +38,6 @@ export default function SearchBar({
       onFilterChange("location", urlLocation);
       if (pathname === "/") router.push("/apartment");
     }
-    alert("hh");
 
     if (urlLocation !== "") {
       // alert(urlLocation);
@@ -46,7 +45,6 @@ export default function SearchBar({
   }, [searchParams, urlLocation]);
 
   const handleSearch = () => {
-    // alert("hh");
     onSearch?.();
     setOpen(false);
   };
