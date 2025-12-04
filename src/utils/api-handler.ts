@@ -16,8 +16,7 @@ export async function apiHandler(
   path: string,
   { method = "GET", headers = {}, body = null, ...otherOptions }: AxiosOptions = {}
 ) {
-  const isFormData =
-    typeof FormData !== "undefined" && body instanceof FormData;
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
   try {
     const response = await axios({
@@ -34,13 +33,15 @@ export async function apiHandler(
 
     return response.data;
   } catch (error: any) {
+    console.log(error);
     if (error.response) {
+      if (error.response.status === 401) {
+        localStorage.clear();
+        window.location.href = "/login";
+      }
       throw {
         status: error.response.status,
-        message:
-          error.response.data?.error ||
-          error.response.data?.message ||
-          "An error occurred",
+        message: error.response.data?.error || error.response.data?.message || "An error occurred",
       };
     }
     throw new Error(error.message || "Network error");

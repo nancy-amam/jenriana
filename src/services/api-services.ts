@@ -22,6 +22,12 @@ export async function signUp(data: SignUpData) {
   });
 }
 
+export async function signInGoogle() {
+  return apiHandler("/api/auth/google", {
+    method: "GET",
+  });
+}
+
 export async function addApartment(apartmentData: ApartmentData, images: File[] = []): Promise<any> {
   try {
     // Validation
@@ -414,7 +420,7 @@ export async function initiateCheckout(bookingId: string, paymentMethod: "card" 
 
     // Use your production URL instead of localhost
     const baseUrl =
-      process.env.NODE_ENV === "production" ? "https://jenriana-frontend.vercel.app" : "http://localhost:3000";
+      process.env.NODE_ENV === "production" ? "https://www.apartmentsbyjenriana.com" : "http://localhost:3000";
 
     const response = await apiHandler(`/api/booking/${bookingId}/checkout`, {
       method: "POST",
@@ -460,6 +466,17 @@ export async function getActiveBookings(): Promise<any> {
 
     throw new Error(error.message || "Failed to fetch active bookings. Please try again later.");
   }
+}
+
+export async function getProfile() {
+  return apiHandler("/api/users/me", { method: "GET" });
+}
+
+export async function updateProfile(data: { fullname: string; phone: string }) {
+  return apiHandler("/api/users/update", {
+    method: "PATCH",
+    body: data,
+  });
 }
 
 export async function getBookingHistory(): Promise<any> {
@@ -728,5 +745,36 @@ export async function getApartmentReviews(apartmentId: string) {
 export async function getBookedDates() {
   return apiHandler(`/booking/booked-dates`, {
     method: "GET",
+  });
+}
+
+export async function createCoupon(data: { code: string; discount: number }) {
+  return apiHandler("/api/coupons/create", {
+    method: "POST",
+    body: data,
+  });
+}
+
+export async function deleteCoupon(id: string) {
+  return apiHandler(`/api/coupons/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function validateCoupon(code: string) {
+  return apiHandler(`/api/coupons/check?code=${encodeURIComponent(code)}`, {
+    method: "GET",
+  });
+}
+
+export async function getAllCoupons() {
+  return apiHandler("/api/coupons/all", {
+    method: "GET",
+  });
+}
+
+export async function toggleCoupon(id: string) {
+  return apiHandler(`/api/coupons/${id}/toggle`, {
+    method: "PATCH",
   });
 }

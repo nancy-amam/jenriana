@@ -9,6 +9,7 @@ import TestimonialsSection from "@/components/testimonials-section";
 import TrendingSection from "@/components/trending-section";
 import Features from "@/components/explore-features";
 import Contact from "@/components/contact-us";
+import FAQSection from "@/components/faqs";
 
 interface Apartment {
   _id: string;
@@ -98,6 +99,7 @@ export default function HomePage() {
       <TrendingSection apartments={trendingApartments} loading={loading} error={error} onRetry={fetchApartments} />
       <TestimonialsSection />
 
+      <FAQSection />
       <Contact />
     </main>
   );

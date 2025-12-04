@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Navbar from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import ApartmentLoadingPage from "@/components/loading";
+import { Toaster } from "sonner";
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -26,6 +27,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <>
+      <Toaster richColors position="bottom-right" theme="dark" />
       {loading && (
         <div className="fixed inset-0 flex items-center justify-center bg-white z-50">
           <ApartmentLoadingPage />

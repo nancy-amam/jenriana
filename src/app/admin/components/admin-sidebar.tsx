@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, BookOpen, Users, Menu, ChartNoAxesColumn } from "lucide-react";
+import { Building2, BookOpen, Users, Menu, ChartNoAxesColumn, Component } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 
@@ -11,6 +11,7 @@ const links = [
   { href: "/admin/bookings", label: "Bookings", icon: <BookOpen className="w-4 h-4" /> },
   { href: "/admin/guests", label: "Guests", icon: <Users className="w-4 h-4" /> },
   { href: "/admin/analytics", label: "Analytics", icon: <ChartNoAxesColumn /> },
+  { href: "/admin/coupons", label: "Coupons", icon: <Component /> },
 ];
 
 interface AdminSidebarProps {

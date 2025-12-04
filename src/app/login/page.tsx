@@ -1,72 +1,86 @@
-'use client'
+"use client";
 
-import Image from 'next/image'
-import Link from 'next/link'
-import { useState } from 'react'
-import { signIn } from '@/services/api-services'
-import { SignInData } from '@/lib/interface'
-import { FiEye, FiEyeOff } from 'react-icons/fi'
-import { useRouter } from 'next/navigation'
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import { signIn, signInGoogle } from "@/services/api-services";
+import { SignInData } from "@/lib/interface";
+import { FiEye, FiEyeOff } from "react-icons/fi";
+import { useRouter } from "next/navigation";
+import { FcGoogle } from "react-icons/fc";
+import { FaFacebook } from "react-icons/fa";
+import { FaApple } from "react-icons/fa";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState<SignInData>({
-    email: '',
-    password: ''
-  })
+    email: "",
+    password: "",
+  });
 
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [showPassword, setShowPassword] = useState(false)
-  const router = useRouter()
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value })
-  }
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
     try {
-      const res = await signIn(formData)
-      console.log('Sign in success:', res)
-
-      
+      const res = await signIn(formData);
       if (res.user) {
-        localStorage.setItem('userId', res.user.id)
-        localStorage.setItem('userRole', res.user.role)
+        localStorage.setItem("userId", res.user.id);
+        localStorage.setItem("userRole", res.user.role);
       }
-
-      // Clear form
-      setFormData({ email: '', password: '' })
-
-      // Redirect based on user role
-      if (res.user?.role === 'admin') {
-        router.push('/admin')
-      } else {
-        router.push('/')
-      }
-
+      setFormData({ email: "", password: "" });
+      if (res.user?.role === "admin") router.push("/admin");
+      else router.push("/");
     } catch (err: any) {
-      console.error('Sign in failed:', err)
-      setError(err.message || 'Something went wrong')
+      setError(err.message || "Something went wrong");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const response = await signInGoogle();
+      window.location.href = response.redirectUrl;
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="flex flex-col-reverse md:flex-row min-h-screen">
-      {/* Left Section: Login Form */}
       <div className="flex flex-col items-center justify-center p-8 md:p-16 w-full md:w-4/10">
         <div className="w-full max-w-[448px] mx-auto">
-          <h1 className="text-[30px] font-normal text-[#111827] mb-2 text-center">
-            Welcome back to Jenriana
-          </h1>
+          <h1 className="text-[30px] font-normal text-[#111827] mb-2 text-center">Welcome back to Jenriana</h1>
           <p className="text-base text-[#4b5563] mb-8 text-center">
             Log in to access your bookings and saved apartments.
           </p>
+
+          {/* Social Login Buttons */}
+          <div className="flex flex-col gap-3 mb-6">
+            <button
+              onClick={handleGoogleLogin}
+              type="button"
+              className="w-full h-[52px] flex items-center justify-center gap-3 border border-gray-300 rounded-lg text-[#111827] bg-white hover:bg-gray-100 transition"
+            >
+              <FcGoogle size={22} />
+              <span className="text-sm">Continue with Google</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3 my-6">
+            <div className="h-[1px] bg-gray-300 w-full" />
+            <span className="text-sm text-gray-500">or</span>
+            <div className="h-[1px] bg-gray-300 w-full" />
+          </div>
 
           <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
             <div>
@@ -79,20 +93,21 @@ export default function LoginPage() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Enter your email"
-                className="w-full h-[58px] rounded-lg border border-gray-300 px-4 py-2 text-base placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                className="w-full h-[58px] rounded-lg border border-gray-300 px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-black"
               />
             </div>
+
             <div className="relative">
               <label htmlFor="password" className="block text-sm font-normal text-[#374151] mb-1">
                 Password
               </label>
               <input
                 id="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Enter your password"
-                className="w-full h-[58px] rounded-lg border border-gray-300 px-4 py-2 pr-12 text-base placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                className="w-full h-[58px] rounded-lg border border-gray-300 px-4 py-2 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-black"
               />
               <span
                 onClick={() => setShowPassword(!showPassword)}
@@ -107,9 +122,9 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-[58px] bg-[#212121] text-white rounded-lg hover:bg-gray-800 transition-colors text-base font-normal mt-6"
+              className="w-full h-[58px] bg-[#212121] text-white rounded-lg hover:bg-gray-800 transition text-base font-normal mt-6"
             >
-              {loading ? 'Signing in...' : 'Continue'}
+              {loading ? "Signing in..." : "Continue"}
             </button>
           </form>
 
@@ -120,7 +135,7 @@ export default function LoginPage() {
           </p>
 
           <p className="text-center text-[#4b5566]">
-            Don&apos;t have an account?{' '}
+            Don&apos;t have an account?{" "}
             <Link href="/sign-up" className="text-[#111827] hover:underline font-medium">
               Sign up
             </Link>
@@ -128,7 +143,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right Section: Image */}
       <div className="relative w-full md:w-7/10 h-[400px] md:h-screen overflow-hidden">
         <Image
           src="/images/image20.png"
@@ -137,20 +151,15 @@ export default function LoginPage() {
           className="object-cover"
           priority
         />
-        <div className="absolute bottom-8 left-8 right-8 text-white flex flex-col justify-end">
-          <p className="text-lg font-normal">
-            Ikoyi Heights — Luxury Balcony with Lagoon View
-          </p>
+        <div className="absolute bottom-8 left-8 right-8 text-white">
+          <p className="text-lg font-normal">Ikoyi Heights — Luxury Balcony with Lagoon View</p>
           <div className="flex justify-end gap-2">
             {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-white' : 'bg-gray-400'}`}
-              />
+              <div key={i} className={`w-2 h-2 rounded-full ${i === 0 ? "bg-white" : "bg-gray-400"}`} />
             ))}
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

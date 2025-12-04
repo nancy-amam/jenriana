@@ -1,21 +1,19 @@
-'use client';
+"use client";
 
-import { Instagram, Twitter, MessageCircleMore, Mail, MapPin, PhoneCall } from 'lucide-react';
+import { Instagram, Twitter, MessageCircleMore, Mail, MapPin, PhoneCall } from "lucide-react";
 
 export default function ContactUsPage() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    alert('Form submitted! (This is a placeholder action)');
+    alert("Form submitted! (This is a placeholder action)");
   };
 
   return (
     <div className="min-h-screen bg-[#212121] text-white py-12 px-4 md:px-16">
       <div className="max-w-[1200px] mx-auto">
-        {/* Top Section: Get in Touch & Form */}
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-16">
-          {/* Left Side: Get in Touch Text */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left  mb-10 lg:mb-0">
-            <h1 className="text-2xl md:text-[80px] font-extrabold text-white leading-[56px] mb-4">Get in touch</h1>
+            <h1 className="text-2xl md:text-[80px] font-extrabold text-white leading-[56px] mb-4"></h1>
             <p className=" text-xl md:text-[28px] font-bold text-white ">
               Please fill the form and we will be happy to assist you.
             </p>
@@ -63,19 +61,19 @@ export default function ContactUsPage() {
 
         {/* Social Section */}
         <div className="mb-16 ">
-           <div className=' flex gap-5'> 
-          <h2 className="text-xl font-semibold mb-4">Social:</h2>
-          <div className="flex gap-6 mb-6">
-            <a href="#" aria-label="Instagram" className="text-white hover:text-gray-400 transition-colors">
-              <Instagram size={32} />
-            </a>
-            <a href="#" aria-label="Twitter" className="text-white hover:text-gray-400 transition-colors">
-              <Twitter size={32} />
-            </a>
-            <a href="#" aria-label="WhatsApp" className="text-white hover:text-gray-400 transition-colors">
-              <MessageCircleMore size={32} />
-            </a>
-          </div>
+          <div className=" flex gap-5">
+            <h2 className="text-xl font-semibold mb-4">Social:</h2>
+            <div className="flex gap-6 mb-6">
+              <a href="#" aria-label="Instagram" className="text-white hover:text-gray-400 transition-colors">
+                <Instagram size={32} />
+              </a>
+              <a href="#" aria-label="Twitter" className="text-white hover:text-gray-400 transition-colors">
+                <Twitter size={32} />
+              </a>
+              <a href="#" aria-label="WhatsApp" className="text-white hover:text-gray-400 transition-colors">
+                <MessageCircleMore size={32} />
+              </a>
+            </div>
           </div>
           <p className=" text-xl md:text-[48px] text-white">Let us know what we can do for you</p>
         </div>
@@ -87,7 +85,7 @@ export default function ContactUsPage() {
             <Mail size={48} className="text-white mb-4" />
             <h3 className="text-xl font-semibold mb-2">Email Us</h3>
             <p className="text-base text-[#d1d5db] mb-4">Send us an email for any inquiries.</p>
-            <p className="text-lg font-medium">info@example.com</p>
+            <p className="text-lg font-medium">info@jenriana.com</p>
           </div>
 
           {/* Visit Us Card */}
@@ -103,7 +101,7 @@ export default function ContactUsPage() {
             <PhoneCall size={48} className="text-white mb-4" />
             <h3 className="text-xl font-semibold mb-2">Call Us</h3>
             <p className="text-base text-[#d1d5db] mb-4">Reach out to us by phone.</p>
-            <p className="text-lg font-medium">+1 (234) 567-8900</p>
+            <p className="text-lg font-medium">+234 801 234 5678</p>
           </div>
         </div>
       </div>

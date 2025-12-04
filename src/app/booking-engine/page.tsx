@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { format, differenceInDays } from 'date-fns';
-import { MapPin, Wallet, Banknote, Lock, Loader2 } from 'lucide-react';
-import { getApartmentById, initiateCheckout } from '@/services/api-services';
-import ApartmentLoadingPage from '@/components/loading';
+import { Suspense, useEffect, useState, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import { format, differenceInDays } from "date-fns";
+import { MapPin, Wallet, Banknote, Lock, Loader2 } from "lucide-react";
+import { getApartmentById, initiateCheckout } from "@/services/api-services";
+import ApartmentLoadingPage from "@/components/loading";
 
 interface Addon {
   _id: string;
   name: string;
   price: number;
-  pricingType: 'perNight' | 'oneTime';
+  pricingType: "perNight" | "oneTime";
   total: number;
 }
 
@@ -41,28 +41,28 @@ interface Booking {
   __v: number;
 }
 
-type PaymentMethod = 'card' | 'bank-transfer';
+type PaymentMethod = "card" | "bank-transfer";
 
 function BookingEngineContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const bookingId = searchParams.get('bookingId');
-  const passedImage = searchParams.get('image');
+  const bookingId = searchParams.get("bookingId");
+  const passedImage = searchParams.get("image");
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const cleanupOldBookings = () => {
-    const ONE_HOUR = 60 * 60 * 1000; 
+    const ONE_HOUR = 60 * 60 * 1000;
     const now = Date.now();
 
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key.startsWith('booking_') && !key.includes('_payment_')) {
+      if (key && key.startsWith("booking_") && !key.includes("_payment_")) {
         try {
           const bookingData = localStorage.getItem(key);
           if (bookingData) {
@@ -70,7 +70,7 @@ function BookingEngineContent() {
             const bookingTime = new Date(booking.createdAt).getTime();
             const bookingId = booking._id;
             const paymentInProgress = localStorage.getItem(`booking_${bookingId}_payment_in_progress`);
-            
+
             if (now - bookingTime > ONE_HOUR && !paymentInProgress) {
               localStorage.removeItem(key);
               localStorage.removeItem(`booking_${bookingId}_payment_method`);
@@ -87,17 +87,17 @@ function BookingEngineContent() {
 
   const checkCurrentBookingExpiry = useCallback(() => {
     if (!booking || isProcessingPayment) return;
-    
+
     const ONE_HOUR = 60 * 60 * 1000;
     const now = Date.now();
     const bookingTime = new Date(booking.createdAt).getTime();
-    
+
     const paymentInProgress = localStorage.getItem(`booking_${booking._id}_payment_in_progress`);
     if (now - bookingTime > ONE_HOUR && !paymentInProgress) {
       localStorage.removeItem(`booking_${bookingId}`);
       localStorage.removeItem(`booking_${booking._id}_payment_method`);
       localStorage.removeItem(`booking_${booking._id}_payment_in_progress`);
-      setError('This booking session has expired. Please create a new booking.');
+      setError("This booking session has expired. Please create a new booking.");
       setBooking(null);
     }
   }, [booking, isProcessingPayment, bookingId]);
@@ -106,15 +106,15 @@ function BookingEngineContent() {
     cleanupOldBookings();
 
     if (!bookingId) {
-      setError('No booking selected.');
+      setError("No booking selected.");
       setLoading(false);
       return;
     }
-    
+
     try {
       const storedBooking = localStorage.getItem(`booking_${bookingId}`);
       if (!storedBooking) {
-        setError('Booking data not found.');
+        setError("Booking data not found.");
         setLoading(false);
         return;
       }
@@ -123,52 +123,44 @@ function BookingEngineContent() {
 
       const fetchApartment = async () => {
         try {
-          const response = await getApartmentById(parsedBooking.apartmentId);    
+          const response = await getApartmentById(parsedBooking.apartmentId);
           const gallery = response.data.gallery || [];
-          
+
           if (gallery.length >= 3) {
             setGalleryImages(gallery.slice(0, 3));
           } else if (gallery.length > 0) {
             const images = [...gallery];
             while (images.length < 3) {
-              images.push(passedImage ? decodeURIComponent(passedImage) : '/images/placeholder.jpg');
+              images.push(passedImage ? decodeURIComponent(passedImage) : "/images/placeholder.jpg");
             }
             setGalleryImages(images.slice(0, 3));
           } else if (passedImage) {
             setGalleryImages([
               decodeURIComponent(passedImage),
               decodeURIComponent(passedImage),
-              decodeURIComponent(passedImage)
+              decodeURIComponent(passedImage),
             ]);
           } else {
-            setGalleryImages([
-              '/images/image18.png',
-              '/images/image19.png',
-              '/images/image20.png'
-            ]);
+            setGalleryImages(["/images/image18.png", "/images/image19.png", "/images/image20.png"]);
           }
         } catch (err: any) {
-          console.error('BookingEnginePage: Failed to fetch apartment gallery:', err);
+          console.error("BookingEnginePage: Failed to fetch apartment gallery:", err);
           if (passedImage) {
             setGalleryImages([
               decodeURIComponent(passedImage),
               decodeURIComponent(passedImage),
-              decodeURIComponent(passedImage)
+              decodeURIComponent(passedImage),
             ]);
           } else {
-            setGalleryImages([
-              '/images/placeholder1.jpg',
-              '/images/placeholder2.jpg',
-              '/images/placeholder3.jpg'
-            ]);
+            setGalleryImages(["/images/placeholder1.jpg", "/images/placeholder2.jpg", "/images/placeholder3.jpg"]);
           }
         }
         setLoading(false);
       };
       fetchApartment();
     } catch (err: any) {
-      console.error('BookingEnginePage: Failed to load booking data:', err);
-      setError('Failed to load booking details.');
+      console.error("BookingEnginePage: Failed to load booking data:", err);
+      setError("Failed to load booking details.");
       setLoading(false);
     }
   }, [bookingId, passedImage]);
@@ -177,7 +169,7 @@ function BookingEngineContent() {
   useEffect(() => {
     const interval = setInterval(() => {
       checkCurrentBookingExpiry();
-    }, 5 * 60 * 1000); 
+    }, 5 * 60 * 1000);
 
     // Also check immediately when component mounts (after booking is loaded)
     if (booking) {
@@ -203,13 +195,13 @@ function BookingEngineContent() {
         const currentTime = Date.now();
         const bookingData = localStorage.getItem(`booking_${bookingId}`);
         const paymentInProgress = localStorage.getItem(`booking_${bookingId}_payment_in_progress`);
-        
+
         if (bookingData && !paymentInProgress) {
           try {
             const booking = JSON.parse(bookingData);
             const bookingTime = new Date(booking.createdAt).getTime();
             const FIFTEEN_MINUTES = 15 * 60 * 1000;
-            
+
             // If booking is older than 15 minutes, clear it
             if (currentTime - bookingTime > FIFTEEN_MINUTES) {
               localStorage.removeItem(`booking_${bookingId}`);
@@ -226,44 +218,46 @@ function BookingEngineContent() {
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [bookingId, isProcessingPayment]);
 
   const handleConfirmAndPay = async () => {
     if (!booking) return;
-    
+
     setIsProcessingPayment(true);
-    
+
     try {
       const response = await initiateCheckout(booking._id, paymentMethod);
-      
+
       // Mark booking as "payment in progress" to prevent cleanup
-      localStorage.setItem(`booking_${booking._id}_payment_in_progress`, 'true');
+      localStorage.setItem(`booking_${booking._id}_payment_in_progress`, "true");
       localStorage.setItem(`booking_${booking._id}_payment_method`, paymentMethod);
-      
-      if (paymentMethod === 'bank-transfer') {
-        alert(
-          `Please transfer ₦${booking.totalAmount.toLocaleString()} to:\n` +
-          `Bank Name: ${response.bankDetails.bankName}\n` +
-          `Account Name: ${response.bankDetails.accountName}\n` +
-          `Account Number: ${response.bankDetails.accountNumber}\n\n` +
-          `${response.bankDetails.note}`
-        );
-        
-        // Only clear localStorage for bank transfer since it's completed
-        clearBookingFromLocalStorage();
-        router.push('/payment-success'); 
-      } else {
-        // For card payments, redirect to Paystack but keep booking data
-        window.location.href = response.payment.authorization_url;
-      }
+
+      window.location.href = response.payment.authorization_url;
+
+      // if (paymentMethod === 'bank-transfer') {
+      //   alert(
+      //     `Please transfer ₦${booking.totalAmount.toLocaleString()} to:\n` +
+      //     `Bank Name: ${response.bankDetails.bankName}\n` +
+      //     `Account Name: ${response.bankDetails.accountName}\n` +
+      //     `Account Number: ${response.bankDetails.accountNumber}\n\n` +
+      //     `${response.bankDetails.note}`
+      //   );
+
+      //   // Only clear localStorage for bank transfer since it's completed
+      //   clearBookingFromLocalStorage();
+      //   router.push('/payment-success');
+      // } else {
+      //   // For card payments, redirect to Paystack but keep booking data
+      //   window.location.href = response.payment.authorization_url;
+      // }
     } catch (err: any) {
-      console.error('BookingEnginePage: Failed to initiate checkout:', err);
-      alert(`Failed to initiate payment: ${err.message || 'Please try again later.'}`);
+      console.error("BookingEnginePage: Failed to initiate checkout:", err);
+      alert(`Failed to initiate payment: ${err.message || "Please try again later."}`);
       // Remove payment in progress flag on error
       if (booking) {
         localStorage.removeItem(`booking_${booking._id}_payment_in_progress`);
@@ -287,18 +281,16 @@ function BookingEngineContent() {
         <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
           <div className="text-6xl mb-4">😔</div>
           <h1 className="text-2xl font-bold mb-4 text-gray-800">Booking Not Found</h1>
-          <p className="text-gray-600 mb-6">
-            {error || 'Your booking session may have expired or been cancelled.'}
-          </p>
-          
+          <p className="text-gray-600 mb-6">{error || "Your booking session may have expired or been cancelled."}</p>
+
           <div className="space-y-3">
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push("/")}
               className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors"
             >
               Start New Booking
             </button>
-            
+
             <button
               onClick={() => router.back()}
               className="w-full bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition-colors"
@@ -306,7 +298,7 @@ function BookingEngineContent() {
               Go Back
             </button>
           </div>
-          
+
           <p className="text-sm text-gray-500 mt-4">
             If you were making a payment and it was cancelled, please start a new booking.
           </p>
@@ -316,8 +308,8 @@ function BookingEngineContent() {
   }
 
   const nights = differenceInDays(new Date(booking.checkOutDate), new Date(booking.checkInDate));
-  const formattedCheckIn = format(new Date(booking.checkInDate), 'MMM d, yyyy');
-  const formattedCheckOut = format(new Date(booking.checkOutDate), 'MMM d, yyyy');
+  const formattedCheckIn = format(new Date(booking.checkInDate), "MMM d, yyyy");
+  const formattedCheckOut = format(new Date(booking.checkOutDate), "MMM d, yyyy");
 
   return (
     <div className="bg-[#f1f1f1] py-12 px-4 md:px-16">
@@ -326,9 +318,7 @@ function BookingEngineContent() {
         <div className="flex flex-col gap-4">
           <div className="bg-white rounded-lg p-6 shadow-md w-full">
             <div className="flex flex-col sm:flex-row sm:justify-between">
-              <h2 className="order-2 sm:order-1 text-2xl font-normal text-[#111827]">
-                {booking.apartmentName}
-              </h2>
+              <h2 className="order-2 sm:order-1 text-2xl font-normal text-[#111827]">{booking.apartmentName}</h2>
               {passedImage && (
                 <div className="order-1 sm:order-2 mb-8 sm:mb-10 sm:ml-4 overflow-x-auto flex gap-2 sm:block sm:overflow-visible">
                   <Image
@@ -347,7 +337,14 @@ function BookingEngineContent() {
               {booking.apartmentLocation}
             </p>
             <p className="text-[24px] md:text-[30px] font-normal text-[#111827] mb-4">
-              ₦{((booking.totalAmount - booking.serviceCharge - booking.tax - booking.addons.reduce((sum, a) => sum + a.total, 0)) / nights).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              ₦
+              {(
+                (booking.totalAmount -
+                  booking.serviceCharge -
+                  booking.tax -
+                  booking.addons.reduce((sum, a) => sum + a.total, 0)) /
+                nights
+              ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
               <span className="text-sm font-normal text-[#6b7280]">/night</span>
             </p>
             <div className="flex gap-2 overflow-x-auto pb-2">
@@ -380,7 +377,9 @@ function BookingEngineContent() {
               </div>
               <div>
                 <p className="text-sm font-normal text-[#374151]">Guests</p>
-                <p>{booking.guests} Guest{booking.guests > 1 ? 's' : ''}</p>
+                <p>
+                  {booking.guests} Guest{booking.guests > 1 ? "s" : ""}
+                </p>
               </div>
               <div>
                 <p className="text-sm font-normal text-[#374151]">Customer Name</p>
@@ -394,7 +393,7 @@ function BookingEngineContent() {
                 <p className="text-sm font-normal text-[#374151]">Phone</p>
                 <p>{booking.customerPhone}</p>
               </div>
-               <div>
+              <div>
                 <p className="text-sm font-normal text-[#374151]">Residential Address</p>
                 <p>{booking.residentialAddress}</p>
               </div>
@@ -408,9 +407,25 @@ function BookingEngineContent() {
                 <h3 className="text-lg font-normal text-[#111827]">Booking Summary</h3>
                 <div className="flex justify-between text-sm">
                   <span>
-                    ₦{((booking.totalAmount - booking.serviceCharge - booking.tax - booking.addons.reduce((sum, a) => sum + a.total, 0)) / nights).toLocaleString(undefined, { maximumFractionDigits: 0 })} x {nights} night(s)
+                    ₦
+                    {(
+                      (booking.totalAmount -
+                        booking.serviceCharge -
+                        booking.tax -
+                        booking.addons.reduce((sum, a) => sum + a.total, 0)) /
+                      nights
+                    ).toLocaleString(undefined, { maximumFractionDigits: 0 })}{" "}
+                    x {nights} night(s)
                   </span>
-                  <span>₦{(booking.totalAmount - booking.serviceCharge - booking.tax - booking.addons.reduce((sum, a) => sum + a.total, 0)).toLocaleString()}</span>
+                  <span>
+                    ₦
+                    {(
+                      booking.totalAmount -
+                      booking.serviceCharge -
+                      booking.tax -
+                      booking.addons.reduce((sum, a) => sum + a.total, 0)
+                    ).toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between text-[#4b5566] text-sm">
                   <span>Service Fee</span>
@@ -418,7 +433,9 @@ function BookingEngineContent() {
                 </div>
                 {booking.addons.map((addon) => (
                   <div key={addon._id} className="flex justify-between text-[#4b5566] text-sm">
-                    <span>{addon.name} ({addon.pricingType === 'perNight' ? 'Per night' : 'One-time'})</span>
+                    <span>
+                      {addon.name} ({addon.pricingType === "perNight" ? "Per night" : "One-time"})
+                    </span>
                     <span>₦{addon.total.toLocaleString()}</span>
                   </div>
                 ))}
@@ -435,110 +452,36 @@ function BookingEngineContent() {
           </div>
         </div>
         {/* Right Column: Payment Details Card */}
-        <div className="bg-white rounded-lg p-6 shadow-md w-full md:max-h-[550px] mt-4 md:mt-0">
-          <h2 className="text-xl md:text-2xl font-normal text-[#111827] mb-2">Payment Details</h2>
-          <p className="text-[#4b5566] mb-2">Payment Method</p>
-          <div className="space-y-4 mb-6 font-normal">
-            <label className="flex items-center gap-3 w-full px-4 py-2 border border-gray-300 rounded-[8px] cursor-pointer">
+        <div className="wrap">
+          <div className="bg-white rounded-lg p-6 shadow-md w-full md:max-h-auto mt-4 md:mt-0">
+            <h2 className="text-xl md:text-2xl font-normal text-[#111827] mb-2">Checkout Payment</h2>
+            <p className="text-sm text-[#4b5566]">
+              You’ll be prompted to make your payment on Paystack using either bank transfer or card.
+            </p>
+
+            <div className="wrap mt-10">
+              <label className="text-sm text-black/70 mb-2">Coupon/Promo Code </label>
               <input
-                type="radio"
-                name="paymentMethod"
-                value="card"
-                checked={paymentMethod === 'card'}
-                onChange={() => setPaymentMethod('card')}
-                className="form-radio text-black h-4 w-4"
-                disabled={isProcessingPayment}
+                type="text"
+                className="border-black/10 border rounded-sm w-full p-3 outline-0 ring-0"
+                placeholder="Enter coupon or promo code"
               />
-              <Wallet className="w-5 h-5 text-gray-700" />
-              <span className="text-base font-normal text-[#111827]">Credit/Debit Card</span>
-            </label>
-            <label className="flex items-center gap-3 w-full px-4 py-2 border border-gray-300 rounded-[8px] cursor-pointer">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="bank-transfer"
-                checked={paymentMethod === 'bank-transfer'}
-                onChange={() => setPaymentMethod('bank-transfer')}
-                className="form-radio text-black h-4 w-4"
-                disabled={isProcessingPayment}
-              />
-              <Banknote className="w-5 h-5 text-gray-700" />
-              <span className="text-base font-normal text-[#111827]">Bank Transfer</span>
-            </label>
-          </div>
-          {paymentMethod === 'card' && (
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="cardNumber" className="block text-sm font-normal text-[#374151] mb-1">
-                  Card Number
-                </label>
-                <input
-                  id="cardNumber"
-                  type="text"
-                  placeholder="XXXX XXXX XXXX XXXX"
-                  className="w-full px-4 py-2 rounded-[8px] border border-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-black"
-                  disabled
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="expiryDate" className="block text-sm font-normal text-[#374151] mb-1">
-                    Expiry Date
-                  </label>
-                  <input
-                    id="expiryDate"
-                    type="text"
-                    placeholder="MM/YY"
-                    className="w-full px-4 py-2 rounded-[8px] border border-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-black"
-                    disabled
-                  />
-                </div>
-                <div>
-                  <label htmlFor="cvc" className="block text-sm font-normal text-[#374151] mb-1">
-                    CVC
-                  </label>
-                  <input
-                    id="cvc"
-                    type="text"
-                    placeholder="XXX"
-                    className="w-full px-4 py-2 rounded-[8px] border border-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-black"
-                    disabled
-                  />
-                </div>
-              </div>
             </div>
-          )}
-          {paymentMethod === 'bank-transfer' && (
-            <div className="text-[#4b5566] space-y-2">
-              <p>Please transfer the total amount to the following bank account:</p>
-              <p className="font-semibold">Bank Name: Jenrianna Bank</p>
-              <p className="font-semibold">Account Name: Jenrianna Apartments</p>
-              <p className="font-semibold">Account Number: 1234567890</p>
-              <p className="text-sm text-[#4b5566]">Your booking will be confirmed upon receipt of payment.</p>
-            </div>
-          )}
-          <button
-            onClick={handleConfirmAndPay}
-            disabled={isProcessingPayment}
-            className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors mt-8 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isProcessingPayment ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              `Confirm and Pay ₦${booking.totalAmount.toLocaleString()}`
-            )}
-          </button>
-          <p className="text-sm text-[#4b5566] text-center mt-2">
-            {paymentMethod === 'card'
-              ? 'You will be redirected to Paystack to complete your payment.'
-              : 'Please complete the bank transfer to confirm your booking.'}
-          </p>
-          <div className="text-xs text-[#4b5566] mt-2 flex items-center justify-center gap-1">
-            <Lock className="w-4 h-4" />
-            <p>Your payment information is secure and encrypted</p>
+
+            <button
+              onClick={handleConfirmAndPay}
+              disabled={isProcessingPayment}
+              className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors mt-8 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isProcessingPayment ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                `Confirm and Pay ₦${booking.totalAmount.toLocaleString()}`
+              )}
+            </button>
           </div>
         </div>
       </div>

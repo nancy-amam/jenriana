@@ -10,6 +10,7 @@ const getPageTitle = (path: string) => {
   if (path.includes("/apartments")) return "Apartment Management";
   if (path.includes("/bookings")) return "Booking Management";
   if (path.includes("/guests")) return "User & Client Management";
+  if (path.includes("/coupons")) return "Coupons Management";
   return "Analytics";
 };
 
