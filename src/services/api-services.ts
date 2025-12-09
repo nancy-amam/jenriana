@@ -412,7 +412,11 @@ export async function createBooking(
   }
 }
 
-export async function initiateCheckout(bookingId: string, paymentMethod: "card" | "bank-transfer"): Promise<any> {
+export async function initiateCheckout(
+  bookingId: string,
+  paymentMethod: "card" | "bank-transfer",
+  couponId: string
+): Promise<any> {
   try {
     if (!bookingId?.trim()) {
       throw new Error("Booking ID is required");
@@ -427,6 +431,7 @@ export async function initiateCheckout(bookingId: string, paymentMethod: "card" 
       data: {
         paymentMethod,
         // Include bookingId in the callback URL so it's available after payment
+        couponId,
         callback_url: `${baseUrl}/payment-success?bookingId=${bookingId}`,
       },
     });
@@ -776,5 +781,24 @@ export async function getAllCoupons() {
 export async function toggleCoupon(id: string) {
   return apiHandler(`/api/coupons/${id}/toggle`, {
     method: "PATCH",
+  });
+}
+
+export function createTrendingApartment(apartmentId: string) {
+  return apiHandler("/api/admin/trending-apartment", {
+    method: "POST",
+    body: { apartmentId },
+  });
+}
+
+export function getTrendingApartments() {
+  return apiHandler("/api/admin/trending-apartment", {
+    method: "GET",
+  });
+}
+
+export function deleteTrendingApartment(id: string) {
+  return apiHandler(`/api/admin/trending-apartment/${id}`, {
+    method: "DELETE",
   });
 }

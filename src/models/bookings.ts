@@ -23,6 +23,7 @@ export interface IBooking extends Document {
   residentialAddress: string;
   specialRequest?: string;
   bookingCode: string;
+  coupon: mongoose.Types.ObjectId;
   expireAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -63,6 +64,7 @@ const BookingSchema = new Schema<IBooking>(
     specialRequest: { type: String },
     expireAt: { type: Date, default: null },
     bookingCode: { type: String, unique: true },
+    coupon: { type: Schema.Types.ObjectId, ref: "Coupon" },
   },
   { timestamps: true }
 );

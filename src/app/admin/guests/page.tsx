@@ -143,7 +143,7 @@ export default function AdminGuestsPage() {
   return (
     <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
       {/* Search */}
-      <div className="w-full max-w-[1200px] h-[82px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 md:mb-6 mt-[-20px]">
+      <div className="w-full h-[82px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 md:mb-6 mt-[-20px]">
         <input
           type="text"
           placeholder="Search by guest name or email"
@@ -155,7 +155,7 @@ export default function AdminGuestsPage() {
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden lg:block w-full max-w-[1200px] bg-white rounded-lg shadow-md p-4">
+      <div className="hidden lg:block w-full bg-white rounded-lg shadow-md p-4">
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-[#4b5566] uppercase">
             <tr>

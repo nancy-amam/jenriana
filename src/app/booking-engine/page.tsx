@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { format, differenceInDays } from "date-fns";
 import { MapPin, Wallet, Banknote, Lock, Loader2 } from "lucide-react";
-import { getApartmentById, initiateCheckout } from "@/services/api-services";
+import { getApartmentById, initiateCheckout, validateCoupon } from "@/services/api-services";
 import ApartmentLoadingPage from "@/components/loading";
 
 interface Addon {
@@ -55,6 +55,11 @@ function BookingEngineContent() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [discountedTotal, setDiscountedTotal] = useState<number | null>(null);
 
   const cleanupOldBookings = () => {
     const ONE_HOUR = 60 * 60 * 1000;
@@ -231,7 +236,7 @@ function BookingEngineContent() {
     setIsProcessingPayment(true);
 
     try {
-      const response = await initiateCheckout(booking._id, paymentMethod);
+      const response = await initiateCheckout(booking._id, paymentMethod, appliedCoupon?._id);
 
       // Mark booking as "payment in progress" to prevent cleanup
       localStorage.setItem(`booking_${booking._id}_payment_in_progress`, "true");
@@ -274,6 +279,41 @@ function BookingEngineContent() {
       </div>
     );
   }
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponError(null);
+
+    try {
+      // const res = await fetch("/api/coupon/validate", {
+      //   method: "POST",
+      //   body: JSON.stringify({ code: couponInput }),
+      //   headers: { "Content-Type": "application/json" },
+      // });
+
+      // const data = await res.json();
+      // if (!res.ok) {
+      //   setCouponError(data.message || "Invalid coupon");
+      //   setAppliedCoupon(null);
+      //   setDiscountedTotal(null);
+      //   return;
+      // }
+
+      const data = await validateCoupon(couponInput);
+
+      setAppliedCoupon(data.coupon);
+
+      const discountAmount = (booking!.totalAmount * data.coupon.discount) / 100;
+      setDiscountedTotal(booking!.totalAmount - discountAmount);
+    } catch (error: any) {
+      console.log(error);
+      setCouponError("Something went wrong.");
+      setCouponError("Invalid coupon");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   if (error || !booking) {
     return (
@@ -445,7 +485,7 @@ function BookingEngineContent() {
                 </div>
                 <div className="flex justify-between font-bold text-lg text-[#111827] border-t border-gray-300 pt-2">
                   <span>Total</span>
-                  <span>₦{booking.totalAmount.toLocaleString()}</span>
+                  <span>₦{(discountedTotal ?? booking.totalAmount).toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -460,12 +500,31 @@ function BookingEngineContent() {
             </p>
 
             <div className="wrap mt-10">
-              <label className="text-sm text-black/70 mb-2">Coupon/Promo Code </label>
-              <input
-                type="text"
-                className="border-black/10 border rounded-sm w-full p-3 outline-0 ring-0"
-                placeholder="Enter coupon or promo code"
-              />
+              <label className="text-sm text-black/70 mb-2">Coupon/Promo Code</label>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  className="border-black/10 border rounded-sm w-full p-3 outline-0"
+                  placeholder="Enter coupon code"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                />
+
+                <button
+                  onClick={handleApplyCoupon}
+                  disabled={couponLoading}
+                  className="px-5 bg-black text-white rounded-md flex items-center justify-center"
+                >
+                  {couponLoading ? <Loader2 className="animate-spin h-5 w-5" /> : "Apply"}
+                </button>
+              </div>
+
+              {couponError && <p className="text-red-500 text-sm mt-2">{couponError}</p>}
+
+              {appliedCoupon && (
+                <p className="text-green-600 text-sm mt-2">Coupon applied — {appliedCoupon.discount}% off</p>
+              )}
             </div>
 
             <button
@@ -479,7 +538,7 @@ function BookingEngineContent() {
                   Processing...
                 </>
               ) : (
-                `Confirm and Pay ₦${booking.totalAmount.toLocaleString()}`
+                `Confirm and Pay ₦${(discountedTotal ?? booking.totalAmount).toLocaleString()}`
               )}
             </button>
           </div>

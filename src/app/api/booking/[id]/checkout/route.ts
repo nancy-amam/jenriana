@@ -1,70 +1,64 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { getUserFromRequest } from "@/app/api/lib/getUserFromRequest";
-import connectDB from "@/app/api/lib/mongodb";
-import { PaystackService } from "@/app/api/lib/paystack.service";
-import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
+import connectDB from "@/app/api/lib/mongodb";
+import { getUserFromRequest } from "@/app/api/lib/getUserFromRequest";
 import Booking from "@/models/bookings";
+import Coupon from "@/models/coupon";
+import { PaystackService } from "@/app/api/lib/paystack.service";
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
-
-export async function POST(req: NextRequest, { params }: RouteContext) {
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     await connectDB();
+
     const user = await getUserFromRequest();
-    if (!user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    const { id } = await params; // Await params
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    const { id } = params;
+    if (!mongoose.Types.ObjectId.isValid(id))
       return NextResponse.json({ message: "Invalid booking ID" }, { status: 400 });
-    }
 
-    // Fetch booking
     const booking = await Booking.findById(id);
-    if (!booking) {
-      return NextResponse.json({ message: "Booking not found" }, { status: 404 });
-    }
+    if (!booking) return NextResponse.json({ message: "Booking not found" }, { status: 404 });
 
-    if (booking.status !== "pending") {
+    if (booking.status !== "pending")
       return NextResponse.json({ message: "Booking already processed" }, { status: 400 });
-    }
 
-    // Get payment method and callback_url from request body
-    const { paymentMethod, callback_url } = await req.json();
-    
-    console.log('Received callback_url from frontend:', callback_url);
+    const { paymentMethod, couponId, callback_url } = await req.json();
+
+    let finalAmount = booking.totalAmount;
+
+    if (couponId) {
+      const coupon = await Coupon.findById(couponId);
+
+      if (!coupon || coupon.isUsed || !coupon.isUsable) {
+        return NextResponse.json({ message: "Invalid or expired coupon" }, { status: 400 });
+      }
+
+      const discountAmount = (booking.totalAmount * coupon.discount) / 100;
+      finalAmount = booking.totalAmount - discountAmount;
+
+      booking.totalAmount = finalAmount;
+      booking.coupon = coupon._id;
+      await booking.save();
+
+      coupon.isUsed = true;
+      coupon.useBy = user._id;
+      await coupon.save();
+    }
 
     if (paymentMethod === "bank-transfer") {
       return NextResponse.json(
-        {
-          message: "Bank transfer details",
-          bookingId: booking._id,
-          bankDetails: {
-            bankName: "Jenrianna Bank",
-            accountName: "Jenrianna Apartments",
-            accountNumber: "1234567890",
-            note: "Your booking will be confirmed upon receipt of payment.",
-          },
-          success: true,
-        },
+        { message: "Bank transfer details", bookingId: booking._id, success: true },
         { status: 200 }
       );
     }
 
-    // Initialize payment for card - Use the callback_url from frontend
     const paystack = new PaystackService();
     const transaction = await paystack.initializeTransaction({
       email: user.email,
-      amount: booking.totalAmount,
-      // Use callback_url from frontend, fallback to default if not provided
+      amount: finalAmount,
       callback_url: callback_url || `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?bookingId=${booking._id}`,
     });
-
-    console.log('Paystack transaction initialized with callback_url:', callback_url);
 
     return NextResponse.json(
       {
@@ -72,14 +66,11 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         bookingId: booking._id,
         payment: transaction,
         success: true,
+        finalAmount,
       },
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Checkout error:", error);
-    return NextResponse.json(
-      { message: "Internal server error", error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Something went wrong", error: error.message }, { status: 500 });
   }
 }

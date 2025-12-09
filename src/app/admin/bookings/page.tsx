@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo } from 'react';
-import { getAllBookings } from '@/services/api-services';
-import ApartmentLoadingPage from '@/components/loading';
-import GuestInfoModal from '../components/guest-information';
+import { useState, useEffect, useMemo } from "react";
+import { getAllBookings } from "@/services/api-services";
+import ApartmentLoadingPage from "@/components/loading";
+import GuestInfoModal from "../components/guest-information";
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
-    console.log('Debouncing value:', value);
+    console.log("Debouncing value:", value);
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
@@ -60,7 +60,7 @@ interface BookingsResponse {
 }
 
 export default function AdminBookingPage() {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,17 +75,21 @@ export default function AdminBookingPage() {
 
   const fetchBookings = async (page: number = 1, searchQuery?: string) => {
     try {
-      console.log('Fetching bookings with params:', { page, limit, searchQuery });
+      console.log("Fetching bookings with params:", { page, limit, searchQuery });
       setLoading(true);
       setError(null);
 
       const response: BookingsResponse = await getAllBookings(page, limit, searchQuery?.trim());
-     
+
       if (!response.bookings || !Array.isArray(response.bookings)) {
-        throw new Error('Invalid response: bookings array is missing or not an array');
+        throw new Error("Invalid response: bookings array is missing or not an array");
       }
-      if (typeof response.total !== 'number' || typeof response.page !== 'number' || typeof response.pages !== 'number') {
-        console.warn('Invalid pagination data, using defaults');
+      if (
+        typeof response.total !== "number" ||
+        typeof response.page !== "number" ||
+        typeof response.pages !== "number"
+      ) {
+        console.warn("Invalid pagination data, using defaults");
       }
 
       setBookings(response.bookings);
@@ -93,9 +97,9 @@ export default function AdminBookingPage() {
       setTotalBookings(response.total || 0);
       setCurrentPage(response.page || page);
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to fetch bookings';
+      const errorMessage = err.message || "Failed to fetch bookings";
       setError(errorMessage);
-      console.error('Error fetching bookings:', err);
+      console.error("Error fetching bookings:", err);
       setBookings([]); // Clear bookings on error to avoid showing stale data
     } finally {
       setLoading(false);
@@ -104,14 +108,14 @@ export default function AdminBookingPage() {
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log('Search input changed:', value);
+    console.log("Search input changed:", value);
     setSearch(value);
     setCurrentPage(1); // Reset to first page on search
   };
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
-      console.log('Changing to page:', page);
+      console.log("Changing to page:", page);
       setCurrentPage(page);
     }
   };
@@ -140,14 +144,14 @@ export default function AdminBookingPage() {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-700';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-700';
-      case 'cancelled':
-        return 'bg-red-100 text-red-700';
+      case "confirmed":
+        return "bg-green-100 text-green-700";
+      case "pending":
+        return "bg-yellow-100 text-yellow-700";
+      case "cancelled":
+        return "bg-red-100 text-red-700";
       default:
-        return 'bg-gray-100 text-gray-700';
+        return "bg-gray-100 text-gray-700";
     }
   };
 
@@ -156,7 +160,7 @@ export default function AdminBookingPage() {
   };
 
   useEffect(() => {
-    console.log('Effect triggered with debouncedSearch:', debouncedSearch, 'currentPage:', currentPage);
+    console.log("Effect triggered with debouncedSearch:", debouncedSearch, "currentPage:", currentPage);
     fetchBookings(currentPage, debouncedSearch);
   }, [debouncedSearch, currentPage]);
 
@@ -179,7 +183,7 @@ export default function AdminBookingPage() {
   return (
     <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
       {/* Search Card */}
-      <div className="w-full max-w-[1200px] h-[82px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 mb-6 mt-[-20px]">
+      <div className="w-full  h-[82px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 mb-6 mt-[-20px]">
         <input
           type="text"
           placeholder="Search by booking name or ID"
@@ -191,7 +195,7 @@ export default function AdminBookingPage() {
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden lg:block w-full max-w-[1200px] bg-white rounded-lg shadow-md p-4">
+      <div className="hidden lg:block w-full  bg-white rounded-lg shadow-md p-4">
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-[#4b5566] uppercase">
             <tr>
@@ -248,12 +252,13 @@ export default function AdminBookingPage() {
             <p className="text-base font-semibold text-[#111827]">{booking.customerName}</p>
             <p className="text-sm text-[#4b5566]">{booking.customerEmail}</p>
             <p className="text-sm text-[#111827] mt-2">
-              ₦{booking.totalAmount.toLocaleString()} for {calculateNights(booking.checkInDate, booking.checkOutDate)} nights
+              ₦{booking.totalAmount.toLocaleString()} for {calculateNights(booking.checkInDate, booking.checkOutDate)}{" "}
+              nights
             </p>
             <p className="text-sm text-[#4b5566] mt-2">
               {formatDate(booking.checkInDate)} - {formatDate(booking.checkOutDate)}
             </p>
-            
+
             {/* Action Buttons Row */}
             <div className="mt-4 flex gap-2">
               <button
@@ -278,7 +283,8 @@ export default function AdminBookingPage() {
       {totalBookings > 0 && (
         <div className="w-full max-w-[1200px] flex flex-col sm:flex-row items-center justify-between mt-6 text-sm text-gray-500">
           <span className="mb-2 sm:mb-0">
-            Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalBookings)} of {totalBookings} bookings
+            Showing {(currentPage - 1) * limit + 1} to {Math.min(currentPage * limit, totalBookings)} of {totalBookings}{" "}
+            bookings
           </span>
           <div className="flex gap-2">
             <button
@@ -288,24 +294,22 @@ export default function AdminBookingPage() {
             >
               Prev
             </button>
-            
+
             {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
               const pageNumber = Math.max(1, currentPage - 1) + i;
               if (pageNumber > totalPages) return null;
-              
+
               return (
                 <button
                   key={pageNumber}
                   onClick={() => handlePageChange(pageNumber)}
-                  className={`px-3 py-1 border rounded ${
-                    pageNumber === currentPage ? 'bg-black text-white' : ''
-                  }`}
+                  className={`px-3 py-1 border rounded ${pageNumber === currentPage ? "bg-black text-white" : ""}`}
                 >
                   {pageNumber}
                 </button>
               );
             })}
-            
+
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
@@ -317,11 +321,7 @@ export default function AdminBookingPage() {
         </div>
       )}
 
-      <GuestInfoModal
-        booking={selectedBooking}
-        isOpen={isModalOpen}
-        onClose={closeModal}
-      />
+      <GuestInfoModal booking={selectedBooking} isOpen={isModalOpen} onClose={closeModal} />
     </div>
   );
 }
