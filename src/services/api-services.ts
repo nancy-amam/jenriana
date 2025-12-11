@@ -477,7 +477,13 @@ export async function getProfile() {
   return apiHandler("/api/users/me", { method: "GET" });
 }
 
-export async function updateProfile(data: { fullname: string; phone: string }) {
+export async function updateProfile(data: {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  dateOfBirth?: string;
+  membershipTier?: "Silver" | "Gold" | "VIP";
+}) {
   return apiHandler("/api/users/update", {
     method: "PATCH",
     body: data,

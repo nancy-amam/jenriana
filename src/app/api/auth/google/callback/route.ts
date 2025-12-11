@@ -70,7 +70,8 @@ export async function GET(req: NextRequest) {
       id: user._id,
       role: user.role,
       email: user.email,
-      fullname: user.fullname,
+      firstName: user.firstName,
+      lastName: user.lastName,
     },
     token: authToken,
   });
