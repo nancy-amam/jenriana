@@ -13,7 +13,7 @@ export interface Image {
 export interface Addon extends BaseEntity {
   name: string;
   price: number;
-  pricingType: 'perNight' | 'oneTime';
+  pricingType: "perNight" | "oneTime";
   description?: string;
   active?: boolean;
 }
@@ -77,11 +77,13 @@ export interface LocationFeature extends BaseEntity, Image {
 }
 
 // Testimonial interface
-export interface Testimonial extends BaseEntity {
+export interface Testimonial {
+  id: string;
   rating: number;
   text: string;
   authorName: string;
-  authorImage: string;
+  authorImage?: string;
+  date?: string;
 }
 
 // Amenity interface
@@ -106,7 +108,7 @@ export interface Booking extends BaseEntity {
   guests: number;
   totalPrice: number;
   selectedServices: { id: string; name: string; price: number }[];
-  paymentMethod: 'card' | 'bank-transfer';
+  paymentMethod: "card" | "bank-transfer";
   bookingDate: string;
 }
 
@@ -152,14 +154,14 @@ export interface CancelBookingResponse {
 }
 
 interface Activity {
- _id: string;
- type: string;
- message: string;
- createdAt: string;
- __v: number;
+  _id: string;
+  type: string;
+  message: string;
+  createdAt: string;
+  __v: number;
 }
 
 export interface ActivityResponse {
- message: string;
- activities: Activity[];
+  message: string;
+  activities: Activity[];
 }

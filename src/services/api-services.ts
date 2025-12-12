@@ -808,3 +808,24 @@ export function deleteTrendingApartment(id: string) {
     method: "DELETE",
   });
 }
+
+export async function submitFeedback(data: any) {
+  return apiHandler("/api/feedback/general", {
+    method: "POST",
+    body: data,
+  });
+}
+
+export function getFeedbacks(publish?: boolean) {
+  const query = publish === undefined ? "" : `?publish=${publish}`;
+  return apiHandler(`/api/feedback/general${query}`, {
+    method: "GET",
+  });
+}
+
+export function updateFeedbackPublish(id: string, publish: boolean) {
+  return apiHandler(`/api/feedback/general/${id}/publish`, {
+    method: "PATCH",
+    body: { publish },
+  });
+}

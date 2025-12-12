@@ -35,7 +35,7 @@ export async function apiHandler(
   } catch (error: any) {
     console.log(error);
     if (error.response) {
-      if (error.response.status === 401) {
+      if (error.response.status === 401 || error.response.status === 403) {
         localStorage.clear();
         window.location.href = "/login";
       }

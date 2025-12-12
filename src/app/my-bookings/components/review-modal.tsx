@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { StarIcon } from 'lucide-react';
+import React, { useState } from "react";
+import Image from "next/image";
+import { StarIcon } from "lucide-react";
 
 interface Review {
   rating: number;
@@ -15,12 +15,7 @@ interface ReviewModalProps {
   apartmentId: string;
 }
 
-const ReviewModal: React.FC<ReviewModalProps> = ({
-  isOpen,
-  onClose,
-  onPostReview,
-  apartmentId
-}) => {
+const ReviewModal: React.FC<ReviewModalProps> = ({ isOpen, onClose, onPostReview, apartmentId }) => {
   const [rating, setRating] = useState(4);
   const [comment, setComment] = useState("");
   const [postedReview, setPostedReview] = useState<Review | null>(null);
@@ -38,7 +33,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
         userImage: "/images/user.png",
       });
     } catch (error) {
-      console.error('Failed to post review:', error);
+      console.error("Failed to post review:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -56,29 +51,24 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
       <div className="bg-white rounded-[20px] p-6 w-[500px] max-h-[600px] flex flex-col gap-4">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-normal text-[#111827]">Rating</h2>
-          <button
-            onClick={handleClose}
-            className="text-[#4b5566] hover:text-black text-xl"
-          >
+          <button onClick={handleClose} className="text-[#4b5566] hover:text-black text-xl">
             ✕
           </button>
         </div>
-        
+
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <StarIcon
               key={star}
-              className={`w-8 h-8 cursor-pointer ${
-                star <= rating ? "text-[#FFD700]" : "text-gray-300"
-              }`}
+              className={`w-4 h-4 cursor-pointer ${star <= rating ? "text-shadow-yellow-500" : "text-gray-300"}`}
               fill={star <= rating ? "#FFD700" : "none"}
               onClick={() => setRating(star)}
             />
           ))}
         </div>
-        
-        <div className="text-base font-normal text-[#111827]">Your Review</div>
-        
+
+        <div className="text-sm font-normal text-[#111827]">Your Review</div>
+
         <textarea
           placeholder="Share your experience"
           value={comment}
@@ -86,7 +76,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
           className="w-full h-[120px] p-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black resize-none"
           disabled={isSubmitting}
         />
-        
+
         <button
           onClick={handlePostReview}
           disabled={isSubmitting}
@@ -94,16 +84,11 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
         >
           {isSubmitting ? "Posting..." : "Post Review"}
         </button>
-        
+
         {postedReview && (
           <div className="flex items-start gap-3 mt-4 p-4 bg-gray-50 rounded-lg">
             <div className="relative w-10 h-10">
-              <Image
-                src="/images/user.png"
-                alt="User"
-                fill
-                className="rounded-full object-cover"
-              />
+              <Image src="/images/user.png" alt="User" fill className="rounded-full object-cover" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
@@ -112,9 +97,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                   {[1, 2, 3, 4, 5].map((star) => (
                     <StarIcon
                       key={star}
-                      className={`w-4 h-4 ${
-                        star <= postedReview.rating ? "text-[#FFD700]" : "text-gray-300"
-                      }`}
+                      className={`w-4 h-4 ${star <= postedReview.rating ? "text-[#FFD700]" : "text-gray-300"}`}
                       fill={star <= postedReview.rating ? "#FFD700" : "none"}
                     />
                   ))}

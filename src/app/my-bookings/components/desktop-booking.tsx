@@ -1,6 +1,6 @@
-import React from 'react';
-import Image from 'next/image';
-import { MapPinIcon, UsersIcon, CalendarDays, CalendarCheck, ChevronDown } from 'lucide-react';
+import React from "react";
+import Image from "next/image";
+import { MapPinIcon, UsersIcon, CalendarDays, CalendarCheck, ChevronDown } from "lucide-react";
 
 interface Booking {
   id: string;
@@ -34,58 +34,61 @@ const BookingCardDesktop: React.FC<BookingCardDesktopProps> = ({
   onRebook,
   onViewDetails,
   onCancelBooking,
-  onRateStay
+  onRateStay,
 }) => {
-  const apartmentImage = booking.apartmentData.gallery?.[0] || '/images/image20.png';
+  const apartmentImage = booking.apartmentData.gallery?.[0] || "/images/image20.png";
 
   return (
-    <div className="hidden lg:flex lg:items-stretch w-full">
-      <div className="flex-shrink-0 w-[300px] h-auto relative rounded-l-lg overflow-hidden">
+    <div className="hidden  w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden lg:flex flex-col lg:flex-row">
+      <div className="w-full lg:w-[320px] h-[220px] lg:h-auto relative flex-shrink-0">
         <Image
           src={apartmentImage}
           alt={booking.apartmentData.name}
-          width={800}
-          height={800}
-          className="object-cover w-full h-full"
+          fill
+          className="object-cover"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.src = '/images/image20.png';
+            target.src = "/images/image20.png";
           }}
         />
+        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-medium shadow">
+          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+        </div>
       </div>
 
-      <div className="flex-grow grid grid-cols-[2fr_1fr] gap-4 w-full p-6">
-        <div className="flex flex-col justify-between">
-          <h2 className="text-xl font-normal text-[#111827]">{booking.apartmentData.name}</h2>
-          <p className="text-base text-[#4b5566] flex items-center gap-1 mt-1">
-            <MapPinIcon className="w-4 h-4 text-[#111827]" />
-            {booking.apartmentData.location}
-          </p>
-          <div className="text-sm text-[#374151] mt-2">
-            <div className="flex items-start gap-2">
-              <CalendarDays className="w-4 h-4 text-[#4b5566] mt-0.5" />
-              <div>
-                <span className="font-normal text-[#111827] mb-2">Check-in – Check-out:</span>
-                <p className="mt-1">
-                  {new Date(booking.checkInDate).toLocaleString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}{" "}
-                  –{" "}
-                  {new Date(booking.checkOutDate).toLocaleString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
+      <div className="flex flex-col lg:flex-row flex-grow justify-between p-6 gap-6">
+        <div className="flex flex-col gap-4 flex-grow">
+          <div>
+            <h2 className="text-xl font-semibold text-[#111827]">{booking.apartmentData.name}</h2>
+            <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
+              <MapPinIcon className="w-4 h-4 text-red-400" />
+              {booking.apartmentData.location}
+            </p>
+          </div>
+
+          <div className="space-y-3 text-sm text-gray-700">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4" />
+              <p>
+                {new Date(booking.checkInDate).toLocaleString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })}{" "}
+                –{" "}
+                {new Date(booking.checkOutDate).toLocaleString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
             </div>
-            <div className="mt-3">
-              <div className="flex items-center gap-2 text-sm text-[#111827] font-normal">
+
+            <div>
+              <div className="flex items-center gap-2 font-medium">
                 <CalendarCheck className="w-4 h-4" />
-                <span>Booked on</span>
+                Booked on
               </div>
-              <p className="text-sm text-[#4b5566] mt-1 ml-5">
+              <p className="text-gray-500 ml-6">
                 {new Date(booking.bookingDate).toLocaleString("en-US", {
                   month: "short",
                   day: "numeric",
@@ -93,62 +96,55 @@ const BookingCardDesktop: React.FC<BookingCardDesktopProps> = ({
                 })}
               </p>
             </div>
-            <div className="mt-3" onClick={() => onRateStay(booking.id)}>
-              <span className="text-base text-[#111827] font-normal">Rate Your Stay</span>
-            </div>
+
+            <button
+              onClick={() => onRateStay(booking.id)}
+              className="text-sm cursor-pointer font-medium text-black underline underline-offset-4 hover:text-gray-700 transition"
+            >
+              Rate Your Stay
+            </button>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 mt-4">
+
+          <div className="flex flex-wrap gap-3 mt-2">
             <button
               onClick={() => onViewDetails(booking.id)}
-              className="w-[141px] h-[50px] rounded-lg border border-gray-300 px-[18px] py-[12px] text-base font-normal text-[#212121] bg-[#d1d5db]/30 hover:bg-gray-50 transition-colors flex items-center justify-center whitespace-nowrap"
+              className="rounded-lg border border-gray-300 h-[48px] px-5 text-sm font-medium bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition"
             >
               View Details
             </button>
+
             <button
               onClick={() => onCancelBooking(booking.id)}
-              className="w-[141px] h-[50px] rounded-lg border border-gray-300 px-[18px] py-[12px] text-base font-normal text-[#212121] bg-[#d1d5db]/30 hover:bg-red-50 transition-colors flex items-center justify-center whitespace-nowrap"
+              className="rounded-lg border border-red-300 h-[48px] px-5 text-sm font-medium text-red-600 bg-red-50 flex items-center justify-center hover:bg-red-100 transition"
             >
               Cancel Booking
             </button>
           </div>
         </div>
-      </div>
 
-      <div className="flex flex-col justify-between h-full lg:h-[150px] w-full lg:w-auto lg:min-w-[200px] mt-4 lg:mt-0 p-6 gap-4">
-        <div className="w-[104px] h-[36px] rounded-lg bg-green-100 text-[#00a699] px-[10px] py-[7px] text-sm font-medium flex items-center justify-center">
-          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-        </div>
-        <div className="text-sm mt-2 flex items-center gap-2">
-          <UsersIcon className="w-5 h-5 text-[#4b5566]" />
+        <div className="flex flex-col justify-between lg:w-[180px] gap-5">
+          <div className="flex items-center gap-2 text-sm text-gray-700">
+            <UsersIcon className="w-5 h-5" />
+            <span>{booking.guests} Guests</span>
+          </div>
+
           <div>
-            <span className="font-normal text-[#4b5566] block">Guests</span>
-            <span className="text-[#374151] block">{booking.guests} Guests</span>
+            <p className="text-3xl font-bold text-black">₦{booking.totalPrice.toLocaleString()}</p>
+            {/* <button
+              onClick={() => onRateStay(booking.id)}
+              className="flex items-center text-gray-500 hover:text-gray-700"
+            >
+              <ChevronDown className="w-5 h-5" />
+            </button> */}
           </div>
+
+          <button
+            onClick={() => onRebook(booking.apartmentId)}
+            className="w-full h-[48px] rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-800 transition"
+          >
+            Rebook
+          </button>
         </div>
-        <div className="text-sm text-[#4b5566]">
-          <div className="flex items-center gap-2 text-black font-bold">
-            <span className="text-xl">₦</span>
-            <div className="flex flex-col flex-1">
-              <span className="text-sm font-medium text-[#4b5566]">Total Paid</span>
-              <div className="flex items-center">
-                <span className="text-base">{booking.totalPrice.toLocaleString()}</span>
-                <span className="text-sm font-medium text-[#6b7280] ml-2">
-                  for {booking.nights} {booking.nights === 1 ? "night" : "nights"}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center" onClick={() => onRateStay(booking.id)}>
-            <ChevronDown className="w-6 h-6" />
-          </div>
-        </div>
-        
-        <button
-          onClick={() => onRebook(booking.apartmentId)}
-          className="w-[141px] h-[50px] rounded-lg bg-black text-white px-[18px] py-[12px] text-base font-medium hover:bg-gray-800 transition-colors flex items-center justify-center"
-        >
-          Rebook
-        </button>
       </div>
     </div>
   );

@@ -1,7 +1,9 @@
 // app/feedback/page.tsx
 "use client";
 
+import { submitFeedback } from "@/services/api-services";
 import { FormEvent, useState } from "react";
+import { toast } from "sonner";
 
 type Rating = "Excellent" | "Good" | "Average" | "Poor";
 type YesNo = "Yes" | "No";
@@ -11,64 +13,6 @@ const RECIPIENT_EMAIL = "stays@yourapartment.com"; // <-- set your fixed recipie
 export default function FeedbackPage() {
   const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
   const [message, setMessage] = useState("");
-
-  function buildMailto({
-    name,
-    contact,
-    bookingProcess,
-    cleanliness,
-    amenitiesComfort,
-    customerService,
-    valueForMoney,
-    enjoyedMost,
-    improvements,
-    recommend,
-  }: {
-    name: string;
-    contact: string;
-    bookingProcess: Rating | null;
-    cleanliness: Rating | null;
-    amenitiesComfort: Rating | null;
-    customerService: Rating | null;
-    valueForMoney: Rating | null;
-    enjoyedMost: string;
-    improvements: string;
-    recommend: YesNo | null;
-  }) {
-    const subject = `New Apartment Feedback - ${name || "Guest"}`;
-
-    // Use CRLF to maximize compatibility across mail clients
-    const bodyLines = [
-      "Customer Feedback Submission",
-      "",
-      "Guest Information",
-      `- Name: ${name || "-"}`,
-      `- Contact: ${contact || "-"}`,
-      "",
-      "Your Experience",
-      `1) Booking process: ${bookingProcess ?? "-"}`,
-      `2) Cleanliness: ${cleanliness ?? "-"}`,
-      `3) Amenities comfort: ${amenitiesComfort ?? "-"}`,
-      `4) Customer service: ${customerService ?? "-"}`,
-      `5) Value for money: ${valueForMoney ?? "-"}`,
-      "",
-      "Additional Feedback",
-      "6) Enjoyed most:",
-      enjoyedMost || "-",
-      "",
-      "7) Improvements:",
-      improvements || "-",
-      "",
-      `8) Recommend us? ${recommend ?? "-"}`,
-    ];
-    const body = bodyLines.join("\r\n");
-
-    // IMPORTANT: encode with encodeURIComponent (not URLSearchParams)
-    const mailto =
-      `mailto:${RECIPIENT_EMAIL}` + `?subject=${encodeURIComponent(subject)}` + `&body=${encodeURIComponent(body)}`;
-
-    return mailto;
-  }
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -91,23 +35,12 @@ export default function FeedbackPage() {
     };
 
     try {
-      const href = buildMailto(payload);
-
-      // Some browsers cap mailto URL length (~2–2.1k chars). If too long, warn gracefully.
-      if (href.length > 2000) {
-        setStatus("error");
-        setMessage("Your message is quite long for a mailto link. Please shorten it a bit (or we can switch to SMTP).");
-        return;
-      }
-
-      // Trigger the user's email client
-      window.location.href = href;
-
+      await submitFeedback(payload);
       setStatus("idle");
-      e.currentTarget.reset();
-    } catch {
+      toast.success("Feedback Sent. Thank you");
+    } catch (err) {
       setStatus("error");
-      setMessage("Couldn’t open your email app. Please try again.");
+      setMessage("Failed to submit feedback.");
     }
   }
 
@@ -172,7 +105,7 @@ export default function FeedbackPage() {
           <h2 className="text-lg font-medium">Additional Feedback</h2>
           <div>
             <label className={label} htmlFor="enjoyedMost">
-              6. What did you enjoy most about your stay?
+              6. What did you enjoy most about your stay. Your experience?
             </label>
             <textarea id="enjoyedMost" name="enjoyedMost" className={field} rows={4} />
           </div>
@@ -204,7 +137,7 @@ export default function FeedbackPage() {
             disabled={status === "submitting"}
             className="rounded-md bg-black px-5 py-2.5 text-white disabled:opacity-60"
           >
-            {status === "submitting" ? "Opening Mail…" : "Submit Feedback"}
+            {status === "submitting" ? "Sending..." : "Submit Feedback"}
           </button>
           {message && <span className={status === "error" ? "text-red-700 text-sm" : "text-sm"}>{message}</span>}
         </div>

@@ -1,6 +1,6 @@
-import React from 'react';
-import BookingCardMobile from './mobile-bookings';
-import BookingCardDesktop from './desktop-booking';
+import React from "react";
+import BookingCardMobile from "./mobile-bookings";
+import BookingCardDesktop from "./desktop-booking";
 
 interface Booking {
   id: string;
@@ -29,15 +29,9 @@ interface BookingCardProps {
   onRateStay: (bookingId: string) => void;
 }
 
-const BookingCard: React.FC<BookingCardProps> = ({
-  booking,
-  onRebook,
-  onViewDetails,
-  onCancelBooking,
-  onRateStay
-}) => {
+const BookingCard: React.FC<BookingCardProps> = ({ booking, onRebook, onViewDetails, onCancelBooking, onRateStay }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md flex flex-col lg:flex-row lg:items-stretch gap-0 lg:gap-6 lg:min-h-[200px]">
+    <div className="rounded-lg flex flex-col lg:flex-row lg:items-stretch gap-0 lg:gap-6 lg:min-h-[200px]">
       <BookingCardMobile
         booking={booking}
         onRebook={onRebook}
@@ -45,7 +39,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
         onCancelBooking={onCancelBooking}
         onRateStay={onRateStay}
       />
-      
+
       <BookingCardDesktop
         booking={booking}
         onRebook={onRebook}

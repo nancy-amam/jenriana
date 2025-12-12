@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, BookOpen, Users, Menu, ChartNoAxesColumn, Component } from "lucide-react";
+import { Building2, BookOpen, Users, Menu, ChartNoAxesColumn, Component, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 
 const links = [
-  { href: "/admin/apartments", label: "Apartments", icon: <Building2 className="w-4 h-4" /> },
-  { href: "/admin/bookings", label: "Bookings", icon: <BookOpen className="w-4 h-4" /> },
-  { href: "/admin/guests", label: "Guests", icon: <Users className="w-4 h-4" /> },
-  { href: "/admin/analytics", label: "Analytics", icon: <ChartNoAxesColumn /> },
-  { href: "/admin/coupons", label: "Coupons", icon: <Component /> },
+  { href: "/admin/apartments", label: "Apartments", icon: <Building2 className="w-3 h-3" /> },
+  { href: "/admin/bookings", label: "Bookings", icon: <BookOpen className="w-3 h-3" /> },
+  { href: "/admin/guests", label: "Guests", icon: <Users className="w-3 h-3" /> },
+  { href: "/admin/analytics", label: "Analytics", icon: <ChartNoAxesColumn className="w-3 h-3" /> },
+  { href: "/admin/coupons", label: "Coupons", icon: <Component className="w-3 h-3" /> },
+  { href: "/admin/feedback", label: "Feedback", icon: <MessageCircle className="w-3 h-3" /> },
 ];
 
 interface AdminSidebarProps {
@@ -34,7 +35,7 @@ export default function AdminSidebar({ isMobile = false, onLinkClick }: AdminSid
               <li key={link.href} className="border-b last:border-b-0">
                 <Link
                   href={link.href}
-                  className={`flex items-center gap-2 px-4 py-3 text-base
+                  className={`flex items-center gap-2 px-4 py-3 text-xs
                     ${isActive ? "bg-black text-white" : "text-[#212121] hover:bg-gray-50"}`}
                   onClick={onLinkClick} // Close mobile menu when link is clicked
                 >
@@ -63,7 +64,7 @@ export default function AdminSidebar({ isMobile = false, onLinkClick }: AdminSid
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className={`flex items-center gap-2 text-base px-3 py-2 rounded transition-colors
+                  className={`flex items-center gap-2 text-sm px-3 py-2 rounded transition-colors
                     ${isActive ? "bg-black text-white" : "text-[#212121] hover:text-black hover:bg-gray-100"}`}
                 >
                   {link.icon}
