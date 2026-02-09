@@ -35,73 +35,144 @@ export default function FeedbackTable() {
 
   if (loading) {
     return (
-      <div className="w-full bg-white mt-10 rounded-lg shadow-md h-[200px] animate-pulse flex items-center justify-center text-gray-400">
-        Loading feedback...
+      <div className="w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm mt-4 h-[280px] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
+          <p className="text-sm text-slate-500">Loading feedback...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="hidden md:block container mx-auto w-full bg-white shadow-md rounded-lg p-4 mt-10 overflow-x-auto">
-        <table className="w-full text-sm font-normal text-left table-fixed">
-          <thead className="text-xs text-[#4b5566] uppercase">
-            <tr>
-              <th className="py-2 w-[20%] min-w-[200px]">Name</th>
-              <th className="w-[15%] min-w-[150px]">Contact</th>
-              <th className="w-[10%] min-w-[100px]">Booking</th>
-              <th className="w-[10%] min-w-[100px]">Cleanliness</th>
-              <th className="w-[10%] min-w-[100px]">Amenities</th>
-              <th className="w-[10%] min-w-[100px]">Customer Service</th>
-              <th className="w-[10%] min-w-[100px]">Recommend</th>
-              <th className="w-[10%] min-w-[100px]">Publish</th>
-              <th className="w-[5%] min-w-[80px]">Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {feedbacks.map((fb: any) => (
-              <tr key={fb._id} className="border-b border-gray-100">
-                <td className="py-3 cursor-pointer underline" onClick={() => setSelected(fb)}>
-                  {fb.name}
-                </td>
-
-                <td className="py-3 truncate">{fb.contact}</td>
-
-                <td className="py-3">{fb.bookingProcess || "-"}</td>
-                <td className="py-3">{fb.cleanliness || "-"}</td>
-                <td className="py-3">{fb.amenitiesComfort || "-"}</td>
-                <td className="py-3">{fb.customerService || "-"}</td>
-
-                <td className="py-3 font-medium">
-                  {fb.recommend === "Yes" ? (
-                    <span className="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">Yes</span>
-                  ) : (
-                    <span className="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs">No</span>
-                  )}
-                </td>
-
-                <td className="py-3">
-                  {fb.publish ? (
-                    <span className="px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs">Published</span>
-                  ) : (
-                    <span className="px-2 py-1 rounded-full bg-gray-200 text-gray-800 text-xs">Hidden</span>
-                  )}
-                </td>
-
-                <td className="py-3">
-                  <button
-                    onClick={() => togglePublish(fb._id, fb.publish)}
-                    disabled={updatingId === fb._id}
-                    className="text-blue-600 text-xs underline disabled:opacity-40"
-                  >
-                    {updatingId === fb._id ? "Updating…" : fb.publish ? "Unpublish" : "Publish"}
-                  </button>
-                </td>
+      <div className="hidden md:block w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm mt-4">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px]">
+            <thead>
+              <tr className="bg-slate-50/80 border-b border-gray-200">
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Name
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Contact
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Booking
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Cleanliness
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Amenities
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Service
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Recommend
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Publish
+                </th>
+                <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Action
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {feedbacks.map((fb: any) => (
+                <tr key={fb._id} className="transition-colors hover:bg-slate-50/50">
+                  <td className="px-5 py-4">
+                    <button
+                      onClick={() => setSelected(fb)}
+                      className="text-sm font-medium text-slate-900 hover:text-blue-600 underline-offset-2 hover:underline text-left"
+                    >
+                      {fb.name}
+                    </button>
+                  </td>
+                  <td className="px-5 py-4 text-sm text-slate-600 truncate max-w-[140px]">{fb.contact}</td>
+                  <td className="px-5 py-4 text-sm text-slate-600">{fb.bookingProcess || "—"}</td>
+                  <td className="px-5 py-4 text-sm text-slate-600">{fb.cleanliness || "—"}</td>
+                  <td className="px-5 py-4 text-sm text-slate-600">{fb.amenitiesComfort || "—"}</td>
+                  <td className="px-5 py-4 text-sm text-slate-600">{fb.customerService || "—"}</td>
+                  <td className="px-5 py-4">
+                    {fb.recommend === "Yes" ? (
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                        Yes
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">
+                        No
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4">
+                    {fb.publish ? (
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                        Published
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                        Hidden
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <button
+                      onClick={() => togglePublish(fb._id, fb.publish)}
+                      disabled={updatingId === fb._id}
+                      className="text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      {updatingId === fb._id ? "Updating…" : fb.publish ? "Unpublish" : "Publish"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden mt-4 space-y-4">
+        {feedbacks.map((fb: any) => (
+          <div
+            key={fb._id}
+            onClick={() => setSelected(fb)}
+            className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-4 space-y-3 cursor-pointer active:bg-slate-50/50 transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-medium text-slate-900">{fb.name}</p>
+              <div className="flex gap-2">
+                {fb.recommend === "Yes" ? (
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Yes</span>
+                ) : (
+                  <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">No</span>
+                )}
+                {fb.publish ? (
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Published</span>
+                ) : (
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">Hidden</span>
+                )}
+              </div>
+            </div>
+            <p className="text-sm text-slate-600 truncate">{fb.contact}</p>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-500">{fb.bookingProcess || "—"} / {fb.cleanliness || "—"}</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePublish(fb._id, fb.publish);
+                }}
+                disabled={updatingId === fb._id}
+                className="text-xs font-medium text-blue-600"
+              >
+                {updatingId === fb._id ? "Updating…" : fb.publish ? "Unpublish" : "Publish"}
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       <FeedbackModal open={!!selected} feedback={selected} onClose={() => setSelected(null)} />

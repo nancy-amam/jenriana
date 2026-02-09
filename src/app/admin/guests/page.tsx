@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Pencil, Trash2 } from "lucide-react";
 import { getAllUsers, deleteUser } from "@/services/api-services";
-import ApartmentLoadingPage from "@/components/loading";
+import AdminContentLoader from "../components/admin-content-loader";
 import DeleteUserModal from "../components/delete-user";
+import { useAdminData } from "@/context/admin-data-context";
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -45,13 +45,14 @@ interface UsersResponse {
 }
 
 export default function AdminGuestsPage() {
-  const [search, setSearch] = useState("");
-  const [users, setUsers] = useState<User[]>([]);
+  const { guestsCache, setGuestsCache } = useAdminData();
+  const [search, setSearch] = useState(guestsCache?.search ?? "");
+  const [users, setUsers] = useState<User[]>(guestsCache?.users ?? []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalUsers, setTotalUsers] = useState(0);
+  const [currentPage, setCurrentPage] = useState(guestsCache?.currentPage ?? 1);
+  const [totalPages, setTotalPages] = useState(guestsCache?.totalPages ?? 1);
+  const [totalUsers, setTotalUsers] = useState(guestsCache?.totalUsers ?? 0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
@@ -60,7 +61,7 @@ export default function AdminGuestsPage() {
 
   const fetchUsers = async (page: number = 1, searchQuery?: string) => {
     try {
-      setLoading(true);
+      setLoading(users.length === 0);
       setError(null);
 
       const response: UsersResponse = await getAllUsers(page, limit, searchQuery?.trim() || undefined);
@@ -69,14 +70,28 @@ export default function AdminGuestsPage() {
         throw new Error("Invalid response: users array is missing or not an array");
       }
 
-      setUsers(response.users);
-      setTotalPages(response.pagination?.pages || 1);
-      setTotalUsers(response.pagination?.total || 0);
-      setCurrentPage(response.pagination?.page || page);
+      const nextUsers = response.users;
+      const nextTotalPages = response.pagination?.pages || 1;
+      const nextTotalUsers = response.pagination?.total || 0;
+      const nextPage = response.pagination?.page || page;
+      const nextSearch = searchQuery?.trim() ?? search;
+
+      setUsers(nextUsers);
+      setTotalPages(nextTotalPages);
+      setTotalUsers(nextTotalUsers);
+      setCurrentPage(nextPage);
+      setGuestsCache({
+        users: nextUsers,
+        totalPages: nextTotalPages,
+        totalUsers: nextTotalUsers,
+        currentPage: nextPage,
+        search: nextSearch,
+      });
     } catch (err: any) {
       const errorMessage = err.message || "Failed to fetch users";
       setError(errorMessage);
       setUsers([]);
+      setGuestsCache(null);
     } finally {
       setLoading(false);
     }
@@ -126,11 +141,7 @@ export default function AdminGuestsPage() {
 
   const memoizedUsers = useMemo(() => users, [users]);
 
-  if (loading && users.length === 0) {
-    return <ApartmentLoadingPage />;
-  }
-
-  if (error) {
+  if (error && users.length === 0) {
     return (
       <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
         <div className="flex justify-center items-center h-64">
@@ -154,40 +165,47 @@ export default function AdminGuestsPage() {
         {loading && <div className="text-gray-500 text-sm">Searching...</div>}
       </div>
 
+      {/* Initial load: show compact loader in content area only */}
+      {loading && users.length === 0 ? (
+        <AdminContentLoader />
+      ) : (
+        <>
       {/* Desktop Table */}
-      <div className="hidden lg:block w-full bg-white rounded-lg shadow-md p-4">
-        <table className="w-full text-sm text-left">
-          <thead className="text-xs text-[#4b5566] uppercase">
-            <tr>
-              <th className="py-2">Name</th>
-              <th>Email</th>
-              <th>Phone Number</th>
-              <th>Total Bookings</th>
-              {/* <th>Actions</th> */}
-            </tr>
-          </thead>
-          <tbody>
-            {memoizedUsers.map((user) => (
-              <tr key={user._id} className="text-[#111827] text-sm font-normal">
-                <td className="py-3 font-medium">{user.fullname}</td>
-                <td>{user.email}</td>
-                <td>{user.phone}</td>
-                <td>{user.totalBookings}</td>
-                {/* <td className="flex gap-3 items-center py-2">
-                  <button className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1">
-                    <Pencil className="w-4 h-4" /> Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteClick(user._id)}
-                    className="text-red-600 hover:underline flex cursor-pointer items-center gap-1"
-                  >
-                    <Trash2 className="w-4 h-4" /> Delete
-                  </button>
-                </td> */}
+      <div className="hidden lg:block w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px]">
+            <thead>
+              <tr className="bg-slate-50/80 border-b border-gray-200">
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Name
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Email
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Phone Number
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Total Bookings
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {memoizedUsers.map((user) => (
+                <tr key={user._id} className="transition-colors hover:bg-slate-50/50">
+                  <td className="px-5 py-4 text-sm font-medium text-slate-900">{user.fullname}</td>
+                  <td className="px-5 py-4 text-sm text-slate-600">{user.email}</td>
+                  <td className="px-5 py-4 text-sm text-slate-600">{user.phone || "—"}</td>
+                  <td className="px-5 py-4">
+                    <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+                      {user.totalBookings}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Mobile Cards */}
@@ -212,6 +230,8 @@ export default function AdminGuestsPage() {
           </div>
         ))}
       </div>
+        </>
+      )}
 
       {/* Delete Confirmation Modal */}
       <DeleteUserModal
@@ -223,42 +243,51 @@ export default function AdminGuestsPage() {
 
       {/* Empty State */}
       {memoizedUsers.length === 0 && !loading && (
-        <div className="w-full max-w-[1200px] bg-white rounded-lg shadow-md p-8 text-center">
-          <p className="text-gray-500">No users found.</p>
+        <div className="w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm p-12 text-center">
+          <p className="text-slate-500 text-sm">No users found.</p>
         </div>
       )}
 
       {/* Pagination */}
       {totalUsers > 0 && (
-        <div className="w-full max-w-[1200px] bottom-0 flex flex-col sm:flex-row items-center justify-between mt-6 text-sm text-gray-500">
-          <span className="mb-2 sm:mb-0">
-            Showing {(currentPage - 1) * limit + 1} to {Math.min(currentPage * limit, totalUsers)} of {totalUsers} users
-          </span>
-          <div className="flex gap-2">
+        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 px-1">
+          <p className="text-sm text-slate-600">
+            Showing <span className="font-medium">{(currentPage - 1) * limit + 1}</span> to{" "}
+            <span className="font-medium">{Math.min(currentPage * limit, totalUsers)}</span> of{" "}
+            <span className="font-medium">{totalUsers}</span> users
+          </p>
+          <div className="flex items-center gap-1">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-gray-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-              Prev
+              Previous
             </button>
-            {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
-              const pageNumber = Math.max(1, currentPage - 1) + i;
-              if (pageNumber > totalPages) return null;
-              return (
-                <button
-                  key={pageNumber}
-                  onClick={() => handlePageChange(pageNumber)}
-                  className={`px-3 py-1 border rounded ${pageNumber === currentPage ? "bg-black text-white" : ""}`}
-                >
-                  {pageNumber}
-                </button>
-              );
-            })}
+            <div className="flex items-center gap-1 mx-2">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const start = Math.max(1, currentPage - 2);
+                const pageNumber = Math.min(start + i, totalPages);
+                if (pageNumber < 1) return null;
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() => handlePageChange(pageNumber)}
+                    className={`min-w-[36px] px-3 py-2 text-sm font-medium rounded-lg transition ${
+                      pageNumber === currentPage
+                        ? "bg-slate-900 text-white"
+                        : "text-slate-600 bg-white border border-gray-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+            </div>
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-gray-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Next
             </button>

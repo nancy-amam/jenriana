@@ -4,7 +4,7 @@ import Apartment from "@/models/apartment";
 import connectDB from "../../lib/mongodb";
 import { getUserFromRequest } from "../../lib/getUserFromRequest";
 import mongoose from "mongoose";
-import { uploadToPinata } from "../../lib/pinata";
+import { uploadToS3 } from "../../lib/s3";
 import { activityService } from "../../services/activity.service";
 
 interface RouteContext {
@@ -67,7 +67,7 @@ export async function PUT(req: Request, { params }: RouteContext) {
     if (galleryFiles.length > 0) {
       const newGalleryUrls: string[] = [];
       for (const file of galleryFiles) {
-        const url = await uploadToPinata(file);
+        const url = await uploadToS3(file);
         newGalleryUrls.push(url);
       }
       updateData.gallery = [

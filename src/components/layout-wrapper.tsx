@@ -25,10 +25,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     return () => clearTimeout(timer);
   }, [pathname]);
 
+  const isAdmin = pathname.startsWith("/admin");
+
   return (
     <>
       <Toaster richColors position="bottom-right" theme="dark" />
-      {loading && (
+      {loading && !isAdmin && (
         <div className="fixed inset-0 flex items-center justify-center bg-white z-50">
           <ApartmentLoadingPage />
         </div>
@@ -37,7 +39,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       {!hideNavAndFooter && <Navbar />}
 
       <main className={!hideNavAndFooter ? "pt-16" : ""}>
-        <Suspense fallback={<ApartmentLoadingPage />}>{children}</Suspense>
+        <Suspense fallback={isAdmin ? null : <ApartmentLoadingPage />}>{children}</Suspense>
       </main>
 
       {!hideFooter && <Footer />}

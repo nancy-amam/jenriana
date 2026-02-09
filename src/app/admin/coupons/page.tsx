@@ -128,82 +128,102 @@ export default function CouponsAdminPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="overflow-x-auto bg-white rounded-2xl border border-black/10"
+          className="overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm"
         >
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr className="text-left text-gray-500 text-xs uppercase tracking-wide">
-                <th className="p-4">Code</th>
-                <th className="p-4">Discount</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Usable</th>
-                <th className="p-4">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <AnimatePresence>
-                {coupons.map((c) => (
-                  <motion.tr
-                    key={c._id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    className="border-b hover:bg-gray-50"
-                  >
-                    <td className="p-4 font-medium">{c.code}</td>
-                    <td className="p-4">{c.discount}%</td>
-
-                    <td className="p-4">
-                      {c.isUsed ? (
-                        <span className="px-3 py-1 rounded-full bg-red-100 text-red-600 text-xs">Used</span>
-                      ) : (
-                        <span className="px-3 py-1 rounded-full bg-green-100 text-green-600 text-xs">Not Used</span>
-                      )}
-                    </td>
-
-                    <td className="p-4">
-                      {c.isUsable ? (
-                        <span className="px-3 py-1 rounded-full bg-green-100 text-green-600 text-xs">Active</span>
-                      ) : (
-                        <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-600 text-xs">Disabled</span>
-                      )}
-                    </td>
-
-                    <td className="p-4 flex items-center gap-4">
-                      <motion.button
-                        whileTap={{ scale: 0.92 }}
-                        onClick={() => handleToggle(c._id)}
-                        disabled={processingId === c._id}
-                        className="text-blue-600 hover:text-blue-800 transition"
-                      >
-                        {c.isUsable ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
-                      </motion.button>
-
-                      {!c.isUsed && (
-                        <motion.button
-                          whileTap={{ scale: 0.92 }}
-                          onClick={() => handleDelete(c._id)}
-                          disabled={processingId === c._id}
-                          className="text-red-600 hover:text-red-800 transition"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </motion.button>
-                      )}
-                    </td>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
-
-              {coupons.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="p-6 text-center text-gray-500">
-                    No coupons available
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[500px]">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-gray-200">
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Code
+                  </th>
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Discount
+                  </th>
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Status
+                  </th>
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Usable
+                  </th>
+                  <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Actions
+                  </th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                <AnimatePresence>
+                  {coupons.map((c) => (
+                    <motion.tr
+                      key={c._id}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      className="transition-colors hover:bg-slate-50/50"
+                    >
+                      <td className="px-5 py-4">
+                        <span className="font-mono text-sm font-semibold text-slate-900">{c.code}</span>
+                      </td>
+                      <td className="px-5 py-4 text-sm font-medium text-slate-700">{c.discount}%</td>
+                      <td className="px-5 py-4">
+                        {c.isUsed ? (
+                          <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">
+                            Used
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                            Not Used
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        {c.isUsable ? (
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                            Disabled
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <motion.button
+                            whileTap={{ scale: 0.92 }}
+                            onClick={() => handleToggle(c._id)}
+                            disabled={processingId === c._id}
+                            className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 transition"
+                            title={c.isUsable ? "Disable" : "Enable"}
+                          >
+                            {c.isUsable ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
+                          </motion.button>
+                          {!c.isUsed && (
+                            <motion.button
+                              whileTap={{ scale: 0.92 }}
+                              onClick={() => handleDelete(c._id)}
+                              disabled={processingId === c._id}
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50 transition"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </motion.button>
+                          )}
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+                {coupons.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-12 text-center text-sm text-slate-500">
+                      No coupons available
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </motion.div>
       )}
 

@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { getAllBookings } from "@/services/api-services";
-import ApartmentLoadingPage from "@/components/loading";
+import AdminContentLoader from "../components/admin-content-loader";
 import GuestInfoModal from "../components/guest-information";
+import { useAdminData } from "@/context/admin-data-context";
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -60,13 +61,14 @@ interface BookingsResponse {
 }
 
 export default function AdminBookingPage() {
-  const [search, setSearch] = useState("");
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const { bookingsCache, setBookingsCache } = useAdminData();
+  const [search, setSearch] = useState(bookingsCache?.search ?? "");
+  const [bookings, setBookings] = useState<Booking[]>(bookingsCache?.bookings ?? []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalBookings, setTotalBookings] = useState(0);
+  const [currentPage, setCurrentPage] = useState(bookingsCache?.currentPage ?? 1);
+  const [totalPages, setTotalPages] = useState(bookingsCache?.totalPages ?? 1);
+  const [totalBookings, setTotalBookings] = useState(bookingsCache?.totalBookings ?? 0);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -75,8 +77,7 @@ export default function AdminBookingPage() {
 
   const fetchBookings = async (page: number = 1, searchQuery?: string) => {
     try {
-      console.log("Fetching bookings with params:", { page, limit, searchQuery });
-      setLoading(true);
+      setLoading(bookings.length === 0);
       setError(null);
 
       const response: BookingsResponse = await getAllBookings(page, limit, searchQuery?.trim());
@@ -92,15 +93,29 @@ export default function AdminBookingPage() {
         console.warn("Invalid pagination data, using defaults");
       }
 
-      setBookings(response.bookings);
-      setTotalPages(response.pages || 1);
-      setTotalBookings(response.total || 0);
-      setCurrentPage(response.page || page);
+      const nextBookings = response.bookings;
+      const nextPages = response.pages || 1;
+      const nextTotal = response.total || 0;
+      const nextPage = response.page || page;
+      const nextSearch = searchQuery?.trim() ?? search;
+
+      setBookings(nextBookings);
+      setTotalPages(nextPages);
+      setTotalBookings(nextTotal);
+      setCurrentPage(nextPage);
+      setBookingsCache({
+        bookings: nextBookings,
+        totalPages: nextPages,
+        totalBookings: nextTotal,
+        currentPage: nextPage,
+        search: nextSearch,
+      });
     } catch (err: any) {
       const errorMessage = err.message || "Failed to fetch bookings";
       setError(errorMessage);
       console.error("Error fetching bookings:", err);
-      setBookings([]); // Clear bookings on error to avoid showing stale data
+      setBookings([]);
+      setBookingsCache(null);
     } finally {
       setLoading(false);
     }
@@ -114,10 +129,7 @@ export default function AdminBookingPage() {
   };
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      console.log("Changing to page:", page);
-      setCurrentPage(page);
-    }
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
   const handleViewBooking = (booking: Booking) => {
@@ -160,17 +172,12 @@ export default function AdminBookingPage() {
   };
 
   useEffect(() => {
-    console.log("Effect triggered with debouncedSearch:", debouncedSearch, "currentPage:", currentPage);
     fetchBookings(currentPage, debouncedSearch);
   }, [debouncedSearch, currentPage]);
 
   const memoizedBookings = useMemo(() => bookings, [bookings]);
 
-  if (loading && bookings.length === 0) {
-    return <ApartmentLoadingPage />;
-  }
-
-  if (error) {
+  if (error && bookings.length === 0) {
     return (
       <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
         <div className="flex justify-center items-center h-64">
@@ -194,49 +201,77 @@ export default function AdminBookingPage() {
         {loading && <div className="text-gray-500 text-sm">Searching...</div>}
       </div>
 
+      {loading && bookings.length === 0 ? (
+        <AdminContentLoader />
+      ) : (
+        <>
       {/* Desktop Table */}
-      <div className="hidden lg:block w-full  bg-white rounded-lg shadow-md p-4">
-        <table className="w-full text-sm text-left">
-          <thead className="text-xs text-[#4b5566] uppercase">
-            <tr>
-              <th className="py-2">Booking ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Amount Paid</th>
-              <th>Arrival - Departure</th>
-              <th>Booking Date</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody className="mt-4">
-            {memoizedBookings.map((booking) => (
-              <tr key={booking._id} className="text-[#111827] text-sm font-normal mt-4">
-                <td className="py-3">{booking._id.slice(-8)}</td>
-                <td>{booking.customerName}</td>
-                <td>{booking.customerEmail}</td>
-                <td>₦{booking.totalAmount.toLocaleString()}</td>
-                <td>
-                  {formatDate(booking.checkInDate)} - {formatDate(booking.checkOutDate)}
-                </td>
-                <td>{formatDate(booking.createdAt)}</td>
-                <td>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(booking.status)}`}>
-                    {formatStatus(booking.status)}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    onClick={() => handleViewBooking(booking)}
-                    className="text-black hover:underline cursor-pointer"
-                  >
-                    View
-                  </button>
-                </td>
+      <div className="hidden lg:block w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px]">
+            <thead>
+              <tr className="bg-slate-50/80 border-b border-gray-200">
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Booking ID
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Name
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Email
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Amount Paid
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Arrival – Departure
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Booking Date
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Status
+                </th>
+                <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Action
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {memoizedBookings.map((booking) => (
+                <tr key={booking._id} className="transition-colors hover:bg-slate-50/50">
+                  <td className="px-5 py-4 text-sm font-mono text-slate-600">{booking._id.slice(-8)}</td>
+                  <td className="px-5 py-4 text-sm font-medium text-slate-900">{booking.customerName}</td>
+                  <td className="px-5 py-4 text-sm text-slate-600">{booking.customerEmail}</td>
+                  <td className="px-5 py-4 text-sm font-semibold text-slate-900">
+                    ₦{booking.totalAmount.toLocaleString()}
+                  </td>
+                  <td className="px-5 py-4 text-sm text-slate-600">
+                    {formatDate(booking.checkInDate)} – {formatDate(booking.checkOutDate)}
+                  </td>
+                  <td className="px-5 py-4 text-sm text-slate-600">{formatDate(booking.createdAt)}</td>
+                  <td className="px-5 py-4">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(
+                        booking.status
+                      )}`}
+                    >
+                      {formatStatus(booking.status)}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <button
+                      onClick={() => handleViewBooking(booking)}
+                      className="text-sm font-medium text-slate-900 hover:text-slate-600 underline-offset-2 hover:underline transition"
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Mobile Cards */}
@@ -271,49 +306,56 @@ export default function AdminBookingPage() {
           </div>
         ))}
       </div>
+        </>
+      )}
 
       {/* Empty State */}
       {memoizedBookings.length === 0 && !loading && (
-        <div className="w-full max-w-[1200px] bg-white rounded-lg shadow-md p-8 text-center">
-          <p className="text-gray-500">No bookings found.</p>
+        <div className="w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm p-12 text-center">
+          <p className="text-slate-500 text-sm">No bookings found.</p>
         </div>
       )}
 
       {/* Pagination */}
       {totalBookings > 0 && (
-        <div className="w-full max-w-[1200px] flex flex-col sm:flex-row items-center justify-between mt-6 text-sm text-gray-500">
-          <span className="mb-2 sm:mb-0">
-            Showing {(currentPage - 1) * limit + 1} to {Math.min(currentPage * limit, totalBookings)} of {totalBookings}{" "}
-            bookings
-          </span>
-          <div className="flex gap-2">
+        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 px-1">
+          <p className="text-sm text-slate-600">
+            Showing <span className="font-medium">{(currentPage - 1) * limit + 1}</span> to{" "}
+            <span className="font-medium">{Math.min(currentPage * limit, totalBookings)}</span> of{" "}
+            <span className="font-medium">{totalBookings}</span> bookings
+          </p>
+          <div className="flex items-center gap-1">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-gray-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-              Prev
+              Previous
             </button>
-
-            {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
-              const pageNumber = Math.max(1, currentPage - 1) + i;
-              if (pageNumber > totalPages) return null;
-
-              return (
-                <button
-                  key={pageNumber}
-                  onClick={() => handlePageChange(pageNumber)}
-                  className={`px-3 py-1 border rounded ${pageNumber === currentPage ? "bg-black text-white" : ""}`}
-                >
-                  {pageNumber}
-                </button>
-              );
-            })}
-
+            <div className="flex items-center gap-1 mx-2">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const start = Math.max(1, currentPage - 2);
+                const pageNumber = Math.min(start + i, totalPages);
+                if (pageNumber < 1) return null;
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() => handlePageChange(pageNumber)}
+                    className={`min-w-[36px] px-3 py-2 text-sm font-medium rounded-lg transition ${
+                      pageNumber === currentPage
+                        ? "bg-slate-900 text-white"
+                        : "text-slate-600 bg-white border border-gray-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+            </div>
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-gray-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Next
             </button>

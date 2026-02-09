@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  AirVent, 
-  Wifi, 
-  WashingMachine, 
-  Zap, 
-  Tv, 
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  AirVent,
+  Wifi,
+  WashingMachine,
+  Zap,
+  Tv,
   ChefHat,
   Ban,
   PartyPopper,
@@ -20,10 +20,10 @@ import {
   Loader2,
   CheckCircle,
   Car,
-  Shield
-} from 'lucide-react';
-import { addApartment, updateApartment } from '@/services/api-services';
-import { Apartment, ApartmentData, Addon } from '@/lib/interface';
+  Shield,
+} from "lucide-react";
+import { addApartment, updateApartment } from "@/services/api-services";
+import { Apartment, ApartmentData, Addon } from "@/lib/interface";
 
 interface Feature {
   id: string;
@@ -76,12 +76,12 @@ interface UIAddon {
   active: boolean;
 }
 
-export default function AddEditApartmentModal({ 
-  open, 
-  onClose, 
+export default function AddEditApartmentModal({
+  open,
+  onClose,
   onSuccess,
   editMode = false,
-  apartmentData 
+  apartmentData,
 }: AddEditApartmentModalProps) {
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [rules, setRules] = useState<RulesState>({
@@ -89,72 +89,72 @@ export default function AddEditApartmentModal({
     noParties: false,
     petsAllowed: false,
     childrenAllowed: true,
-    maxGuests: true
+    maxGuests: true,
   });
   const [addOns, setAddOns] = useState<UIAddon[]>([]);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    location: '',
-    address: '',
+    name: "",
+    location: "",
+    address: "",
     pricePerNight: 0,
     rooms: 0,
     bathrooms: 0,
-    maxGuests: 0
+    maxGuests: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const features: Feature[] = [
-    { id: 'ac', name: 'Air Conditioning', icon: AirVent },
-    { id: 'wifi', name: 'WiFi', icon: Wifi },
-    { id: 'washing', name: 'Washing Machine', icon: WashingMachine },
-    { id: 'generator', name: 'Generator', icon: Zap },
-    { id: 'tv', name: 'Smart TV', icon: Tv },
-    { id: 'kitchen', name: 'Kitchen', icon: ChefHat },
-    { id: 'parking', name: 'Parking', icon: Car },
-    { id: 'security', name: '24/7 Security', icon: Shield }
+    { id: "ac", name: "Air Conditioning", icon: AirVent },
+    { id: "wifi", name: "WiFi", icon: Wifi },
+    { id: "washing", name: "Washing Machine", icon: WashingMachine },
+    { id: "generator", name: "Generator", icon: Zap },
+    { id: "tv", name: "Smart TV", icon: Tv },
+    { id: "kitchen", name: "Kitchen", icon: ChefHat },
+    { id: "parking", name: "Parking", icon: Car },
+    { id: "security", name: "24/7 Security", icon: Shield },
   ];
 
   const rulesList: Rule[] = [
-    { key: 'noSmoking', name: 'No Smoking', icon: Ban },
-    { key: 'noParties', name: 'No Parties', icon: PartyPopper },
-    { key: 'petsAllowed', name: 'Pets Allowed', icon: Heart },
-    { key: 'childrenAllowed', name: 'Children Allowed', icon: Baby },
-    { key: 'maxGuests', name: 'Don\'t Exceed Max Guests', icon: Users }
+    { key: "noSmoking", name: "No Smoking", icon: Ban },
+    { key: "noParties", name: "No Parties", icon: PartyPopper },
+    { key: "petsAllowed", name: "Pets Allowed", icon: Heart },
+    { key: "childrenAllowed", name: "Children Allowed", icon: Baby },
+    { key: "maxGuests", name: "Don't Exceed Max Guests", icon: Users },
   ];
 
   const featureMapping = {
-    'air-conditioning': 'ac',
-    'wifi': 'wifi',
-    'washing-machine': 'washing',
-    'generator': 'generator',
-    'smart-tv': 'tv',
-    'kitchen': 'kitchen',
-    'parking': 'parking',
-    '24-7-security': 'security'
+    "air-conditioning": "ac",
+    wifi: "wifi",
+    "washing-machine": "washing",
+    generator: "generator",
+    "smart-tv": "tv",
+    kitchen: "kitchen",
+    parking: "parking",
+    "24-7-security": "security",
   };
 
   const reverseFeatureMapping = {
-    'ac': 'air-conditioning',
-    'wifi': 'wifi',
-    'washing': 'washing-machine',
-    'generator': 'generator',
-    'tv': 'smart-tv',
-    'kitchen': 'kitchen',
-    'parking': 'parking',
-    'security': '24-7-security'
+    ac: "air-conditioning",
+    wifi: "wifi",
+    washing: "washing-machine",
+    generator: "generator",
+    tv: "smart-tv",
+    kitchen: "kitchen",
+    parking: "parking",
+    security: "24-7-security",
   };
 
   const rulesMapping = {
-    'no-smoking': 'noSmoking',
-    'no-parties': 'noParties',
-    'pets-allowed': 'petsAllowed',
-    'children-allowed': 'childrenAllowed',
-    'do-not-exceed-guest-count': 'maxGuests',
-    'max-guests-enforced': 'maxGuests'
+    "no-smoking": "noSmoking",
+    "no-parties": "noParties",
+    "pets-allowed": "petsAllowed",
+    "children-allowed": "childrenAllowed",
+    "do-not-exceed-guest-count": "maxGuests",
+    "max-guests-enforced": "maxGuests",
   };
 
   const pricingTypeToApi: Record<UIPricingType, "perNight" | "oneTime"> = {
@@ -171,18 +171,18 @@ export default function AddEditApartmentModal({
   useEffect(() => {
     if (editMode && apartmentData && open) {
       setFormData({
-        name: apartmentData.name || '',
-        location: apartmentData.location || '',
-        address: apartmentData.address || '',
+        name: apartmentData.name || "",
+        location: apartmentData.location || "",
+        address: apartmentData.address || "",
         pricePerNight: apartmentData.pricePerNight || 0,
         rooms: apartmentData.rooms || 0,
         bathrooms: apartmentData.bathrooms || 0,
-        maxGuests: apartmentData.maxGuests || 0
+        maxGuests: apartmentData.maxGuests || 0,
       });
 
       if (apartmentData.features) {
         const mappedFeatures = apartmentData.features
-          .map(feature => featureMapping[feature as keyof typeof featureMapping])
+          .map((feature) => featureMapping[feature as keyof typeof featureMapping])
           .filter(Boolean) as string[];
         setSelectedFeatures(mappedFeatures);
       }
@@ -192,11 +192,11 @@ export default function AddEditApartmentModal({
         noParties: false,
         petsAllowed: false,
         childrenAllowed: true,
-        maxGuests: true
+        maxGuests: true,
       };
 
       if (apartmentData.rules) {
-        apartmentData.rules.forEach(rule => {
+        apartmentData.rules.forEach((rule) => {
           const ruleKey = rulesMapping[rule as keyof typeof rulesMapping];
           if (ruleKey) {
             newRules[ruleKey as keyof RulesState] = true;
@@ -212,13 +212,13 @@ export default function AddEditApartmentModal({
       if (apartmentData.addons && apartmentData.addons.length > 0) {
         setAddOns(
           apartmentData.addons.map((addon, index): UIAddon => {
-            const pricingType = apiToPricingType[addon.pricingType as keyof typeof apiToPricingType] || 'per/night';
+            const pricingType = apiToPricingType[addon.pricingType as keyof typeof apiToPricingType] || "per/night";
             return {
               id: addon.id || `${Date.now()}-${index}`,
-              name: addon.name || '',
+              name: addon.name || "",
               price: addon.price || 0,
               pricingType,
-              description: (addon.description ?? '').trim(),
+              description: (addon.description ?? "").trim(),
               active: addon.active ?? true,
             };
           })
@@ -235,13 +235,13 @@ export default function AddEditApartmentModal({
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      location: '',
-      address: '',
+      name: "",
+      location: "",
+      address: "",
       pricePerNight: 0,
       rooms: 0,
       bathrooms: 0,
-      maxGuests: 0
+      maxGuests: 0,
     });
     setSelectedFeatures([]);
     setRules({
@@ -249,7 +249,7 @@ export default function AddEditApartmentModal({
       noParties: false,
       petsAllowed: false,
       childrenAllowed: true,
-      maxGuests: true
+      maxGuests: true,
     });
     setUploadedImages([]);
     setExistingImages([]);
@@ -260,47 +260,45 @@ export default function AddEditApartmentModal({
 
   const getFeatureIconColor = (featureId: string): string => {
     const colors = {
-      ac: 'text-blue-500',
-      wifi: 'text-green-500',
-      washing: 'text-purple-500',
-      generator: 'text-yellow-500',
-      tv: 'text-red-500',
-      kitchen: 'text-orange-500',
-      parking: 'text-teal-500',
-      security: 'text-indigo-500'
+      ac: "text-blue-500",
+      wifi: "text-green-500",
+      washing: "text-purple-500",
+      generator: "text-yellow-500",
+      tv: "text-red-500",
+      kitchen: "text-orange-500",
+      parking: "text-teal-500",
+      security: "text-indigo-500",
     };
-    return colors[featureId as keyof typeof colors] || 'text-gray-500';
+    return colors[featureId as keyof typeof colors] || "text-gray-500";
   };
 
   const getRuleIconColor = (ruleKey: keyof RulesState): string => {
     const colors = {
-      noSmoking: 'text-red-500',
-      noParties: 'text-purple-500',
-      petsAllowed: 'text-green-500',
-      childrenAllowed: 'text-blue-500',
-      maxGuests: 'text-orange-500'
+      noSmoking: "text-red-500",
+      noParties: "text-purple-500",
+      petsAllowed: "text-green-500",
+      childrenAllowed: "text-blue-500",
+      maxGuests: "text-orange-500",
     };
-    return colors[ruleKey] || 'text-gray-500';
+    return colors[ruleKey] || "text-gray-500";
   };
 
   const handleInputChange = (field: keyof FormData, value: string | number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
     if (error) setError(null);
   };
 
   const toggleFeature = (featureId: string) => {
-    setSelectedFeatures(prev => 
-      prev.includes(featureId) 
-        ? prev.filter(id => id !== featureId)
-        : [...prev, featureId]
+    setSelectedFeatures((prev) =>
+      prev.includes(featureId) ? prev.filter((id) => id !== featureId) : [...prev, featureId]
     );
   };
 
   const toggleRule = (ruleKey: keyof RulesState) => {
-    setRules(prev => ({ ...prev, [ruleKey]: !prev[ruleKey] }));
+    setRules((prev) => ({ ...prev, [ruleKey]: !prev[ruleKey] }));
   };
 
   const addNewAddOn = () => {
@@ -318,59 +316,59 @@ export default function AddEditApartmentModal({
   };
 
   const removeAddOn = (id: string) => {
-    setAddOns(prev => prev.filter(addon => addon.id !== id));
+    setAddOns((prev) => prev.filter((addon) => addon.id !== id));
   };
 
   const toggleAddOnActive = (id: string) => {
-    setAddOns(prev => prev.map(addon => 
-      addon.id === id ? { ...addon, active: !addon.active } : addon
-    ));
+    setAddOns((prev) => prev.map((addon) => (addon.id === id ? { ...addon, active: !addon.active } : addon)));
   };
 
   const updateAddOn = (id: string, field: keyof UIAddon, value: string | number | boolean) => {
-    setAddOns(prev => prev.map(addon => 
-      addon.id === id ? { ...addon, [field]: value } : addon
-    ));
+    setAddOns((prev) => prev.map((addon) => (addon.id === id ? { ...addon, [field]: value } : addon)));
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setUploadedImages(prev => [...prev, ...files]);
+    setUploadedImages((prev) => [...prev, ...files]);
   };
 
   const removeImage = (index: number) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const removeExistingImage = (index: number) => {
-    setExistingImages(prev => prev.filter((_, i) => i !== index));
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const validateForm = (): boolean => {
     if (!formData.name.trim()) {
-      setError('Apartment name is required');
+      setError("Apartment name is required");
       return false;
     }
     if (!formData.location.trim()) {
-      setError('Location is required');
+      setError("Location is required");
       return false;
     }
     if (!formData.address.trim()) {
-      setError('Address is required');
+      setError("Address is required");
       return false;
     }
     if (formData.pricePerNight <= 0) {
-      setError('Price per night must be greater than 0');
+      setError("Price per night must be greater than 0");
       return false;
     }
     if (formData.maxGuests <= 0) {
-      setError('Max guests must be greater than 0');
+      setError("Max guests must be greater than 0");
       return false;
     }
     for (const [index, addon] of addOns.entries()) {
       if (addon.name.trim()) {
-        if (!addon.pricingType || !['per/day', 'per/night', 'one time fee'].includes(addon.pricingType)) {
-          setError(`Pricing type for add-on "${addon.name || `Add-on ${index + 1}`}" must be "per/day", "per/night", or "one time fee"`);
+        if (!addon.pricingType || !["per/day", "per/night", "one time fee"].includes(addon.pricingType)) {
+          setError(
+            `Pricing type for add-on "${
+              addon.name || `Add-on ${index + 1}`
+            }" must be "per/day", "per/night", or "one time fee"`
+          );
           return false;
         }
         if (addon.price <= 0) {
@@ -389,20 +387,20 @@ export default function AddEditApartmentModal({
     setError(null);
 
     try {
-      const selectedFeatureNames = selectedFeatures.map(id => 
-        reverseFeatureMapping[id as keyof typeof reverseFeatureMapping] || id.toLowerCase().replace(/\s+/g, '-')
+      const selectedFeatureNames = selectedFeatures.map(
+        (id) => reverseFeatureMapping[id as keyof typeof reverseFeatureMapping] || id.toLowerCase().replace(/\s+/g, "-")
       );
 
       const rulesArray = [];
-      if (rules.noSmoking) rulesArray.push('no-smoking');
-      if (rules.noParties) rulesArray.push('no-parties');
-      if (rules.petsAllowed) rulesArray.push('pets-allowed');
-      if (rules.childrenAllowed) rulesArray.push('children-allowed');
-      if (rules.maxGuests) rulesArray.push('do-not-exceed-guest-count');
+      if (rules.noSmoking) rulesArray.push("no-smoking");
+      if (rules.noParties) rulesArray.push("no-parties");
+      if (rules.petsAllowed) rulesArray.push("pets-allowed");
+      if (rules.childrenAllowed) rulesArray.push("children-allowed");
+      if (rules.maxGuests) rulesArray.push("do-not-exceed-guest-count");
 
       const addOnsPayload: Addon[] = addOns
-        .filter(addon => addon.name.trim() && addon.pricingType && addon.price > 0)
-        .map(addon => {
+        .filter((addon) => addon.name.trim() && addon.pricingType && addon.price > 0)
+        .map((addon) => {
           const mappedPricingType = pricingTypeToApi[addon.pricingType];
           if (!mappedPricingType) {
             throw new Error(`Invalid pricing type for add-on "${addon.name}": ${addon.pricingType}`);
@@ -413,7 +411,7 @@ export default function AddEditApartmentModal({
             price: addon.price,
             pricingType: mappedPricingType,
             description: (addon.description ?? "").trim(),
-            active: addon.active
+            active: addon.active,
           };
         });
 
@@ -429,7 +427,7 @@ export default function AddEditApartmentModal({
         gallery: existingImages,
         rules: rulesArray,
         isTrending: apartmentData?.isTrending || false,
-        addons: addOnsPayload
+        addons: addOnsPayload,
       };
 
       let response;
@@ -438,9 +436,9 @@ export default function AddEditApartmentModal({
       } else {
         response = await addApartment(apartmentPayload, uploadedImages);
       }
-      
+
       resetForm();
-      setSuccessMessage(`Apartment ${editMode ? 'updated' : 'added'} successfully!`);
+      setSuccessMessage(`Apartment ${editMode ? "updated" : "added"} successfully!`);
 
       setTimeout(() => {
         setSuccessMessage(null);
@@ -448,22 +446,22 @@ export default function AddEditApartmentModal({
         onClose();
       }, 3000);
     } catch (err: any) {
-      let errorMessage = `Failed to ${editMode ? 'update' : 'add'} apartment`;
-      
-      if (err && typeof err === 'object') {
+      let errorMessage = `Failed to ${editMode ? "update" : "add"} apartment`;
+
+      if (err && typeof err === "object") {
         if (err.status && err.message) {
-          if (err.message.includes('Pinata')) {
-            errorMessage = 'Failed to upload images to Pinata. Please try again or contact support.';
+          if (err.message.includes("Pinata") || err.message.includes("S3") || err.message.includes("Upload failed")) {
+            errorMessage = "Failed to upload images. Please try again or contact support.";
           } else {
             errorMessage = `Error ${err.status}: ${err.message}`;
           }
         } else if (err.message) {
           errorMessage = err.message;
-        } else if (typeof err === 'string') {
+        } else if (typeof err === "string") {
           errorMessage = err;
         }
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -474,11 +472,11 @@ export default function AddEditApartmentModal({
 
   return (
     <div className="fixed inset-0 flex backdrop-blur-sm justify-center items-center p-5 z-50">
-      <div 
+      <div
         className="bg-white w-[686px] max-h-[90vh] overflow-y-auto rounded-xl p-6 shadow-2xl relative"
         style={{
-          msOverflowStyle: 'none',
-          scrollbarWidth: 'none'
+          msOverflowStyle: "none",
+          scrollbarWidth: "none",
         }}
       >
         {/* Success Message */}
@@ -494,14 +492,8 @@ export default function AddEditApartmentModal({
 
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-[#111827]">
-            {editMode ? 'Edit Apartment' : 'Add Apartment'}
-          </h2>
-          <button 
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
-            disabled={isLoading}
-          >
+          <h2 className="text-xl font-semibold text-[#111827]">{editMode ? "Edit Apartment" : "Add Apartment"}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer" disabled={isLoading}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -512,9 +504,7 @@ export default function AddEditApartmentModal({
             <div className="flex items-start">
               <X className="h-5 w-5 text-red-400" />
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
-                  Error {editMode ? 'Updating' : 'Adding'} Apartment
-                </h3>
+                <h3 className="text-sm font-medium text-red-800">Error {editMode ? "Updating" : "Adding"} Apartment</h3>
                 <p className="mt-1 text-sm text-red-700">{error}</p>
                 <button
                   onClick={() => setError(null)}
@@ -532,39 +522,33 @@ export default function AddEditApartmentModal({
           <h3 className="text-left text-lg font-medium text-[#111827] mb-4">Basic Information</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Apartment Name*
-              </label>
+              <label className="block text-sm font-medium text-[#374151] mb-2">Apartment Name*</label>
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                onChange={(e) => handleInputChange("name", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="Enter apartment name"
                 disabled={isLoading}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Location*
-              </label>
+              <label className="block text-sm font-medium text-[#374151] mb-2">Location*</label>
               <input
                 type="text"
                 value={formData.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
+                onChange={(e) => handleInputChange("location", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="Enter location"
                 disabled={isLoading}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
-                Address*
-              </label>
+              <label className="block text-sm font-medium text-[#374151] mb-2">Address*</label>
               <input
                 type="text"
                 value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
+                onChange={(e) => handleInputChange("address", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="Enter full address"
                 disabled={isLoading}
@@ -576,13 +560,11 @@ export default function AddEditApartmentModal({
         {/* 2x2 Grid for Property Details */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-2">
-              Price per Night*
-            </label>
+            <label className="block text-sm font-medium text-[#374151] mb-2">Price per Night*</label>
             <input
               type="number"
-              value={formData.pricePerNight || ''}
-              onChange={(e) => handleInputChange('pricePerNight', parseFloat(e.target.value) || 0)}
+              value={formData.pricePerNight || ""}
+              onChange={(e) => handleInputChange("pricePerNight", parseFloat(e.target.value) || 0)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               placeholder="$0"
               min="0"
@@ -591,13 +573,11 @@ export default function AddEditApartmentModal({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-2">
-              Number of Rooms
-            </label>
+            <label className="block text-sm font-medium text-[#374151] mb-2">Number of Rooms</label>
             <input
               type="number"
-              value={formData.rooms || ''}
-              onChange={(e) => handleInputChange('rooms', parseInt(e.target.value) || 0)}
+              value={formData.rooms || ""}
+              onChange={(e) => handleInputChange("rooms", parseInt(e.target.value) || 0)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               placeholder="0"
               min="0"
@@ -605,13 +585,11 @@ export default function AddEditApartmentModal({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-2">
-              Number of Bathrooms
-            </label>
+            <label className="block text-sm font-medium text-[#374151] mb-2">Number of Bathrooms</label>
             <input
               type="number"
-              value={formData.bathrooms || ''}
-              onChange={(e) => handleInputChange('bathrooms', parseInt(e.target.value) || 0)}
+              value={formData.bathrooms || ""}
+              onChange={(e) => handleInputChange("bathrooms", parseInt(e.target.value) || 0)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               placeholder="0"
               min="0"
@@ -619,13 +597,11 @@ export default function AddEditApartmentModal({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-2">
-              Max Guests*
-            </label>
+            <label className="block text-sm font-medium text-[#374151] mb-2">Max Guests*</label>
             <input
               type="number"
-              value={formData.maxGuests || ''}
-              onChange={(e) => handleInputChange('maxGuests', parseInt(e.target.value) || 0)}
+              value={formData.maxGuests || ""}
+              onChange={(e) => handleInputChange("maxGuests", parseInt(e.target.value) || 0)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               placeholder="0"
               min="1"
@@ -646,10 +622,10 @@ export default function AddEditApartmentModal({
                   key={feature.id}
                   onClick={() => !isLoading && toggleFeature(feature.id)}
                   className={`w-[175.375px] h-[58px] p-[17px] flex items-center gap-3 border rounded-lg cursor-pointer transition-all ${
-                    isSelected 
-                      ? 'border-purple-600 bg-purple-50' 
-                      : 'border-gray-200 hover:border-purple-600 hover:bg-gray-50'
-                  } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    isSelected
+                      ? "border-purple-600 bg-purple-50"
+                      : "border-gray-200 hover:border-purple-600 hover:bg-gray-50"
+                  } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   <input
                     type="checkbox"
@@ -676,7 +652,7 @@ export default function AddEditApartmentModal({
                 <div
                   key={rule.key}
                   className={`h-10 flex justify-between bg-[#f9fafb] items-center rounded-lg px-4 py-2 border border-gray-200 ${
-                    isLoading ? 'opacity-50' : ''
+                    isLoading ? "opacity-50" : ""
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -686,12 +662,12 @@ export default function AddEditApartmentModal({
                   <div
                     onClick={() => !isLoading && toggleRule(rule.key)}
                     className={`w-11 h-6 rounded-full cursor-pointer transition-colors ${
-                      rules[rule.key] ? 'bg-blue-600' : 'bg-gray-300'
-                    } ${isLoading ? 'cursor-not-allowed' : ''}`}
+                      rules[rule.key] ? "bg-blue-600" : "bg-gray-300"
+                    } ${isLoading ? "cursor-not-allowed" : ""}`}
                   >
                     <div
                       className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform mt-0.5 ${
-                        rules[rule.key] ? 'translate-x-5' : 'translate-x-0.5'
+                        rules[rule.key] ? "translate-x-5" : "translate-x-0.5"
                       }`}
                     />
                   </div>
@@ -707,11 +683,9 @@ export default function AddEditApartmentModal({
           <p className="text-sm text-[#4b5566] mb-4">
             Attach custom services to this apartment. These will appear to users during checkout.
           </p>
-          
-          {addOns.length === 0 && (
-            <p className="text-sm text-gray-500 mb-4">No add-ons available.</p>
-          )}
-          
+
+          {addOns.length === 0 && <p className="text-sm text-gray-500 mb-4">No add-ons available.</p>}
+
           {addOns.map((addon, index) => (
             <div key={addon.id} className="mb-4 p-4 border border-gray-200 rounded-lg">
               <div className="flex justify-between items-center mb-3">
@@ -719,34 +693,32 @@ export default function AddEditApartmentModal({
                 <button
                   onClick={() => !isLoading && removeAddOn(addon.id)}
                   className={`p-1 text-sm text-red-500 hover:bg-red-50 cursor-pointer rounded ${
-                    isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                    isLoading ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                 >
                   Remove
                 </button>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4 mb-3">
                 <div>
-                  <label className="block text-sm font-medium text-[#4b5566] mb-1">
-                    Add-on Name
-                  </label>
+                  <label className="block text-sm font-medium text-[#4b5566] mb-1">Add-on Name</label>
                   <input
                     type="text"
                     value={addon.name}
-                    onChange={(e) => !isLoading && updateAddOn(addon.id, 'name', e.target.value)}
+                    onChange={(e) => !isLoading && updateAddOn(addon.id, "name", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="Service name"
                     disabled={isLoading}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#4b5566] mb-1">
-                    Pricing Type
-                  </label>
+                  <label className="block text-sm font-medium text-[#4b5566] mb-1">Pricing Type</label>
                   <select
                     value={addon.pricingType}
-                    onChange={(e) => !isLoading && updateAddOn(addon.id, 'pricingType', e.target.value as UIPricingType)}
+                    onChange={(e) =>
+                      !isLoading && updateAddOn(addon.id, "pricingType", e.target.value as UIPricingType)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     disabled={isLoading}
                   >
@@ -756,30 +728,26 @@ export default function AddEditApartmentModal({
                   </select>
                 </div>
               </div>
-              
+
               <div className="mb-3">
-                <label className="block text-sm font-medium text-[#4b5566] mb-1">
-                  Description
-                </label>
+                <label className="block text-sm font-medium text-[#4b5566] mb-1">Description</label>
                 <input
                   type="text"
                   value={addon.description}
-                  onChange={(e) => !isLoading && updateAddOn(addon.id, 'description', e.target.value)}
+                  onChange={(e) => !isLoading && updateAddOn(addon.id, "description", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   placeholder="Service description"
                   disabled={isLoading}
                 />
               </div>
-              
+
               <div className="flex items-center gap-4">
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Price
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
                   <input
                     type="number"
-                    value={addon.price || ''}
-                    onChange={(e) => !isLoading && updateAddOn(addon.id, 'price', parseFloat(e.target.value) || 0)}
+                    value={addon.price || ""}
+                    onChange={(e) => !isLoading && updateAddOn(addon.id, "price", parseFloat(e.target.value) || 0)}
                     className="w-[90%] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="$0"
                     min="0"
@@ -792,12 +760,12 @@ export default function AddEditApartmentModal({
                   <div
                     onClick={() => !isLoading && toggleAddOnActive(addon.id)}
                     className={`w-11 h-6 rounded-full cursor-pointer transition-colors ${
-                      addon.active ? 'bg-black' : 'bg-gray-300'
-                    } ${isLoading ? 'cursor-not-allowed' : ''}`}
+                      addon.active ? "bg-black" : "bg-gray-300"
+                    } ${isLoading ? "cursor-not-allowed" : ""}`}
                   >
                     <div
                       className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform mt-0.5 ${
-                        addon.active ? 'translate-x-5' : 'translate-x-0.5'
+                        addon.active ? "translate-x-5" : "translate-x-0.5"
                       }`}
                     />
                   </div>
@@ -805,11 +773,11 @@ export default function AddEditApartmentModal({
               </div>
             </div>
           ))}
-          
+
           <button
             onClick={() => !isLoading && addNewAddOn()}
             className={`flex items-center gap-2 p-3 bg-[#d1d5db]/30 text-[#374151] rounded-lg cursor-pointer text-sm font-medium ${
-              isLoading ? 'opacity-50 cursor-not-allowed' : ''
+              isLoading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
             <Plus className="w-4 h-4" />
@@ -820,7 +788,7 @@ export default function AddEditApartmentModal({
         {/* Images */}
         <div className="mb-6">
           <h3 className="text-left text-lg font-semibold text-[#111827] mb-4">Images</h3>
-          
+
           {editMode && existingImages.length > 0 && (
             <div className="mb-4">
               <h4 className="text-sm font-medium text-gray-700 mb-2">Current Images</h4>
@@ -835,7 +803,7 @@ export default function AddEditApartmentModal({
                     <button
                       onClick={() => !isLoading && removeExistingImage(index)}
                       className={`absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors ${
-                        isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                        isLoading ? "opacity-50 cursor-not-allowed" : ""
                       }`}
                     >
                       <X className="w-3 h-3" />
@@ -845,24 +813,24 @@ export default function AddEditApartmentModal({
               </div>
             </div>
           )}
-          
+
           {uploadedImages.length > 0 && (
             <div className="mb-4">
               <h4 className="text-sm font-medium text-gray-700 mb-2">
-                {editMode ? 'New Images to Add' : 'Selected Images'}
+                {editMode ? "New Images to Add" : "Selected Images"}
               </h4>
               <div className="flex gap-2 mb-4 flex-wrap">
                 {uploadedImages.map((image, index) => (
                   <div key={index} className="relative w-20 h-20 bg-gray-200 rounded-lg overflow-hidden">
                     <img
                       src={URL.createObjectURL(image)}
-                      alt={`${editMode ? 'New' : 'Apartment'} image ${index + 1}`}
+                      alt={`${editMode ? "New" : "Apartment"} image ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                     <button
                       onClick={() => !isLoading && removeImage(index)}
                       className={`absolute top-1 right-1 w-5 h-5 bg-red-500 cursor-pointer text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors ${
-                        isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                        isLoading ? "opacity-50 cursor-not-allowed" : ""
                       }`}
                     >
                       <X className="w-3 h-3" />
@@ -872,7 +840,7 @@ export default function AddEditApartmentModal({
               </div>
             </div>
           )}
-          
+
           <div className="max-w-[646px] h-[136px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
             <input
               type="file"
@@ -883,16 +851,22 @@ export default function AddEditApartmentModal({
               id="image-upload"
               disabled={isLoading}
             />
-            <label htmlFor="image-upload" className={`cursor-pointer text-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            <label
+              htmlFor="image-upload"
+              className={`cursor-pointer text-center ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
               <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
               <p className="text-sm text-gray-600">
                 Drag and drop images here or <span className="text-blue-600">browse files</span>
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {editMode && existingImages.length > 0 && `${existingImages.length} existing image${existingImages.length > 1 ? 's' : ''}`}
-                {editMode && existingImages.length > 0 && uploadedImages.length > 0 && ' • '}
-                {uploadedImages.length > 0 && `${uploadedImages.length} new image${uploadedImages.length > 1 ? 's' : ''} selected`}
-                {!editMode && uploadedImages.length === 0 && existingImages.length === 0 && 'No images selected'}
+                {editMode &&
+                  existingImages.length > 0 &&
+                  `${existingImages.length} existing image${existingImages.length > 1 ? "s" : ""}`}
+                {editMode && existingImages.length > 0 && uploadedImages.length > 0 && " • "}
+                {uploadedImages.length > 0 &&
+                  `${uploadedImages.length} new image${uploadedImages.length > 1 ? "s" : ""} selected`}
+                {!editMode && uploadedImages.length === 0 && existingImages.length === 0 && "No images selected"}
               </p>
             </label>
           </div>
@@ -907,16 +881,15 @@ export default function AddEditApartmentModal({
           >
             Cancel
           </button>
-          <button 
+          <button
             onClick={handleSubmit}
             disabled={isLoading}
             className="px-4 py-2 bg-black text-white rounded-lg cursor-pointer hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isLoading ? 
-              `${editMode ? 'Updating' : 'Adding'} Apartment...` : 
-              `${editMode ? 'Update' : 'Add'} Apartment`
-            }
+            {isLoading
+              ? `${editMode ? "Updating" : "Adding"} Apartment...`
+              : `${editMode ? "Update" : "Add"} Apartment`}
           </button>
         </div>
       </div>

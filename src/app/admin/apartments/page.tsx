@@ -13,8 +13,9 @@ import {
   getTrendingApartments,
   deleteTrendingApartment,
 } from "@/services/api-services";
-import ApartmentLoadingPage from "@/components/loading";
+import AdminContentLoader from "../components/admin-content-loader";
 import { useApartmentModal } from "@/context/apartment-context";
+import { useAdminData } from "@/context/admin-data-context";
 import { toast } from "sonner";
 
 // Custom debounce hook
@@ -68,8 +69,9 @@ type DeleteModalState = {
 
 export default function ApartmentsManagementPage() {
   const { modalState, openAddModal, openEditModal, closeModal } = useApartmentModal();
-  const [apartments, setApartments] = useState<Apartment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { apartmentsCache, setApartmentsCache } = useAdminData();
+  const [apartments, setApartments] = useState<Apartment[]>(apartmentsCache?.apartments ?? []);
+  const [loading, setLoading] = useState(apartmentsCache ? false : true);
   const [error, setError] = useState<null | string>(null);
   const [editLoading, setEditLoading] = useState<string | null>(null);
   const [deleteModalState, setDeleteModalState] = useState<DeleteModalState>({
@@ -78,10 +80,10 @@ export default function ApartmentsManagementPage() {
     apartmentName: "",
     isDeleting: false,
   });
-  const [location, setLocation] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalApartments, setTotalApartments] = useState(0);
+  const [location, setLocation] = useState(apartmentsCache?.location ?? "");
+  const [currentPage, setCurrentPage] = useState(apartmentsCache?.currentPage ?? 1);
+  const [totalPages, setTotalPages] = useState(apartmentsCache?.totalPages ?? 1);
+  const [totalApartments, setTotalApartments] = useState(apartmentsCache?.totalApartments ?? 0);
   const limit = 10;
   const debouncedLocation = useDebounce(location, 500);
   const [activeTab, setActiveTab] = useState<"all" | "trending">("all");
@@ -90,7 +92,7 @@ export default function ApartmentsManagementPage() {
 
   const fetchApartments = async (page: number = 1, locationQuery?: string) => {
     try {
-      setLoading(true);
+      setLoading(apartments.length === 0);
       setError(null);
 
       const response: ApartmentsResponse = await getAdminApartments(page, limit, locationQuery?.trim());
@@ -123,10 +125,20 @@ export default function ApartmentsManagementPage() {
         (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
       );
 
+      const nextPage = Math.min(page, response.pagination.totalPages) || 1;
+      const nextLocation = locationQuery?.trim() ?? location;
+
       setApartments(sortedData);
       setTotalPages(response.pagination.totalPages);
       setTotalApartments(response.pagination.total);
-      setCurrentPage(Math.min(page, response.pagination.totalPages) || 1);
+      setCurrentPage(nextPage);
+      setApartmentsCache({
+        apartments: sortedData,
+        totalPages: response.pagination.totalPages,
+        totalApartments: response.pagination.total,
+        currentPage: nextPage,
+        location: nextLocation,
+      });
     } catch (err: any) {
       const errorMessage =
         err.status === 404
@@ -136,6 +148,7 @@ export default function ApartmentsManagementPage() {
           : err.message || "Failed to fetch apartments. Please try again later.";
       setError(errorMessage);
       setApartments([]);
+      setApartmentsCache(null);
     } finally {
       setLoading(false);
     }
@@ -318,15 +331,7 @@ export default function ApartmentsManagementPage() {
     }
   };
 
-  if (loading && apartments.length === 0) {
-    return (
-      <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
-        <ApartmentLoadingPage />
-      </div>
-    );
-  }
-
-  if (error) {
+  if (error && apartments.length === 0) {
     return (
       <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
         <div className="flex items-center justify-center h-64">
@@ -347,11 +352,11 @@ export default function ApartmentsManagementPage() {
   };
   return (
     <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
-      <div className="w-full mb-10 h-[82px] bg-white shadow-md rounded-lg flex items-center px-4 gap-4 mt-[-20px]">
+      <div className="w-full mb-6 bg-white rounded-xl border border-gray-200/80 shadow-sm flex items-center px-5 py-4">
         <input
           type="text"
           placeholder="Search by location (e.g., Lekki)"
-          className="w-[90%] p-3 rounded-[8px] border border-[#d1d5db]/30 text-sm outline-none"
+          className="flex-1 p-3 rounded-lg border border-gray-200 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400/30 transition"
           value={location}
           onChange={handleSearch}
         />
@@ -377,95 +382,118 @@ export default function ApartmentsManagementPage() {
         </button>
       </div>
 
+      {loading && apartments.length === 0 ? (
+        <AdminContentLoader />
+      ) : (
+        <>
       {activeTab === "all" && (
-        <div className="hidden md:block container mx-auto w-full bg-white shadow-md rounded-lg p-4 mt-10 overflow-x-auto">
-          <table className="w-full text-sm font-normal text-left table-fixed">
-            <thead className="text-xs text-[#4b5566] uppercase">
-              <tr>
-                <th className="py-2 w-[25%] min-w-[250px]">Apartment</th>
-                <th className="w-[12%] min-w-[100px]">Location</th>
-                <th className="w-[12%] min-w-[100px]">Price/Night</th>
-                <th className="w-[8%] min-w-[60px]">Rooms</th>
-                <th className="w-[20%] min-w-[150px]">Features</th>
-                <th className="w-[10%] min-w-[80px]">Status</th>
-                <th className="w-[13%] min-w-[120px]">Action</th>
-              </tr>
-            </thead>
-            <tbody className="mt-4">
-              {apartments.map((apt) => (
-                <tr key={apt._id} className="text-[#111827] text-sm font-normal border-b border-gray-100">
-                  <td className="py-3 font-medium">
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-12 h-12 flex-shrink-0">
-                        <Image
-                          src={apt.gallery?.[0] || "/images/default-apartment.png"}
-                          alt={apt.name}
-                          fill
-                          className="rounded object-cover"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium truncate pe-3">{apt.name}</div>
-                        <div className="text-xs text-gray-500 whitespace-nowrap">
-                          Added {apt.createdAt ? new Date(apt.createdAt).toLocaleDateString() : "N/A"}
+        <div className="hidden md:block w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm mt-4">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[800px]">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-gray-200">
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Apartment
+                  </th>
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Location
+                  </th>
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Price/Night
+                  </th>
+                  <th className="px-5 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Rooms
+                  </th>
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Features
+                  </th>
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Status
+                  </th>
+                  <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {apartments.map((apt) => (
+                  <tr key={apt._id} className="transition-colors hover:bg-slate-50/50">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-11 h-11 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100">
+                          <Image
+                            src={apt.gallery?.[0] || "/images/default-apartment.png"}
+                            alt={apt.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-medium text-slate-900 truncate max-w-[180px]">{apt.name}</div>
+                          <div className="text-xs text-slate-500">
+                            {apt.createdAt ? new Date(apt.createdAt).toLocaleDateString() : "—"}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="py-3">
-                    <div className="truncate" title={apt.location}>
+                    </td>
+                    <td className="px-5 py-4 text-sm text-slate-600 truncate max-w-[120px]" title={apt.location}>
                       {apt.location}
-                    </div>
-                  </td>
-                  <td className="py-3 whitespace-nowrap">₦{apt.pricePerNight?.toLocaleString() || "0"}</td>
-                  <td className="py-3 text-center">{apt.rooms}</td>
-                  <td className="py-3">
-                    <div className="truncate" title={apt.features?.join(", ") || "N/A"}>
-                      {apt.features?.join(", ") || "N/A"}
-                    </div>
-                  </td>
-                  <td className="py-3">
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Active
-                    </span>
-                  </td>
-                  <td className="py-3">
-                    <div className="flex gap-2 items-center">
-                      <button
-                        onClick={() => handleEditClick(apt._id)}
-                        disabled={editLoading === apt._id}
-                        className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1 text-xs disabled:opacity-50"
-                      >
-                        {editLoading === apt._id ? (
-                          <>
-                            <div className="w-3 h-3 border border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                            Loading...
-                          </>
-                        ) : (
-                          <>
-                            <Pencil className="w-3 h-3" /> Edit
-                          </>
-                        )}
-                      </button>
-                      <button
-                        className="text-red-600 hover:underline cursor-pointer flex items-center gap-1 text-xs"
-                        onClick={() => handleDeleteClick(apt)}
-                      >
-                        <Trash2 className="w-3 h-3" /> Delete
-                      </button>
-
-                      <button
-                        className="text-blue-600 hover:underline cursor-pointer flex items-center gap-1 text-xs"
-                        onClick={() => handleAddToTrending(apt._id)}
-                      >
-                        <Plus className="w-3 h-3" /> Trending
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+                    <td className="px-5 py-4 text-sm font-semibold text-slate-900 whitespace-nowrap">
+                      ₦{apt.pricePerNight?.toLocaleString() || "0"}
+                    </td>
+                    <td className="px-5 py-4 text-center">
+                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-sm font-medium text-slate-700">
+                        {apt.rooms}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-sm text-slate-600 max-w-[160px]">
+                      <span className="line-clamp-2" title={apt.features?.join(", ") || "—"}>
+                        {apt.features?.slice(0, 2).join(", ") || "—"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                        Active
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex gap-2 items-center justify-end">
+                        <button
+                          onClick={() => handleEditClick(apt._id)}
+                          disabled={editLoading === apt._id}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50 transition"
+                        >
+                          {editLoading === apt._id ? (
+                            <>
+                              <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                              Loading
+                            </>
+                          ) : (
+                            <>
+                              <Pencil className="w-3.5 h-3.5" /> Edit
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleAddToTrending(apt._id)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Trending
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(apt)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -547,68 +575,78 @@ export default function ApartmentsManagementPage() {
 
       {/* Desktop trending */}
       {activeTab === "trending" && (
-        <div className="w-full bg-white shadow-md rounded-lg p-4 mt-10 overflow-x-auto">
+        <div className="w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm mt-4">
           {loadingTrending ? (
-            <div className="flex justify-center py-10">
-              <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+            <div className="flex justify-center py-16">
+              <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
             </div>
           ) : trendingList.length === 0 ? (
-            <p className="text-center py-6 text-gray-500">No trending apartments yet</p>
+            <div className="py-16 text-center">
+              <p className="text-slate-500 text-sm">No trending apartments yet</p>
+            </div>
           ) : (
-            <table className="w-full text-sm font-normal text-left table-fixed">
-              <thead className="text-xs text-[#4b5566] uppercase">
-                <tr>
-                  <th className="py-2 w-[25%] min-w-[250px]">Apartment</th>
-                  <th className="w-[12%] min-w-[100px]">Location</th>
-                  <th className="w-[12%] min-w-[100px]">Price/Night</th>
-                  <th className="w-[10%] min-w-[120px] text-center">Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {trendingList.map((item) => (
-                  <tr key={item._id} className="text-[#111827] text-sm border-b border-gray-100">
-                    <td className="py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 flex-shrink-0">
-                          <Image
-                            src={item.apartmentId?.gallery?.[0] || "/placeholder.svg"}
-                            alt={item.apartmentId?.name}
-                            fill
-                            className="rounded object-cover"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium truncate">{item.apartmentId?.name}</div>
-                          <div className="text-xs text-gray-500">Trending ID: {item._id.slice(-6)}</div>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td>{item.apartmentId?.location}</td>
-
-                    <td>₦{item.apartmentId?.pricePerNight?.toLocaleString()}</td>
-
-                    <td className="text-center">
-                      <button
-                        onClick={async () => {
-                          try {
-                            await deleteTrendingApartment(item._id);
-                            toast.success("Removed from trending");
-                            fetchTrending();
-                          } catch (err: any) {
-                            toast.error(err.message);
-                          }
-                        }}
-                        className="text-red-600 hover:underline text-xs flex items-center justify-center gap-1"
-                      >
-                        <Trash2 className="h-3 w-3" /> Remove
-                      </button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[500px]">
+                <thead>
+                  <tr className="bg-slate-50/80 border-b border-gray-200">
+                    <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                      Apartment
+                    </th>
+                    <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                      Location
+                    </th>
+                    <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                      Price/Night
+                    </th>
+                    <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">
+                      Action
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {trendingList.map((item) => (
+                    <tr key={item._id} className="transition-colors hover:bg-slate-50/50">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-11 h-11 flex-shrink-0 rounded-lg overflow-hidden bg-slate-100">
+                            <Image
+                              src={item.apartmentId?.gallery?.[0] || "/placeholder.svg"}
+                              alt={item.apartmentId?.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <div>
+                            <div className="font-medium text-slate-900">{item.apartmentId?.name}</div>
+                            <div className="text-xs text-slate-500">ID: {item._id.slice(-6)}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-sm text-slate-600">{item.apartmentId?.location}</td>
+                      <td className="px-5 py-4 text-sm font-semibold text-slate-900">
+                        ₦{item.apartmentId?.pricePerNight?.toLocaleString()}
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          onClick={async () => {
+                            try {
+                              await deleteTrendingApartment(item._id);
+                              toast.success("Removed from trending");
+                              fetchTrending();
+                            } catch (err: any) {
+                              toast.error(err.message);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
@@ -668,41 +706,52 @@ export default function ApartmentsManagementPage() {
       )}
 
       {totalApartments > 0 && (
-        <div className="w-full max-w-[1200px] bottom-0 flex flex-col sm:flex-row items-center justify-between mt-6 text-sm text-gray-500">
-          <span className="mb-2 sm:mb-0">
-            Showing {(currentPage - 1) * limit + 1} to {Math.min(currentPage * limit, totalApartments)} of{" "}
-            {totalApartments} apartments
-          </span>
-          <div className="flex gap-2">
+        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 px-1">
+          <p className="text-sm text-slate-600">
+            Showing <span className="font-medium">{(currentPage - 1) * limit + 1}</span> to{" "}
+            <span className="font-medium">{Math.min(currentPage * limit, totalApartments)}</span> of{" "}
+            <span className="font-medium">{totalApartments}</span> apartments
+          </p>
+          <div className="flex items-center gap-1">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-gray-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-              Prev
+              Previous
             </button>
-            {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
-              const pageNumber = Math.max(1, currentPage - 1) + i;
-              if (pageNumber > totalPages) return null;
-              return (
-                <button
-                  key={pageNumber}
-                  onClick={() => handlePageChange(pageNumber)}
-                  className={`px-3 py-1 border rounded ${pageNumber === currentPage ? "bg-black text-white" : ""}`}
-                >
-                  {pageNumber}
-                </button>
-              );
-            })}
+            <div className="flex items-center gap-1 mx-2">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const start = Math.max(1, currentPage - 2);
+                const pageNumber = Math.min(start + i, totalPages);
+                if (pageNumber < 1) return null;
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() => handlePageChange(pageNumber)}
+                    className={`min-w-[36px] px-3 py-2 text-sm font-medium rounded-lg transition ${
+                      pageNumber === currentPage
+                        ? "bg-slate-900 text-white"
+                        : "text-slate-600 bg-white border border-gray-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+            </div>
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-gray-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Next
             </button>
           </div>
         </div>
+      )}
+
+        </>
       )}
 
       {/* Use the new DeleteApartmentModal component */}

@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "../lib/mongodb";
 import Apartment, { IAddon } from "@/models/apartment";
-import { uploadToPinata } from "../lib/pinata";
+import { uploadToS3 } from "../lib/s3";
 import { getUserFromRequest } from "../lib/getUserFromRequest";
 import { activityService } from "../services/activity.service";
 
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     const galleryFiles = formData.getAll("gallery") as File[];
     const galleryUrls: string[] = [];
     for (const file of galleryFiles) {
-      const url = await uploadToPinata(file);
+      const url = await uploadToS3(file);
       galleryUrls.push(url);
     }
     const addons = JSON.parse(formData.get("addons") as string) as IAddon[];

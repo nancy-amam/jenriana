@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Home, CalendarCheck, DollarSign, User, Star, Edit, Plus } from "lucide-react";
 import { getAdminAnalytics, getActivity } from "@/services/api-services";
 import { AnalyticsResponse } from "@/lib/interface";
-import ApartmentLoadingPage from "@/components/loading";
+import AdminContentLoader from "../components/admin-content-loader";
 
 interface Activity {
   _id: string;
@@ -183,11 +183,11 @@ export default function AnalyticsPage() {
   };
 
   if (loading) {
-    return <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
-            <div className="flex justify-center items-center h-64">
-              <ApartmentLoadingPage />
-            </div>
-          </div>;
+    return (
+      <div className="p-4 sm:p-6 bg-[#f1f1f1]">
+        <AdminContentLoader />
+      </div>
+    );
   }
 
   if (!analytics) {
@@ -253,7 +253,7 @@ export default function AnalyticsPage() {
         
         {activitiesLoading ? (
           <div className="flex justify-center py-8">
-            <ApartmentLoadingPage />
+            <AdminContentLoader />
           </div>
         ) : activities.length > 0 ? (
           <div className="space-y-3">
