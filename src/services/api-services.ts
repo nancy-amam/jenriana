@@ -87,10 +87,8 @@ export async function addApartment(apartmentData: ApartmentData, images: File[] 
       });
     }
 
-    // Append addons array
-    if (apartmentData.addons?.length) {
-      formData.append("addons", JSON.stringify(apartmentData.addons));
-    }
+    // Append addons array (always send so backend can parse safely)
+    formData.append("addons", JSON.stringify(apartmentData.addons ?? []));
 
     // Append images if provided
     if (images.length > 0) {
@@ -293,10 +291,8 @@ export async function updateApartment(
       });
     }
 
-    // Append addons array
-    if (apartmentData.addons?.length) {
-      formData.append("addons", JSON.stringify(apartmentData.addons));
-    }
+    // Append addons array (always send so backend can parse safely)
+    formData.append("addons", JSON.stringify(apartmentData.addons ?? []));
 
     // Append images if provided
     if (images.length > 0) {

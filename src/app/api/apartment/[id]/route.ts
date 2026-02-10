@@ -53,17 +53,25 @@ export async function PUT(req: Request, { params }: RouteContext) {
       updateData.features = formData.getAll("features") as string[];
     if (formData.has("rules"))
       updateData.rules = formData.getAll("rules") as string[];
-    if (formData.get("addons")) {
-      const newAddons = JSON.parse(formData.get("addons") as string);
-      const merged = [...(existingApartment.addons || []), ...newAddons];
-
-      updateData.addons = merged.filter(
-        (addon, index, self) =>
-          index === self.findIndex((a) => a.name === addon.name)
-      );
+    const addonsRaw = formData.get("addons");
+    if (addonsRaw != null && String(addonsRaw).trim() !== "") {
+      try {
+        const newAddons = JSON.parse(String(addonsRaw));
+        const merged = [...(existingApartment.addons || []), ...(Array.isArray(newAddons) ? newAddons : [])];
+        updateData.addons = merged.filter(
+          (addon, index, self) =>
+            index === self.findIndex((a) => a.name === addon.name)
+        );
+      } catch {
+        // keep existing addons if payload is invalid
+      }
     }
 
-    const galleryFiles = formData.getAll("gallery") as File[];
+    const galleryRaw = formData.getAll("gallery");
+    const galleryFiles = galleryRaw.filter(
+      (f): f is File | (Blob & { name?: string }) =>
+        f instanceof File || (typeof f === "object" && f !== null && "arrayBuffer" in f && typeof (f as Blob).arrayBuffer === "function")
+    );
     if (galleryFiles.length > 0) {
       const newGalleryUrls: string[] = [];
       for (const file of galleryFiles) {

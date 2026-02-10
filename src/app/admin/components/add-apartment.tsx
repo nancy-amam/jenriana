@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   X,
   AirVent,
@@ -94,6 +94,7 @@ export default function AddEditApartmentModal({
   const [addOns, setAddOns] = useState<UIAddon[]>([]);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<FormData>({
     name: "",
     location: "",
@@ -329,7 +330,28 @@ export default function AddEditApartmentModal({
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setUploadedImages((prev) => [...prev, ...files]);
+    if (files.length > 0) {
+      setUploadedImages((prev) => [...prev, ...files]);
+    }
+    e.target.value = ""; // allow selecting the same file(s) again
+  };
+
+  const openFilePicker = () => {
+    if (isLoading) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isLoading) return;
+    const files = Array.from(e.dataTransfer.files || []).filter((f) => f.type.startsWith("image/"));
+    if (files.length > 0) setUploadedImages((prev) => [...prev, ...files]);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   const removeImage = (index: number) => {
@@ -841,35 +863,57 @@ export default function AddEditApartmentModal({
             </div>
           )}
 
-          <div className="max-w-[646px] h-[136px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
+          <label
+            className={`max-w-[646px] h-[136px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-gray-50/50 transition-colors ${
+              isLoading ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+          >
             <input
+              ref={fileInputRef}
               type="file"
               multiple
               accept="image/*"
               onChange={handleImageUpload}
-              className="hidden"
+              className="sr-only"
               id="image-upload"
               disabled={isLoading}
+              tabIndex={-1}
+              aria-label="Upload apartment images"
             />
-            <label
-              htmlFor="image-upload"
-              className={`cursor-pointer text-center ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">
-                Drag and drop images here or <span className="text-blue-600">browse files</span>
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {editMode &&
-                  existingImages.length > 0 &&
-                  `${existingImages.length} existing image${existingImages.length > 1 ? "s" : ""}`}
-                {editMode && existingImages.length > 0 && uploadedImages.length > 0 && " • "}
-                {uploadedImages.length > 0 &&
-                  `${uploadedImages.length} new image${uploadedImages.length > 1 ? "s" : ""} selected`}
-                {!editMode && uploadedImages.length === 0 && existingImages.length === 0 && "No images selected"}
-              </p>
-            </label>
-          </div>
+            <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-gray-600">
+              Drag and drop images here or{" "}
+              <span
+                role="button"
+                tabIndex={0}
+                className="text-blue-600 underline cursor-pointer hover:text-blue-700 pointer-events-auto"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openFilePicker();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openFilePicker();
+                  }
+                }}
+              >
+                browse files
+              </span>
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {editMode &&
+                existingImages.length > 0 &&
+                `${existingImages.length} existing image${existingImages.length > 1 ? "s" : ""}`}
+              {editMode && existingImages.length > 0 && uploadedImages.length > 0 && " • "}
+              {uploadedImages.length > 0 &&
+                `${uploadedImages.length} new image${uploadedImages.length > 1 ? "s" : ""} selected`}
+              {!editMode && uploadedImages.length === 0 && existingImages.length === 0 && "No images selected"}
+            </p>
+          </label>
         </div>
 
         {/* Action Buttons */}

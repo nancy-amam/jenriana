@@ -5,6 +5,13 @@ import Image from "next/image";
 import { useInView } from "react-intersection-observer";
 import { useRouter } from "next/navigation";
 
+interface FeaturesProps {
+  /** When provided, clicking a location filters on the current page instead of navigating */
+  onLocationClick?: (location: string) => void;
+  /** Real apartment counts per location (overrides dummy apartmentCount when provided) */
+  locationCounts?: Record<string, number>;
+}
+
 function FadeInUp({
   children,
   delay = 0,
@@ -28,12 +35,18 @@ function FadeInUp({
   );
 }
 
-export default function Features() {
+export default function Features({ onLocationClick, locationCounts = {} }: FeaturesProps) {
   const router = useRouter();
 
   const goToLocation = (location: string) => {
-    const formatted = location.toLowerCase().replace(/\s+/g, "-");
-    router.push(`/apartment?location=${formatted}`);
+    if (onLocationClick) {
+      // Use lowercase with spaces for filter matching (e.g. "victoria island" matches "Victoria Island, Lagos")
+      const filterValue = location.toLowerCase().replace(/\s+/g, " ");
+      onLocationClick(filterValue);
+    } else {
+      const formatted = location.toLowerCase().replace(/\s+/g, "-");
+      router.push(`/apartment?location=${formatted}`);
+    }
   };
 
   return (
@@ -60,7 +73,9 @@ export default function Features() {
               </div>
               <div className="p-3 text-left">
                 <h3 className="text-sm font-normal text-[#1e1e1e]">{feature.locationName}</h3>
-                <p className="text-xs text-[#4b5563]">{feature.apartmentCount} Apartments</p>
+                <p className="text-xs text-[#4b5563]">
+                {locationCounts[feature.locationName] ?? feature.apartmentCount} Apartments
+              </p>
               </div>
             </div>
           </FadeInUp>
@@ -94,7 +109,9 @@ export default function Features() {
 
               <div className="p-2 text-left">
                 <h3 className="text-sm font-normal text-[#1e1e1e]">{feature.locationName}</h3>
-                <p className="text-sm text-[#4b5563]">{feature.apartmentCount} Apartments</p>
+                <p className="text-sm text-[#4b5563]">
+                {locationCounts[feature.locationName] ?? feature.apartmentCount} Apartments
+              </p>
               </div>
             </div>
           </FadeInUp>

@@ -362,7 +362,7 @@ export default function ApartmentsManagementPage() {
         />
       </div>
 
-      <div className="flex gap-4 mt-[-20px] mb-6">
+      <div className="flex gap-4 mb-6">
         <button
           onClick={() => setActiveTab("all")}
           className={`px-4 py-2 rounded-lg text-sm font-medium ${
@@ -500,73 +500,96 @@ export default function ApartmentsManagementPage() {
       {activeTab === "all" && (
         <div className="md:hidden space-y-4">
           {apartments.map((apt) => (
-            <div key={apt._id} className="bg-white rounded-lg shadow-md p-4 space-y-3">
-              <div className="flex gap-3">
-                <div className="relative w-20 h-12 rounded-md overflow-hidden flex-shrink-0">
-                  <Image
-                    src={apt.gallery?.[0] || "/images/default-apartment.png"}
-                    alt={apt.name}
-                    fill
-                    className="object-cover"
-                  />
+            <div key={apt._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              {/* Hero image */}
+              <div className="relative aspect-[16/10] w-full bg-slate-100">
+                <Image
+                  src={apt.gallery?.[0] || "/images/default-apartment.png"}
+                  alt={apt.name}
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute top-2 right-2">
+                  <span className="inline-flex rounded-full bg-emerald-500/90 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                    Active
+                  </span>
                 </div>
-                <div className="flex-1">
-                  <p className="text-base font-semibold text-[#111827]">{apt.name}</p>
-                </div>
-              </div>
-              <div className="text-sm text-[#374151] space-y-2">
-                <p className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" /> {apt.location}
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="flex items-center gap-1">
-                    <BedDouble className="w-3 h-3" />
-                    <span>{apt.rooms} rooms</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Bath className="w-3 h-3" />
-                    <span>{apt.bathrooms || 0} baths</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="w-3 h-3" />
-                    <span>{apt.maxGuests || 1} guests</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-green-600 font-semibold">
-                    <span>₦{apt.pricePerNight?.toLocaleString() || "0"}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="font-medium">Status:</span>
-                    <span>Active</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="font-medium">Features:</span>
-                    <span>{apt.features?.slice(0, 2).join(", ") || "N/A"}</span>
-                  </div>
+                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                  <span className="rounded-lg bg-black/60 px-2.5 py-1.5 text-sm font-semibold text-white backdrop-blur-sm">
+                    {"\u20A6"}
+                    {(apt.pricePerNight ?? 0).toLocaleString()}
+                    <span className="ml-0.5 font-normal text-white/90">/night</span>
+                  </span>
                 </div>
               </div>
-              <div className="flex gap-4 mt-2">
-                <button
-                  onClick={() => handleEditClick(apt._id)}
-                  disabled={editLoading === apt._id}
-                  className="flex-1 bg-[#f3f4f6] text-[#374151] cursor-pointer text-sm py-2 rounded-md flex items-center justify-center gap-1 disabled:opacity-50"
-                >
-                  {editLoading === apt._id ? (
-                    <>
-                      <div className="w-4 h-4 border border-gray-600 border-t-transparent rounded-full animate-spin"></div>
-                      Loading...
-                    </>
-                  ) : (
-                    <>
-                      <Pencil className="w-4 h-4" /> Edit
-                    </>
-                  )}
-                </button>
-                <button
-                  className="flex-1 bg-[#fef2f2] text-[#dc2626] cursor-pointer text-sm py-2 rounded-md flex items-center justify-center gap-1"
-                  onClick={() => handleDeleteClick(apt)}
-                >
-                  <Trash2 className="w-4 h-4" /> Delete
-                </button>
+
+              {/* Content */}
+              <div className="p-4 space-y-4">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900 truncate">{apt.name}</h3>
+                  <p className="flex items-center gap-1.5 mt-0.5 text-sm text-slate-500">
+                    <MapPin className="w-3.5 h-3.5 shrink-0" />
+                    {apt.location}
+                  </p>
+                </div>
+
+                {/* Specs row */}
+                <div className="flex flex-wrap gap-4 text-sm text-slate-600">
+                  <span className="flex items-center gap-1.5">
+                    <BedDouble className="w-4 h-4 text-slate-400" />
+                    {apt.rooms} rooms
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Bath className="w-4 h-4 text-slate-400" />
+                    {apt.bathrooms ?? 0} baths
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Users className="w-4 h-4 text-slate-400" />
+                    {apt.maxGuests ?? 1} guests
+                  </span>
+                </div>
+
+                {/* Features pills */}
+                {apt.features && apt.features.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {apt.features.slice(0, 3).map((f) => (
+                      <span
+                        key={f}
+                        className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
+                      >
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-1">
+                  <button
+                    onClick={() => handleEditClick(apt._id)}
+                    disabled={editLoading === apt._id}
+                    className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200 active:bg-slate-300 disabled:opacity-50 transition-colors"
+                  >
+                    {editLoading === apt._id ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
+                        Loading
+                      </>
+                    ) : (
+                      <>
+                        <Pencil className="w-4 h-4" />
+                        Edit
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClick(apt)}
+                    className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-2 rounded-lg bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100 active:bg-red-200 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           ))}

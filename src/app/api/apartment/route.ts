@@ -69,13 +69,21 @@ export async function POST(request: Request) {
     const features = formData.getAll("features") as string[];
     const rules = formData.getAll("rules") as string[];
 
-    const galleryFiles = formData.getAll("gallery") as File[];
+    const galleryRaw = formData.getAll("gallery");
+    const galleryFiles = galleryRaw.filter(
+      (f): f is File | (Blob & { name?: string }) =>
+        f instanceof File || (typeof f === "object" && f !== null && "arrayBuffer" in f && typeof (f as Blob).arrayBuffer === "function")
+    );
     const galleryUrls: string[] = [];
     for (const file of galleryFiles) {
       const url = await uploadToS3(file);
       galleryUrls.push(url);
     }
-    const addons = JSON.parse(formData.get("addons") as string) as IAddon[];
+    const addonsRaw = formData.get("addons");
+    const addons: IAddon[] =
+      addonsRaw != null && String(addonsRaw).trim() !== ""
+        ? (JSON.parse(String(addonsRaw)) as IAddon[])
+        : [];
     const apartment = await Apartment.create({
       name,
       location,
@@ -102,9 +110,13 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error: any) {
-    console.error(error);
+    console.error("POST /api/apartment error:", error);
+    const message =
+      error.message?.includes("S3") || error.message?.includes("upload")
+        ? "Image upload failed. Check S3 env vars (S3_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)."
+        : error.message;
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message },
       { status: 500 }
     );
   }

@@ -6,10 +6,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const getPageTitle = (path: string) => {
+  if (path === "/admin" || path === "/admin/") return "Dashboard";
   if (path.includes("/apartments")) return "Apartment Management";
   if (path.includes("/bookings")) return "Booking Management";
   if (path.includes("/guests")) return "User & Client Management";
-  return "Analytics";
+  if (path.includes("/analytics")) return "Analytics";
+  if (path.includes("/coupons")) return "Coupons";
+  if (path.includes("/feedback")) return "Feedback";
+  return "Dashboard";
 };
 
 const getPageCount = (path: string) => {
@@ -40,19 +44,19 @@ export default function MobileNavbar({ isApartmentsPage, editMode = false, apart
   };
 
   return (
-    <div className="p-4 mt-5 bg-[#f1f1f1]">
-      <div className="flex items-center gap-2 justify-between">
-        <h1 className="text-[24px] font-semibold mt-5 text-[#111827]">{title}</h1>
+    <div className="px-4 py-4 bg-[#f1f1f1] border-b border-gray-200/60">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-lg font-semibold text-[#111827] truncate">{title}</h1>
         {isApartmentsPage ? (
           <button
             onClick={handleAddEditClick}
-            className="flex items-center mt-5 justify-center w-10 h-10 bg-black hover:bg-gray-800 text-white rounded-full transition-colors"
+            className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-black hover:bg-gray-800 text-white rounded-full transition-colors"
             aria-label={editMode ? "Edit apartment" : "Add apartment"}
           >
             <Plus className="h-5 w-5" />
           </button>
         ) : (
-          count && <span className="text-sm text-[#4b5566]">{count}</span>
+          count ? <span className="text-sm text-[#6b7280] truncate">{count}</span> : null
         )}
       </div>
     </div>

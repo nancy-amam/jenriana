@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getApartments, getTrendingApartments } from "@/services/api-services";
 import HeroSection from "@/components/hero-section";
 import SearchBar from "@/components/filter-section";
@@ -8,6 +8,7 @@ import FeaturedListings from "@/components/featured-listings";
 import TestimonialsSection from "@/components/testimonials-section";
 import TrendingSection from "@/components/trending-section";
 import Features from "@/components/explore-features";
+import { locationFeatures } from "@/lib/dummy-data";
 import Contact from "@/components/contact-us";
 import FAQSection from "@/components/faqs";
 import { toast } from "sonner";
@@ -35,6 +36,8 @@ export default function HomePage() {
 
   const [trendingList, setTrendingList] = useState<any[]>([]);
   const [loadingTrending, setLoadingTrending] = useState(false);
+  const [locationCounts, setLocationCounts] = useState<Record<string, number>>({});
+  const featuredRef = useRef<HTMLDivElement>(null);
 
   const handleFilterChange = (field: string, value: string | number) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
@@ -89,6 +92,26 @@ export default function HomePage() {
     return () => clearTimeout(timeout);
   }, [fetchApartments]);
 
+  useEffect(() => {
+    const fetchLocationCounts = async () => {
+      try {
+        const counts: Record<string, number> = {};
+        await Promise.all(
+          locationFeatures.map(async (feature) => {
+            let slug = feature.locationName.toLowerCase().replace(/\s+/g, " ");
+            if (slug === "victoria isalnd") slug = "victoria island";
+            const response = await getApartments(1, 1, slug);
+            counts[feature.locationName] = response.total ?? 0;
+          })
+        );
+        setLocationCounts(counts);
+      } catch {
+        // Silently fail - will fall back to dummy counts
+      }
+    };
+    fetchLocationCounts();
+  }, []);
+
   const fetchTrending = async () => {
     try {
       setLoadingTrending(true);
@@ -133,8 +156,16 @@ export default function HomePage() {
         onSearch={fetchApartments}
         buttonLabel="Find Apartments"
       />
-      <Features />
-      <FeaturedListings apartments={featuredApartments} loading={loading} error={error} onRetry={fetchApartments} />
+      <Features
+        locationCounts={locationCounts}
+        onLocationClick={(location) => {
+          handleFilterChange("location", location);
+          featuredRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }}
+      />
+      <div ref={featuredRef}>
+        <FeaturedListings apartments={featuredApartments} loading={loading} error={error} onRetry={fetchApartments} />
+      </div>
       <TrendingSection apartments={trendingList} loading={loading} error={error} onRetry={fetchApartments} />
       <TestimonialsSection />
 

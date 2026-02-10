@@ -190,7 +190,7 @@ export default function AdminBookingPage() {
   return (
     <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
       {/* Search Card */}
-      <div className="w-full  h-[82px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 mb-6 mt-[-20px]">
+      <div className="w-full min-h-[60px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 mb-6">
         <input
           type="text"
           placeholder="Search by booking name or ID"
