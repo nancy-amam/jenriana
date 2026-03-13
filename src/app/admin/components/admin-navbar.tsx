@@ -74,7 +74,7 @@ export default function AdminNavbar({ editMode = false, apartmentData }: AdminNa
   const count = getPageCount(pathname, counts);
 
   return (
-    <nav className="hidden md:block bg-white p-4 shadow-sm">
+    <nav className="hidden md:block bg-white p-4 border-b border-black/10">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <p className="text-gray-800 font-semibold text-lg">{title}</p>

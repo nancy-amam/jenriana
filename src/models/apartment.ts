@@ -29,6 +29,7 @@ export interface IApartment extends Document {
   status: "active" | "inactive";
   isTrending: boolean;
   addons: IAddon[];
+  ownerId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -68,6 +69,7 @@ const ApartmentSchema: Schema = new Schema(
     isTrending: { type: Boolean, default: false },
     addons: { type: [AddonSchema], default: [] },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
+    ownerId: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );

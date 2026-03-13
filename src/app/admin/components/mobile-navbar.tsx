@@ -44,7 +44,7 @@ export default function MobileNavbar({ isApartmentsPage, editMode = false, apart
   };
 
   return (
-    <div className="px-4 py-4 bg-[#f1f1f1] border-b border-gray-200/60">
+    <div className="px-4 py-4 bg-white border-b border-black/10">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-lg font-semibold text-[#111827] truncate">{title}</h1>
         {isApartmentsPage ? (

@@ -134,12 +134,26 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          <p className="text-center text-[#4b5566]">
-            Don&apos;t have an account?{" "}
-            <Link href="/sign-up" className="text-[#111827] hover:underline font-medium">
-              Sign up
-            </Link>
-          </p>
+          <div className="flex flex-wrap justify-between items-center gap-x-4 gap-y-2 mt-4 text-[#4b5566] text-sm">
+            <span>
+              Partner?{" "}
+              <Link
+                href="/partner/auth/login"
+                className="text-[#B8860B] hover:text-amber-700 hover:underline font-medium"
+              >
+                Log in here
+              </Link>
+            </span>
+            <span>
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/sign-up"
+                className="text-[#B8860B] hover:text-amber-700 hover:underline font-medium"
+              >
+                Sign up
+              </Link>
+            </span>
+          </div>
         </div>
       </div>
 

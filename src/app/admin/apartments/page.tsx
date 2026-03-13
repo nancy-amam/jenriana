@@ -333,7 +333,7 @@ export default function ApartmentsManagementPage() {
 
   if (error && apartments.length === 0) {
     return (
-      <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
+      <div className="p-4 sm:p-6 bg-white min-h-screen">
         <div className="flex items-center justify-center h-64">
           <div className="text-red-500">Error: {error}</div>
         </div>
@@ -351,8 +351,8 @@ export default function ApartmentsManagementPage() {
     }
   };
   return (
-    <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
-      <div className="w-full mb-6 bg-white rounded-xl border border-gray-200/80 shadow-sm flex items-center px-5 py-4">
+    <div className="p-4 sm:p-6 bg-white min-h-screen">
+      <div className="w-full mb-6 bg-white rounded-xl border border-black/10 flex items-center px-5 py-4">
         <input
           type="text"
           placeholder="Search by location (e.g., Lekki)"
@@ -387,7 +387,7 @@ export default function ApartmentsManagementPage() {
       ) : (
         <>
       {activeTab === "all" && (
-        <div className="hidden md:block w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm mt-4">
+        <div className="hidden md:block w-full overflow-hidden rounded-xl border border-black/10 bg-white mt-4">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[800px]">
               <thead>
@@ -500,7 +500,7 @@ export default function ApartmentsManagementPage() {
       {activeTab === "all" && (
         <div className="md:hidden space-y-4">
           {apartments.map((apt) => (
-            <div key={apt._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div key={apt._id} className="bg-white rounded-xl border border-black/10 overflow-hidden">
               {/* Hero image */}
               <div className="relative aspect-[16/10] w-full bg-slate-100">
                 <Image
@@ -598,7 +598,7 @@ export default function ApartmentsManagementPage() {
 
       {/* Desktop trending */}
       {activeTab === "trending" && (
-        <div className="w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm mt-4">
+        <div className="w-full overflow-hidden rounded-xl border border-black/10 bg-white mt-4">
           {loadingTrending ? (
             <div className="flex justify-center py-16">
               <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
@@ -685,7 +685,7 @@ export default function ApartmentsManagementPage() {
             <p className="text-center py-6 text-gray-500">No trending apartments yet</p>
           ) : (
             trendingList.map((item) => (
-              <div key={item._id} className="bg-white rounded-lg shadow-md p-4 space-y-3">
+              <div key={item._id} className="bg-white rounded-lg border border-black/10 p-4 space-y-3">
                 <div className="flex gap-3">
                   <div className="relative w-20 h-12 rounded-md overflow-hidden flex-shrink-0">
                     <Image

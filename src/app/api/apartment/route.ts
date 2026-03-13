@@ -84,6 +84,11 @@ export async function POST(request: Request) {
       addonsRaw != null && String(addonsRaw).trim() !== ""
         ? (JSON.parse(String(addonsRaw)) as IAddon[])
         : [];
+    const ownerIdRaw = formData.get("ownerId");
+    const ownerId =
+      ownerIdRaw != null && String(ownerIdRaw).trim() !== ""
+        ? (ownerIdRaw as string).trim()
+        : undefined;
     const apartment = await Apartment.create({
       name,
       location,
@@ -98,6 +103,7 @@ export async function POST(request: Request) {
       gallery: galleryUrls,
       addons,
       status: "active",
+      ...(ownerId && { ownerId }),
     });
 
     await activityService.saveActivity(

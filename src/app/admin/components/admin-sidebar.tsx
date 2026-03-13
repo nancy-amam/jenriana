@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Home,
+  Handshake,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -21,6 +22,7 @@ const links = [
   { href: "/admin/apartments", label: "Apartments", icon: Building2 },
   { href: "/admin/bookings", label: "Bookings", icon: BookOpen },
   { href: "/admin/guests", label: "Guests", icon: Users },
+  { href: "/admin/partners", label: "Partners", icon: Handshake },
   { href: "/admin/analytics", label: "Analytics", icon: ChartNoAxesColumn },
   { href: "/admin/coupons", label: "Coupons", icon: Component },
   { href: "/admin/feedback", label: "Feedback", icon: MessageCircle },

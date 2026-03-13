@@ -11,7 +11,11 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const [loading, setLoading] = useState(false);
 
-  const hideNavAndFooter = pathname.includes("/sign-up") || pathname.includes("/login") || pathname.includes("/admin");
+  const hideNavAndFooter =
+    pathname.includes("/sign-up") ||
+    pathname.includes("/login") ||
+    pathname.includes("/admin") ||
+    pathname.includes("/partner");
 
   const hideFooter =
     hideNavAndFooter ||
@@ -26,11 +30,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   }, [pathname]);
 
   const isAdmin = pathname.startsWith("/admin");
+  const isPartner = pathname.startsWith("/partner");
 
   return (
     <>
       <Toaster richColors position="bottom-right" theme="dark" />
-      {loading && !isAdmin && (
+      {loading && !isAdmin && !isPartner && (
         <div className="fixed inset-0 flex items-center justify-center bg-white z-50">
           <ApartmentLoadingPage />
         </div>
@@ -39,7 +44,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       {!hideNavAndFooter && <Navbar />}
 
       <main className={!hideNavAndFooter ? "pt-16" : ""}>
-        <Suspense fallback={isAdmin ? null : <ApartmentLoadingPage />}>{children}</Suspense>
+        <Suspense fallback={isAdmin || isPartner ? null : <ApartmentLoadingPage />}>{children}</Suspense>
       </main>
 
       {!hideFooter && <Footer />}

@@ -49,6 +49,15 @@ export async function PUT(req: Request, { params }: RouteContext) {
     if (formData.has("isTrending"))
       updateData.isTrending = formData.get("isTrending") === "true";
 
+    if (formData.has("ownerId")) {
+      const ownerIdRaw = formData.get("ownerId");
+      const ownerIdVal =
+        ownerIdRaw != null && String(ownerIdRaw).trim() !== ""
+          ? (ownerIdRaw as string).trim()
+          : null;
+      updateData.ownerId = ownerIdVal;
+    }
+
     if (formData.has("features"))
       updateData.features = formData.getAll("features") as string[];
     if (formData.has("rules"))

@@ -25,6 +25,8 @@ export interface IBooking extends Document {
   bookingCode: string;
   coupon: mongoose.Types.ObjectId;
   expireAt: Date;
+  partnerPayoutStatus?: "pending" | "paid";
+  partnerPaidAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -65,6 +67,8 @@ const BookingSchema = new Schema<IBooking>(
     expireAt: { type: Date, default: null },
     bookingCode: { type: String, unique: true },
     coupon: { type: Schema.Types.ObjectId, ref: "Coupon" },
+    partnerPayoutStatus: { type: String, enum: ["pending", "paid"] },
+    partnerPaidAt: { type: Date },
   },
   { timestamps: true }
 );

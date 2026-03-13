@@ -72,6 +72,7 @@ export async function addApartment(apartmentData: ApartmentData, images: File[] 
     formData.append("bathrooms", String(apartmentData.bathrooms || 0));
     formData.append("maxGuests", String(apartmentData.maxGuests));
     formData.append("isTrending", String(apartmentData.isTrending || false));
+    formData.append("ownerId", apartmentData.ownerId?.trim() ?? "");
 
     // Append features array
     if (apartmentData.features?.length) {
@@ -276,6 +277,7 @@ export async function updateApartment(
     formData.append("bathrooms", String(apartmentData.bathrooms || 0));
     formData.append("maxGuests", String(apartmentData.maxGuests));
     formData.append("isTrending", String(apartmentData.isTrending || false));
+    formData.append("ownerId", apartmentData.ownerId?.trim() ?? "");
 
     // Append features array
     if (apartmentData.features?.length) {

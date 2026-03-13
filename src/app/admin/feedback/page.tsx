@@ -35,7 +35,7 @@ export default function FeedbackTable() {
 
   if (loading) {
     return (
-      <div className="w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm mt-4 h-[280px] flex items-center justify-center">
+      <div className="w-full overflow-hidden rounded-xl border border-black/10 bg-white mt-4 h-[280px] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
           <p className="text-sm text-slate-500">Loading feedback...</p>
@@ -46,7 +46,7 @@ export default function FeedbackTable() {
 
   return (
     <>
-      <div className="hidden md:block w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm mt-4">
+      <div className="hidden md:block w-full overflow-hidden rounded-xl border border-black/10 bg-white mt-4">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
             <thead>
@@ -140,7 +140,7 @@ export default function FeedbackTable() {
           <div
             key={fb._id}
             onClick={() => setSelected(fb)}
-            className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-4 space-y-3 cursor-pointer active:bg-slate-50/50 transition"
+            className="bg-white rounded-xl border border-black/10 p-4 space-y-3 cursor-pointer active:bg-slate-50/50 transition"
           >
             <div className="flex justify-between items-start">
               <p className="font-medium text-slate-900">{fb.name}</p>

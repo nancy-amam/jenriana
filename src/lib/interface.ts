@@ -32,6 +32,8 @@ export interface BaseApartment {
   rules?: string[];
   isTrending?: boolean;
   addons?: Addon[];
+  /** Partner (owner) user ID; empty/null = Jenrianna / Unassigned (in-house) */
+  ownerId?: string | null;
 }
 
 // Full Apartment interface with transformed fields

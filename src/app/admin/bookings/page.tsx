@@ -179,7 +179,7 @@ export default function AdminBookingPage() {
 
   if (error && bookings.length === 0) {
     return (
-      <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
+      <div className="p-4 sm:p-6 bg-white min-h-screen">
         <div className="flex justify-center items-center h-64">
           <div className="text-lg text-red-600">Error: {error}</div>
         </div>
@@ -188,9 +188,9 @@ export default function AdminBookingPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
+    <div className="p-4 sm:p-6 bg-white min-h-screen">
       {/* Search Card */}
-      <div className="w-full min-h-[60px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 mb-6">
+      <div className="w-full min-h-[60px] bg-white rounded-lg border border-black/10 px-4 py-4 flex items-center gap-4 mb-6">
         <input
           type="text"
           placeholder="Search by booking name or ID"
@@ -206,7 +206,7 @@ export default function AdminBookingPage() {
       ) : (
         <>
       {/* Desktop Table */}
-      <div className="hidden lg:block w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm">
+      <div className="hidden lg:block w-full overflow-hidden rounded-xl border border-black/10 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
             <thead>
@@ -277,7 +277,7 @@ export default function AdminBookingPage() {
       {/* Mobile Cards */}
       <div className="lg:hidden space-y-4">
         {memoizedBookings.map((booking) => (
-          <div key={booking._id} className="bg-white rounded-lg shadow-md p-4 relative">
+          <div key={booking._id} className="bg-white rounded-lg border border-black/10 p-4 relative">
             <div className="flex justify-between text-xs font-medium mb-2">
               <span className="text-gray-600">{booking._id.slice(-8)}</span>
               <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(booking.status)}`}>
@@ -311,7 +311,7 @@ export default function AdminBookingPage() {
 
       {/* Empty State */}
       {memoizedBookings.length === 0 && !loading && (
-        <div className="w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm p-12 text-center">
+        <div className="w-full overflow-hidden rounded-xl border border-black/10 bg-white p-12 text-center">
           <p className="text-slate-500 text-sm">No bookings found.</p>
         </div>
       )}

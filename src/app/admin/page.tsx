@@ -74,7 +74,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-[60vh]">
+      <div className="p-4 sm:p-6 bg-white min-h-[60vh]">
         <AdminContentLoader />
       </div>
     );
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
     : [];
 
   return (
-    <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
+    <div className="p-4 sm:p-6 bg-white min-h-screen">
       <div className="max-w-5xl mx-auto">
         <header className="mb-8">
           <h1 className="text-xl sm:text-2xl font-semibold text-slate-800">Dashboard</h1>
@@ -134,7 +134,7 @@ export default function AdminDashboard() {
         </header>
 
         {!analytics ? (
-          <div className="rounded-xl bg-white border border-slate-200/80 shadow-sm p-8 text-center text-slate-500">
+          <div className="rounded-xl bg-white border border-black/10 p-8 text-center text-slate-500">
             Could not load dashboard stats. Check your connection or try again later.
           </div>
         ) : (
@@ -146,7 +146,7 @@ export default function AdminDashboard() {
                   <Link
                     key={stat.title}
                     href={stat.href}
-                    className="group rounded-xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md hover:border-slate-300/80 transition-all overflow-hidden"
+                    className="group rounded-xl bg-white border border-black/10 hover:border-black/15 transition-colors overflow-hidden"
                   >
                     <div className="p-4 sm:p-5">
                       <div className="flex items-start justify-between gap-2">
@@ -176,7 +176,7 @@ export default function AdminDashboard() {
               })}
             </section>
 
-            <section className="rounded-xl bg-white border border-slate-200/80 shadow-sm overflow-hidden">
+            <section className="rounded-xl bg-white border border-black/10 overflow-hidden">
               <div className="px-4 sm:px-5 py-3 border-b border-slate-100 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-slate-700">Recent activity</h2>
                 <Link
@@ -221,13 +221,13 @@ export default function AdminDashboard() {
               </Link>
               <Link
                 href="/admin/apartments"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-black/10 text-slate-700 text-sm font-medium hover:bg-slate-50 transition"
               >
                 <Building2 className="w-4 h-4" /> Apartments
               </Link>
               <Link
                 href="/admin/guests"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-black/10 text-slate-700 text-sm font-medium hover:bg-slate-50 transition"
               >
                 <Users className="w-4 h-4" /> Guests
               </Link>

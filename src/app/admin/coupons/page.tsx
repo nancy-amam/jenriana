@@ -128,7 +128,7 @@ export default function CouponsAdminPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm"
+          className="overflow-hidden rounded-xl border border-black/10 bg-white"
         >
           <div className="overflow-x-auto">
             <table className="w-full min-w-[500px]">

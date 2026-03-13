@@ -61,6 +61,13 @@ interface FormData {
   rooms: number;
   bathrooms: number;
   maxGuests: number;
+  ownerId: string;
+}
+
+interface PartnerOption {
+  _id: string;
+  fullname: string;
+  email: string;
 }
 
 // Local pricing type for UI display
@@ -103,7 +110,10 @@ export default function AddEditApartmentModal({
     rooms: 0,
     bathrooms: 0,
     maxGuests: 0,
+    ownerId: "",
   });
+  const [partners, setPartners] = useState<PartnerOption[]>([]);
+  const [partnersLoading, setPartnersLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -170,7 +180,21 @@ export default function AddEditApartmentModal({
   };
 
   useEffect(() => {
+    if (open) {
+      setPartnersLoading(true);
+      fetch("/api/admin/partners")
+        .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to fetch partners"))))
+        .then((data) => setPartners(data.partners ?? []))
+        .catch(() => setPartners([]))
+        .finally(() => setPartnersLoading(false));
+    }
+  }, [open]);
+
+  useEffect(() => {
     if (editMode && apartmentData && open) {
+      const rawOwnerId = (apartmentData as Apartment & { ownerId?: string | null }).ownerId;
+      const ownerId =
+        rawOwnerId == null ? "" : typeof rawOwnerId === "string" ? rawOwnerId : String((rawOwnerId as { _id?: string })._id ?? rawOwnerId);
       setFormData({
         name: apartmentData.name || "",
         location: apartmentData.location || "",
@@ -179,6 +203,7 @@ export default function AddEditApartmentModal({
         rooms: apartmentData.rooms || 0,
         bathrooms: apartmentData.bathrooms || 0,
         maxGuests: apartmentData.maxGuests || 0,
+        ownerId: ownerId || "",
       });
 
       if (apartmentData.features) {
@@ -243,6 +268,7 @@ export default function AddEditApartmentModal({
       rooms: 0,
       bathrooms: 0,
       maxGuests: 0,
+      ownerId: "",
     });
     setSelectedFeatures([]);
     setRules({
@@ -450,6 +476,7 @@ export default function AddEditApartmentModal({
         rules: rulesArray,
         isTrending: apartmentData?.isTrending || false,
         addons: addOnsPayload,
+        ownerId: formData.ownerId.trim() || null,
       };
 
       let response;
@@ -575,6 +602,23 @@ export default function AddEditApartmentModal({
                 placeholder="Enter full address"
                 disabled={isLoading}
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-2">Owner</label>
+              <select
+                value={formData.ownerId}
+                onChange={(e) => handleInputChange("ownerId", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                disabled={isLoading || partnersLoading}
+              >
+                <option value="">Jenrianna / Unassigned</option>
+                {partners.map((partner) => (
+                  <option key={partner._id} value={partner._id}>
+                    {partner.fullname || partner.email}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">In-house apartments: leave as Jenrianna / Unassigned.</p>
             </div>
           </div>
         </div>

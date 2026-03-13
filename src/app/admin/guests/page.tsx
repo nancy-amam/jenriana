@@ -143,7 +143,7 @@ export default function AdminGuestsPage() {
 
   if (error && users.length === 0) {
     return (
-      <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
+      <div className="p-4 sm:p-6 bg-white min-h-screen">
         <div className="flex justify-center items-center h-64">
           <div className="text-lg text-red-600">Error: {error}</div>
         </div>
@@ -152,9 +152,9 @@ export default function AdminGuestsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 bg-[#f1f1f1] min-h-screen">
+    <div className="p-4 sm:p-6 bg-white min-h-screen">
       {/* Search */}
-      <div className="w-full min-h-[60px] bg-white rounded-lg shadow-md px-4 py-4 flex items-center gap-4 mb-6">
+      <div className="w-full min-h-[60px] bg-white rounded-lg border border-black/10 px-4 py-4 flex items-center gap-4 mb-6">
         <input
           type="text"
           placeholder="Search by guest name or email"
@@ -171,7 +171,7 @@ export default function AdminGuestsPage() {
       ) : (
         <>
       {/* Desktop Table */}
-      <div className="hidden lg:block w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm">
+      <div className="hidden lg:block w-full overflow-hidden rounded-xl border border-black/10 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px]">
             <thead>
@@ -211,7 +211,7 @@ export default function AdminGuestsPage() {
       {/* Mobile Cards */}
       <div className="lg:hidden space-y-4 mt-6">
         {memoizedUsers.map((user) => (
-          <div key={user._id} className="bg-white rounded-lg shadow-md p-4 relative">
+          <div key={user._id} className="bg-white rounded-lg border border-black/10 p-4 relative">
             <p className="text-sm font-semibold text-gray-800">{user.fullname}</p>
             <p className="text-sm text-gray-600">{user.email}</p>
             <p className="text-sm text-gray-600">{user.phone}</p>
@@ -243,7 +243,7 @@ export default function AdminGuestsPage() {
 
       {/* Empty State */}
       {memoizedUsers.length === 0 && !loading && (
-        <div className="w-full overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm p-12 text-center">
+        <div className="w-full overflow-hidden rounded-xl border border-black/10 bg-white p-12 text-center">
           <p className="text-slate-500 text-sm">No users found.</p>
         </div>
       )}

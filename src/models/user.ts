@@ -9,7 +9,7 @@ export interface IUser extends Document {
   dateOfBirth?: Date;
   membershipNumber?: string;
   membershipTier: "Silver" | "Gold" | "VIP";
-  role: "admin" | "user";
+  role: "admin" | "user" | "partner";
   totalBookings: number;
   favorites: mongoose.Types.ObjectId[];
   createdAt: Date;
@@ -31,7 +31,7 @@ const UserSchema: Schema = new Schema(
       enum: ["Silver", "Gold", "VIP"],
       default: "Silver",
     },
-    role: { type: String, enum: ["admin", "user"], default: "user" },
+    role: { type: String, enum: ["admin", "user", "partner"], default: "user" },
     totalBookings: { type: Number, default: 0 },
     favorites: [{ type: Schema.Types.ObjectId, ref: "Apartment" }],
   },

@@ -20,7 +20,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <AdminDataProvider>
       <ApartmentModalProvider>
-        <div className="flex flex-col min-h-screen bg-[#f1f1f1]">
+        <div className="flex flex-col min-h-screen bg-white">
           {/* Mobile header + sidebar + content */}
           <div className="md:hidden flex flex-col flex-1 min-h-0">
             {/* Fixed top bar */}
@@ -58,7 +58,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Page header + main content */}
             <div className="flex flex-col flex-1 min-h-0">
               <MobileNavbar isApartmentsPage={isApartmentsPage} />
-              <main className="flex-1 overflow-auto px-4 py-4 pb-6 bg-[#f1f1f1]">{children}</main>
+              <main className="flex-1 overflow-auto px-4 py-4 pb-6 bg-white">{children}</main>
             </div>
           </div>
 
@@ -67,7 +67,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <AdminSidebar />
             <div className="flex flex-col flex-grow min-h-0">
               <AdminNavbar />
-              <main className="flex-1 overflow-auto p-6 bg-[#f1f1f1]">{children}</main>
+              <main className="flex-1 overflow-auto p-6 bg-white">{children}</main>
             </div>
           </div>
         </div>
