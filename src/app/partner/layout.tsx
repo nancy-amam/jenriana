@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import PartnerSidebar from "./components/partner-sidebar";
 import PartnerNavbar from "./components/partner-navbar";
+import PartnerAuthGuard from "./components/partner-auth-guard";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -13,13 +14,14 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isAuthPage = pathname.startsWith("/partner/auth");
 
-  // Login / set-password: no sidebar, just the content
+  // Login / set-password: no sidebar, no auth check
   if (isAuthPage) {
     return <>{children}</>;
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#fafafa]">
+    <PartnerAuthGuard>
+      <div className="flex flex-col min-h-screen bg-[#fafafa]">
       {/* Mobile header + sidebar + content */}
       <div className="md:hidden flex flex-col flex-1 min-h-0">
         <header className="sticky top-0 z-50 flex-shrink-0 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
@@ -67,5 +69,6 @@ export default function PartnerLayout({ children }: { children: React.ReactNode 
         </div>
       </div>
     </div>
+    </PartnerAuthGuard>
   );
 }

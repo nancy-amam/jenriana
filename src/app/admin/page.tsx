@@ -1,22 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Building2, BookOpen, Users, DollarSign, TrendingUp, ArrowRight, CalendarCheck } from "lucide-react";
-import { getAdminAnalytics, getActivity } from "@/services/api-services";
-import { AnalyticsResponse } from "@/lib/interface";
-import AdminContentLoader from "./components/admin-content-loader";
-
-interface Activity {
-  _id: string;
-  type: string;
-  message: string;
-  createdAt: string;
-}
-
-interface ActivityResponse {
-  activities: Activity[];
-}
+import { useAdminAnalytics, useAdminActivity } from "@/hooks/use-admin-api";
+import { PulseCards } from "@/components/ui/pulse-loader";
 
 function formatActivityDate(dateString: string) {
   const date = new Date(dateString);
@@ -42,40 +29,23 @@ function shortenActivity(type: string) {
 }
 
 export default function AdminDashboard() {
-  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activitiesLoading, setActivitiesLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchData() {
-      try {
-        const [analyticsData, activityData] = await Promise.all([
-          getAdminAnalytics(),
-          getActivity().catch(() => ({ activities: [] })),
-        ]);
-        if (!cancelled) {
-          setAnalytics(analyticsData);
-          setActivities((activityData as ActivityResponse).activities?.slice(0, 5) ?? []);
-        }
-      } catch {
-        if (!cancelled) setAnalytics(null);
-      } finally {
-        if (!cancelled) setLoading(false);
-        setActivitiesLoading(false);
-      }
-    }
-    fetchData();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { data: analytics, isLoading: loading } = useAdminAnalytics();
+  const { data: activities = [], isLoading: activitiesLoading } = useAdminActivity();
+  const recentActivities = activities.slice(0, 5);
 
   if (loading) {
     return (
       <div className="p-4 sm:p-6 bg-white min-h-[60vh]">
-        <AdminContentLoader />
+        <div className="h-8 w-48 rounded bg-slate-200 animate-pulse mb-6" />
+        <PulseCards count={4} />
+        <div className="mt-8 rounded-xl border border-black/10 overflow-hidden">
+          <div className="h-12 bg-slate-100 animate-pulse" />
+          <div className="flex flex-col gap-2 p-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-12 rounded bg-slate-100 animate-pulse" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -188,13 +158,15 @@ export default function AdminDashboard() {
               </div>
               <div className="divide-y divide-slate-100">
                 {activitiesLoading ? (
-                  <div className="flex justify-center py-10">
-                    <AdminContentLoader />
+                  <div className="space-y-2 p-4">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="h-12 rounded bg-slate-100 animate-pulse" />
+                    ))}
                   </div>
-                ) : activities.length === 0 ? (
+                ) : recentActivities.length === 0 ? (
                   <div className="py-10 text-center text-sm text-slate-500">No recent activity</div>
                 ) : (
-                  activities.map((activity) => (
+                  recentActivities.map((activity) => (
                     <div
                       key={activity._id}
                       className="px-4 sm:px-5 py-3 flex items-center gap-3 hover:bg-slate-50/80 transition-colors"

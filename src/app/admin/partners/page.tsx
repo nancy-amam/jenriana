@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -13,7 +13,9 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
-import AdminContentLoader from "../components/admin-content-loader";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAdminPartners, adminKeys } from "@/hooks/use-admin-api";
+import { PulseTableRows } from "@/components/ui/pulse-loader";
 import { toast } from "sonner";
 
 interface Partner {
@@ -28,9 +30,8 @@ interface Partner {
 }
 
 export default function AdminPartnersPage() {
-  const [partners, setPartners] = useState<Partner[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { data: partners = [], isLoading, isError } = useAdminPartners();
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
 
@@ -39,53 +40,27 @@ export default function AdminPartnersPage() {
   const [addLastName, setAddLastName] = useState("");
   const [addPhone, setAddPhone] = useState("");
   const [addPassword, setAddPassword] = useState("");
-  const [addLoading, setAddLoading] = useState(false);
 
-  const fetchPartners = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch("/api/admin/partners", { credentials: "include" });
-      if (!res.ok) {
-        if (res.status === 403) throw new Error("Forbidden");
-        throw new Error("Failed to fetch partners");
-      }
-      const data = await res.json();
-      setPartners(data.partners ?? []);
-    } catch (err: any) {
-      setError(err.message || "Failed to load partners");
-      setPartners([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchPartners();
-  }, [fetchPartners]);
-
-  const handleAddPartner = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!addEmail.trim()) {
-      toast.error("Email is required");
-      return;
-    }
-    setAddLoading(true);
-    try {
+  const addPartnerMutation = useMutation({
+    mutationFn: async (body: {
+      email: string;
+      firstName?: string;
+      lastName?: string;
+      phone?: string;
+      password?: string;
+    }) => {
       const res = await fetch("/api/admin/partners", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          email: addEmail.trim(),
-          firstName: addFirstName.trim() || undefined,
-          lastName: addLastName.trim() || undefined,
-          phone: addPhone.trim() || undefined,
-          password: addPassword.trim() || undefined,
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to create partner");
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.partners });
       toast.success("Partner created successfully");
       setAddModalOpen(false);
       setAddEmail("");
@@ -93,12 +68,23 @@ export default function AdminPartnersPage() {
       setAddLastName("");
       setAddPhone("");
       setAddPassword("");
-      fetchPartners();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create partner");
-    } finally {
-      setAddLoading(false);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const handleAddPartner = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addEmail.trim()) {
+      toast.error("Email is required");
+      return;
     }
+    addPartnerMutation.mutate({
+      email: addEmail.trim(),
+      firstName: addFirstName.trim() || undefined,
+      lastName: addLastName.trim() || undefined,
+      phone: addPhone.trim() || undefined,
+      password: addPassword.trim() || undefined,
+    });
   };
 
   const handleMarkPaid = async (partnerId: string) => {
@@ -113,7 +99,7 @@ export default function AdminPartnersPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to mark as paid");
       toast.success(`${data.updatedCount ?? 0} payout(s) marked as paid`);
-      fetchPartners();
+      queryClient.invalidateQueries({ queryKey: adminKeys.partners });
     } catch (err: any) {
       toast.error(err.message || "Failed to mark payouts");
     } finally {
@@ -124,10 +110,10 @@ export default function AdminPartnersPage() {
   const formatMoney = (n: number) =>
     new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(n);
 
-  if (error && partners.length === 0) {
+  if (isError && partners.length === 0) {
     return (
       <div className="p-4 sm:p-6 bg-white min-h-screen flex items-center justify-center">
-        <div className="text-lg text-red-600">Error: {error}</div>
+        <div className="text-lg text-red-600">Error loading partners. Try again later.</div>
       </div>
     );
   }
@@ -146,8 +132,13 @@ export default function AdminPartnersPage() {
         </button>
       </div>
 
-      {loading && partners.length === 0 ? (
-        <AdminContentLoader />
+      {isLoading && partners.length === 0 ? (
+        <div className="rounded-xl border border-black/10 bg-white overflow-hidden">
+          <div className="h-12 bg-slate-50 animate-pulse" />
+          <div className="p-4">
+            <PulseTableRows rows={6} />
+          </div>
+        </div>
       ) : (
         <>
           <div className="hidden lg:block w-full overflow-hidden rounded-xl border border-black/10 bg-white">
@@ -297,7 +288,7 @@ export default function AdminPartnersPage() {
         </>
       )}
 
-      {partners.length === 0 && !loading && (
+      {partners.length === 0 && !isLoading && (
         <div className="w-full rounded-xl border border-black/10 bg-white p-12 text-center">
           <Handshake className="w-12 h-12 text-slate-300 mx-auto mb-3" />
           <p className="text-slate-500 text-sm">No partners yet.</p>
@@ -389,10 +380,10 @@ export default function AdminPartnersPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={addLoading}
+                  disabled={addPartnerMutation.isPending}
                   className="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
                 >
-                  {addLoading ? "Creating…" : "Create partner"}
+                  {addPartnerMutation.isPending ? "Creating…" : "Create partner"}
                 </button>
               </div>
             </form>

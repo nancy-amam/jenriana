@@ -1,56 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getAllCoupons, deleteCoupon, toggleCoupon } from "@/services/api-services";
-import { Loader2, Trash2, ToggleLeft, ToggleRight, Plus } from "lucide-react";
+import { useState } from "react";
+import { Trash2, ToggleLeft, ToggleRight, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CreateCouponModal from "./create-coupon-modal";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAdminCoupons, useCouponMutations, adminKeys } from "@/hooks/use-admin-api";
+import { PulseTableRows } from "@/components/ui/pulse-loader";
 
 export default function CouponsAdminPage() {
-  const [coupons, setCoupons] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: coupons = [], isLoading } = useAdminCoupons();
+  const { deleteCoupon: deleteCouponFn, toggleCoupon: toggleCouponFn } = useCouponMutations();
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [openModal, setOpenModal] = useState(false);
 
-  const fetchCoupons = async () => {
-    setLoading(true);
-    try {
-      const res = await getAllCoupons();
-      setCoupons(res.coupons || []);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCoupons();
-  }, []);
-
   const handleDelete = async (id: string) => {
-    setProcessingId(id);
     const answer = confirm("Are you sure you want to delete this coupon?");
-    if (!answer) {
-      setProcessingId(null);
-      return;
-    }
+    if (!answer) return;
+    setProcessingId(id);
     try {
-      await deleteCoupon(id);
-      setCoupons((prev) => prev.filter((c) => c._id !== id));
+      await deleteCouponFn(id);
+      toast.success("Coupon deleted successfully");
+    } catch {
+      toast.error("Failed to delete coupon");
     } finally {
       setProcessingId(null);
-      toast.success("Coupon deleted successfully");
     }
   };
 
   const handleToggle = async (id: string) => {
     setProcessingId(id);
     try {
-      const res = await toggleCoupon(id);
-      setCoupons((prev) => prev.map((c) => (c._id === id ? res.coupon : c)));
+      await toggleCouponFn(id);
+      toast.success("Coupon status updated successfully");
+    } catch {
+      toast.error("Failed to update coupon");
     } finally {
       setProcessingId(null);
-      toast.success("Coupon status updated successfully");
     }
   };
 
@@ -120,9 +108,9 @@ export default function CouponsAdminPage() {
         </motion.div>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-neutral-800" />
+      {isLoading ? (
+        <div className="overflow-hidden rounded-xl border border-black/10 bg-white p-4">
+          <PulseTableRows rows={6} />
         </div>
       ) : (
         <motion.div
@@ -231,7 +219,7 @@ export default function CouponsAdminPage() {
         open={openModal}
         onClose={() => {
           setOpenModal(false);
-          fetchCoupons();
+          queryClient.invalidateQueries({ queryKey: adminKeys.coupons });
         }}
       />
     </div>

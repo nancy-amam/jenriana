@@ -26,8 +26,16 @@ export default function PartnerSetPasswordPage() {
     setLoading(true);
     setError(null);
     try {
-      // TODO: call API to send OTP to email
-      // await fetch('/api/partner/send-otp', { method: 'POST', body: JSON.stringify({ email }) });
+      const res = await fetch("/api/partner/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.message || "Could not send code. Please try again.");
+        return;
+      }
       setStep(2);
     } catch {
       setError("Could not send OTP. Please try again.");
@@ -41,8 +49,16 @@ export default function PartnerSetPasswordPage() {
     setLoading(true);
     setError(null);
     try {
-      // TODO: call API to verify OTP
-      // await fetch('/api/partner/verify-otp', { method: 'POST', body: JSON.stringify({ email, otp }) });
+      const res = await fetch("/api/partner/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), otp: otp.replace(/\D/g, "") }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.message || "Invalid or expired OTP. Please try again.");
+        return;
+      }
       setStep(3);
     } catch {
       setError("Invalid or expired OTP. Please try again.");
@@ -64,8 +80,20 @@ export default function PartnerSetPasswordPage() {
     }
     setLoading(true);
     try {
-      // TODO: call API to set password
-      // await fetch('/api/partner/set-password', { method: 'POST', body: JSON.stringify({ email, otp, password }) });
+      const res = await fetch("/api/partner/set-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          otp: otp.replace(/\D/g, ""),
+          password,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.message || "Could not set password. Please try again.");
+        return;
+      }
       setSuccess(true);
       setTimeout(() => router.push("/partner/auth/login"), 2000);
     } catch {

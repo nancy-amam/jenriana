@@ -3,14 +3,50 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Home, Users, Bath, Bed, ChevronRight, LayoutGrid } from "lucide-react";
-import { MOCK_APARTMENTS, formatMoney } from "./data";
+import { usePartnerApartments } from "@/hooks/use-partner-api";
+import { formatMoney } from "./data";
+import { PulseCards } from "@/components/ui/pulse-loader";
 
 export default function PartnerApartmentsPage() {
-  const apartments = MOCK_APARTMENTS;
+  const { data: apartments = [], isLoading, isError } = usePartnerApartments();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100/80 p-6">
+          <div className="h-8 w-48 rounded bg-slate-200 animate-pulse" />
+          <div className="mt-2 h-6 w-24 rounded bg-slate-200 animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="aspect-[4/3] bg-slate-200 animate-pulse" />
+              <div className="p-5 space-y-3">
+                <div className="h-5 w-3/4 rounded bg-slate-200 animate-pulse" />
+                <div className="h-4 w-1/2 rounded bg-slate-200 animate-pulse" />
+                <div className="flex gap-4">
+                  <div className="h-4 w-12 rounded bg-slate-200 animate-pulse" />
+                  <div className="h-4 w-12 rounded bg-slate-200 animate-pulse" />
+                </div>
+                <div className="h-6 w-24 rounded bg-slate-200 animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-xl bg-white border border-gray-100 p-8 text-center text-gray-500">
+        Could not load apartments. Try again later.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header card: title + count pill */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100/80 p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-2xl font-bold text-gray-900">My Apartments</h1>
@@ -21,7 +57,6 @@ export default function PartnerApartmentsPage() {
         </div>
       </div>
 
-      {/* Property cards grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {apartments.map((apt) => (
           <Link
@@ -57,12 +92,12 @@ export default function PartnerApartmentsPage() {
                   className={`rounded-full px-3 py-1.5 text-xs font-medium shadow-sm ${
                     apt.status === "active"
                       ? "bg-emerald-500/90 text-white"
-                      : apt.status === "maintenance"
-                        ? "bg-amber-500/90 text-white"
-                        : "bg-gray-500/90 text-white"
+                      : apt.status === "inactive"
+                        ? "bg-gray-500/90 text-white"
+                        : "bg-amber-500/90 text-white"
                   }`}
                 >
-                  {apt.status === "maintenance" ? "Maintenance" : apt.status === "active" ? "Live" : "Paused"}
+                  {apt.status === "active" ? "Live" : apt.status === "inactive" ? "Paused" : "Maintenance"}
                 </span>
               </div>
               <div className="absolute bottom-3 right-3 rounded-full bg-black/50 px-3 py-1.5 text-xs font-medium text-white">

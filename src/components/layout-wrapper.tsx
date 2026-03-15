@@ -6,6 +6,7 @@ import Navbar from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import ApartmentLoadingPage from "@/components/loading";
 import { Toaster } from "sonner";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -33,7 +34,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const isPartner = pathname.startsWith("/partner");
 
   return (
-    <>
+    <QueryProvider>
       <Toaster richColors position="bottom-right" theme="dark" />
       {loading && !isAdmin && !isPartner && (
         <div className="fixed inset-0 flex items-center justify-center bg-white z-50">
@@ -48,6 +49,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       </main>
 
       {!hideFooter && <Footer />}
-    </>
+    </QueryProvider>
   );
 }

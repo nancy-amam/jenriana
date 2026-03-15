@@ -216,13 +216,14 @@ export async function getApartments(
 
     return response;
   } catch (error: any) {
-    console.error("Failed to search apartments:", {
-      message: error.message,
-      status: error.status,
-      details: error,
-    });
+    const message =
+      error?.message ??
+      (error?.response?.data?.error || error?.response?.data?.message) ??
+      (typeof error === "string" ? error : "Failed to search apartments. Please try again later.");
+    const status = error?.status ?? error?.response?.status;
+    console.error("Failed to search apartments:", message, status != null ? `(status: ${status})` : "", error);
 
-    throw new Error(error.message || "Failed to search apartments. Please try again later.");
+    throw new Error(message || "Failed to search apartments. Please try again later.");
   }
 }
 
@@ -826,4 +827,39 @@ export function updateFeedbackPublish(id: string, publish: boolean) {
     method: "PATCH",
     body: { publish },
   });
+}
+
+// —— Admin partners (list) ——
+export async function getAdminPartners() {
+  const res = await fetch("/api/admin/partners", { credentials: "include" });
+  if (!res.ok) throw new Error(res.status === 403 ? "Forbidden" : "Failed to fetch partners");
+  const data = await res.json();
+  return { partners: data.partners ?? [] };
+}
+
+// —— Partner APIs ——
+export async function getPartnerDashboard() {
+  const res = await fetch("/api/partner/dashboard", { credentials: "include" });
+  if (!res.ok) throw new Error(res.status === 403 ? "Forbidden" : "Failed to fetch dashboard");
+  return res.json();
+}
+
+export async function getPartnerApartments() {
+  const res = await fetch("/api/partner/apartments", { credentials: "include" });
+  if (!res.ok) throw new Error(res.status === 403 ? "Forbidden" : "Failed to fetch apartments");
+  const data = await res.json();
+  return { apartments: data.apartments ?? [] };
+}
+
+export async function getPartnerApartment(id: string) {
+  const res = await fetch(`/api/partner/apartments/${id}`, { credentials: "include" });
+  if (!res.ok) throw new Error(res.status === 404 ? "Not found" : "Failed to fetch apartment");
+  return res.json();
+}
+
+export async function getPartnerTransactions() {
+  const res = await fetch("/api/partner/transactions", { credentials: "include" });
+  if (!res.ok) throw new Error(res.status === 403 ? "Forbidden" : "Failed to fetch transactions");
+  const data = await res.json();
+  return { transactions: data.transactions ?? [] };
 }

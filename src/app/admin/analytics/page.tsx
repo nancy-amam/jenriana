@@ -1,57 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from "react";
 import { Home, CalendarCheck, DollarSign, User, Star, Edit, Plus } from "lucide-react";
-import { getAdminAnalytics, getActivity } from "@/services/api-services";
-import { AnalyticsResponse } from "@/lib/interface";
-import AdminContentLoader from "../components/admin-content-loader";
-
-interface Activity {
-  _id: string;
-  type: string;
-  message: string;
-  createdAt: string;
-  __v: number;
-}
-
-interface ActivityResponse {
-  message: string;
-  activities: Activity[];
-}
+import { useAdminAnalytics, useAdminActivity } from "@/hooks/use-admin-api";
+import { PulseCards } from "@/components/ui/pulse-loader";
 
 export default function AnalyticsPage() {
-  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activitiesLoading, setActivitiesLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchAnalytics() {
-      try {
-        const data = await getAdminAnalytics();
-        setAnalytics(data);
-      } catch (err) {
-        // Handle error silently or show user-friendly message
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchAnalytics();
-  }, []);
-
-  useEffect(() => {
-    async function fetchActivities() {
-      try {
-        const data = await getActivity();
-        setActivities(data.activities);
-      } catch (err) {
-        // Handle error silently or show user-friendly message
-      } finally {
-        setActivitiesLoading(false);
-      }
-    }
-    fetchActivities();
-  }, []);
+  const { data: analytics, isLoading: loading } = useAdminAnalytics();
+  const { data: activities = [], isLoading: activitiesLoading } = useAdminActivity();
 
   const cleanActivityMessage = (message: string, type: string) => {
     try {
@@ -184,8 +139,16 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-6 bg-white">
-        <AdminContentLoader />
+      <div className="p-4 md:p-6 space-y-8 min-h-screen">
+        <PulseCards count={3} />
+        <div className="bg-white rounded-lg shadow p-4 md:p-6">
+          <div className="h-6 w-40 rounded bg-slate-200 animate-pulse mb-4" />
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-14 rounded-lg bg-slate-100 animate-pulse" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -252,8 +215,10 @@ export default function AnalyticsPage() {
         <h2 className="text-lg font-semibold text-gray-700 mb-4">Recent Activities</h2>
         
         {activitiesLoading ? (
-          <div className="flex justify-center py-8">
-            <AdminContentLoader />
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-14 rounded-lg bg-slate-100 animate-pulse" />
+            ))}
           </div>
         ) : activities.length > 0 ? (
           <div className="space-y-3">

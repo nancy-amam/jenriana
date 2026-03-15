@@ -1,45 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getFeedbacks, updateFeedbackPublish } from "@/services/api-services";
+import { useState } from "react";
+import { useAdminFeedbacks, useFeedbackPublishMutation } from "@/hooks/use-admin-api";
+import { PulseTableRows } from "@/components/ui/pulse-loader";
 
 export default function FeedbackTable() {
-  const [feedbacks, setFeedbacks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: feedbacks = [], isLoading } = useAdminFeedbacks();
+  const publishMutation = useFeedbackPublishMutation();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [selected, setSelected] = useState<any>(null);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await getFeedbacks();
-      setFeedbacks(res.data || []);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const togglePublish = async (id: string, current: boolean) => {
+    setUpdatingId(id);
     try {
-      setUpdatingId(id);
-      await updateFeedbackPublish(id, !current);
-      fetchData();
+      await publishMutation.mutateAsync({ id, publish: !current });
     } finally {
       setUpdatingId(null);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="w-full overflow-hidden rounded-xl border border-black/10 bg-white mt-4 h-[280px] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
-          <p className="text-sm text-slate-500">Loading feedback...</p>
-        </div>
+      <div className="w-full overflow-hidden rounded-xl border border-black/10 bg-white mt-4 p-4">
+        <div className="h-6 w-32 rounded bg-slate-200 animate-pulse mb-4" />
+        <PulseTableRows rows={8} />
       </div>
     );
   }

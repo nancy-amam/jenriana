@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   MapPin,
@@ -26,7 +26,9 @@ import {
   Dumbbell,
   Video,
 } from "lucide-react";
-import { getApartmentById, formatMoney, type ApartmentStatus, type PartnerApartment } from "../data";
+import { formatMoney, type ApartmentStatus, type PartnerApartment } from "../data";
+import { usePartnerApartment } from "@/hooks/use-partner-api";
+import { PulseLoader } from "@/components/ui/pulse-loader";
 
 // Map feature names to icons for "What this place offers" style layout
 const FEATURE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -114,28 +116,68 @@ function StatusControl({
 
 export default function PartnerApartmentDetailPage() {
   const params = useParams();
-  const id = typeof params.id === "string" ? params.id : "";
-  const initial = getApartmentById(id);
+  const id = typeof params.id === "string" ? params.id : null;
+  const { data: apiApartment, isLoading, isError } = usePartnerApartment(id);
 
-  const [apartment, setApartment] = useState<PartnerApartment | null>(initial ?? null);
-  const [listingStatus, setListingStatus] = useState<ApartmentStatus>(initial?.status ?? "active");
+  const apartment: PartnerApartment | null = apiApartment
+    ? {
+        _id: apiApartment._id,
+        name: apiApartment.name,
+        location: apiApartment.location ?? "",
+        address: apiApartment.address,
+        pricePerNight: apiApartment.pricePerNight ?? 0,
+        rooms: apiApartment.rooms ?? 0,
+        bathrooms: apiApartment.bathrooms ?? 0,
+        maxGuests: apiApartment.maxGuests ?? 0,
+        gallery: apiApartment.gallery ?? [],
+        status: (apiApartment.status as ApartmentStatus) ?? "active",
+        occupied: false,
+        features: apiApartment.features ?? [],
+        rules: apiApartment.rules ?? [],
+        description: apiApartment.description,
+      }
+    : null;
 
-  if (!id || !apartment) {
+  const [listingStatus, setListingStatus] = useState<ApartmentStatus>("active");
+
+  useEffect(() => {
+    if (apartment?.status) setListingStatus(apartment.status);
+  }, [apartment?.status]);
+
+  if (!id) {
     return (
       <div className="space-y-6">
-        <Link
-          href="/partner/apartments"
-          className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm border border-gray-100 hover:bg-gray-50"
-        >
+        <Link href="/partner/apartments" className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm border border-gray-100 hover:bg-gray-50">
           <ArrowLeft className="w-4 h-4" />
           Back to apartments
         </Link>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100/80 p-12 text-center">
           <p className="text-gray-500">Apartment not found.</p>
-          <Link
-            href="/partner/apartments"
-            className="mt-4 inline-block rounded-full bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-600"
-          >
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-10 w-32 rounded bg-slate-200 animate-pulse" />
+        <div className="aspect-[21/9] rounded-2xl bg-slate-200 animate-pulse" />
+        <PulseLoader className="min-h-[180px]" />
+      </div>
+    );
+  }
+
+  if (isError || !apartment) {
+    return (
+      <div className="space-y-6">
+        <Link href="/partner/apartments" className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm border border-gray-100 hover:bg-gray-50">
+          <ArrowLeft className="w-4 h-4" />
+          Back to apartments
+        </Link>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100/80 p-12 text-center">
+          <p className="text-gray-500">Apartment not found.</p>
+          <Link href="/partner/apartments" className="mt-4 inline-block rounded-full bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-600">
             View all apartments
           </Link>
         </div>
@@ -145,7 +187,6 @@ export default function PartnerApartmentDetailPage() {
 
   const handleStatusChange = (newStatus: ApartmentStatus) => {
     setListingStatus(newStatus);
-    setApartment((prev) => (prev ? { ...prev, status: newStatus } : null));
   };
 
   const features = apartment.features ?? [];
