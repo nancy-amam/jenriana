@@ -23,6 +23,8 @@ export interface BaseApartment {
   name: string;
   location: string;
   address: string;
+  /** Listing copy from partner/admin when present */
+  description?: string;
   pricePerNight: number;
   rooms?: number;
   bathrooms?: number;
@@ -76,6 +78,15 @@ export interface LocationFeature extends BaseEntity, Image {
   locationName: string;
   apartmentCount: number;
   colSpan: number;
+}
+
+/** Hero “explore by location” spotlight — apartment + area, used in rotating pairs */
+export interface ExploreSpotlight extends BaseEntity, Image {
+  apartmentName: string;
+  /** Display line under the title, e.g. city / neighborhood */
+  locationLine: string;
+  /** Passed to search / filter (lowercase area token) */
+  filterLocation: string;
 }
 
 // Testimonial interface

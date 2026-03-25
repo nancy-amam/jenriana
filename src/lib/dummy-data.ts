@@ -1,5 +1,4 @@
-import type {  LocationFeature, Testimonial } from "./interface"
-
+import type { LocationFeature, Testimonial } from "./interface";
 
 export const locationFeatures: LocationFeature[] = [
   {

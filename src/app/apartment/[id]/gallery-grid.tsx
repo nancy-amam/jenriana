@@ -8,9 +8,11 @@ import { X, ChevronLeft, ChevronRight } from "lucide-react";
 interface Props {
   name: string;
   gallery?: string[] | null;
+  /** Match apartment detail dark theme */
+  variant?: "light" | "dark";
 }
 
-export default function GalleryGrid({ name, gallery }: Props) {
+export default function GalleryGrid({ name, gallery, variant = "light" }: Props) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -38,14 +40,21 @@ export default function GalleryGrid({ name, gallery }: Props) {
     setLightboxOpen(true);
   };
 
+  const headingClass =
+    variant === "dark"
+      ? "text-2xl md:text-[34px] font-semibold text-white mb-4"
+      : "text-2xl md:text-[36px] font-semibold text-[#111827] mb-4";
+
   return (
-    <section className="px-6 max-w-[1400px] mx-auto mb-10">
+    <section
+      className={`px-6 max-w-[1400px] mx-auto mb-10 ${variant === "dark" ? "bg-black pt-6" : ""}`}
+    >
       <motion.h2
         initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 0.4 }}
-        className="text-2xl md:text-[36px] font-semibold text-[#111827] mb-4"
+        className={headingClass}
       >
         Apartment Gallery
       </motion.h2>
@@ -71,7 +80,7 @@ export default function GalleryGrid({ name, gallery }: Props) {
           ))}
         </div>
       ) : (
-        <p className="text-gray-500">No images available.</p>
+        <p className={variant === "dark" ? "text-zinc-500" : "text-gray-500"}>No images available.</p>
       )}
 
       <AnimatePresence>

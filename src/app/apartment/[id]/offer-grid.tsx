@@ -3,7 +3,8 @@
 import { AirVent, Wifi, Utensils, Tv, Laptop, Dumbbell, ParkingSquare, ShieldCheck, Battery } from "lucide-react";
 import { motion } from "framer-motion";
 
-const featureMapping = {
+/** Shared with apartment detail “Room amenities” grid */
+export const featureMapping = {
   wifi: { name: "WiFi", icon: Wifi, color: "text-green-500" },
   parking: { name: "Parking", icon: ParkingSquare, color: "text-teal-500" },
   gym: { name: "Gym", icon: Dumbbell, color: "text-green-500" },

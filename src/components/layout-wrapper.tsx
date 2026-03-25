@@ -1,16 +1,14 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import ApartmentLoadingPage from "@/components/loading";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/components/providers/query-provider";
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [loading, setLoading] = useState(false);
 
   const hideNavAndFooter =
     pathname.includes("/sign-up") ||
@@ -24,29 +22,30 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     pathname.includes("/my-bookings") ||
     pathname.includes("/contact-us");
 
-  useEffect(() => {
-    setLoading(true);
-    const timer = setTimeout(() => setLoading(false), 400);
-    return () => clearTimeout(timer);
-  }, [pathname]);
+  const isHome = pathname === "/";
+  const isApartmentsIndex = pathname === "/apartment";
+  /** Apartment detail `/apartment/[id]` — nav overlays hero like home */
+  const isApartmentDetail = pathname.startsWith("/apartment/");
+  const useOverlayNavShell = isHome || isApartmentsIndex || isApartmentDetail;
 
-  const isAdmin = pathname.startsWith("/admin");
-  const isPartner = pathname.startsWith("/partner");
+  const mainInner = <Suspense fallback={null}>{children}</Suspense>;
 
   return (
     <QueryProvider>
       <Toaster richColors position="bottom-right" theme="dark" />
-      {loading && !isAdmin && !isPartner && (
-        <div className="fixed inset-0 flex items-center justify-center bg-white z-50">
-          <ApartmentLoadingPage />
+      {hideNavAndFooter ? (
+        <main>{mainInner}</main>
+      ) : useOverlayNavShell ? (
+        <div className="relative">
+          <Navbar />
+          <main>{mainInner}</main>
         </div>
+      ) : (
+        <>
+          <Navbar />
+          <main className="pt-16">{mainInner}</main>
+        </>
       )}
-
-      {!hideNavAndFooter && <Navbar />}
-
-      <main className={!hideNavAndFooter ? "pt-16" : ""}>
-        <Suspense fallback={isAdmin || isPartner ? null : <ApartmentLoadingPage />}>{children}</Suspense>
-      </main>
 
       {!hideFooter && <Footer />}
     </QueryProvider>

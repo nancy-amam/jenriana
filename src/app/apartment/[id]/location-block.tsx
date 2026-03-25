@@ -16,17 +16,19 @@ const ruleMapping = {
 interface Props {
   address: string;
   rules?: string[] | null;
+  variant?: "light" | "dark";
 }
 
-export default function LocationBlock({ address, rules = [] }: Props) {
+export default function LocationBlock({ address, rules = [], variant = "light" }: Props) {
+  const dark = variant === "dark";
   return (
-    <section className="max-w-[1400px] mx-auto px-4 mb-12">
+    <section className={`max-w-[1400px] mx-auto px-4 mb-12 ${dark ? "" : ""}`}>
       <motion.h2
         initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 0.4 }}
-        className="text-2xl md:text-[36px] font-semibold text-[#111827] mb-6"
+        className={`text-2xl md:text-[36px] font-semibold mb-6 ${dark ? "text-white" : "text-[#111827]"}`}
       >
         Location
       </motion.h2>
@@ -51,23 +53,25 @@ export default function LocationBlock({ address, rules = [] }: Props) {
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.05 }}
-          className="flex flex-col gap-4 md:mt-10"
+          className={`flex flex-col gap-4 md:mt-10 ${dark ? "text-zinc-300" : ""}`}
         >
-          <h3 className="text-lg font-semibold">Things to know before booking</h3>
+          <h3 className={`text-lg font-semibold ${dark ? "text-zinc-100" : ""}`}>
+            Things to know before booking
+          </h3>
           {rules!?.length > 0 ? (
             rules?.map((rule) => {
               const r = ruleMapping[rule as keyof typeof ruleMapping];
               if (!r) return null;
               const Icon = r.icon;
               return (
-                <div key={rule} className="flex items-start gap-2 text-gray-800">
+                <div key={rule} className={`flex items-start gap-2 ${dark ? "text-zinc-300" : "text-gray-800"}`}>
                   <Icon className={`w-5 h-5 mt-1 ${r.color}`} />
                   <span>{r.name}</span>
                 </div>
               );
             })
           ) : (
-            <p className="text-gray-500">No rules specified.</p>
+            <p className={dark ? "text-zinc-500" : "text-gray-500"}>No rules specified.</p>
           )}
         </motion.div>
       </div>

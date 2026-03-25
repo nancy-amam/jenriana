@@ -36,6 +36,7 @@ export function transformApartment(apartmentData: any): Apartment {
     features: apartmentData.features,
     rules: apartmentData.rules,
     isTrending: apartmentData.isTrending,
+    description: apartmentData.description,
   };
 }
 
